@@ -44,4 +44,4 @@ if __name__ == "__main__":
 
     # Random Forest (defaults) - 10 runs - 70.24%, 50 runs - 70.946%
 
-    # Logistic Regression - (defaults) 10 runs - 94.166666666% every time
+    # Logistic Regression - (defaults, multinomial[lbfgs]) 10 runs - 94.166666666% every time
