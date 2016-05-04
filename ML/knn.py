@@ -1,6 +1,7 @@
 import numpy as np
 from sklearn import neighbors
 from sklearn import cross_validation
+from sklearn.metrics import accuracy_score
 
 def accuracy(actual, predicted):
     correct = 0
@@ -26,7 +27,7 @@ def kNN_once(features, label):
         # Execute kNN classifier
         knn = neighbors.KNeighborsClassifier(n_neighbors=5)
         y_ = knn.fit(X_train, y_train).predict(X_test)
-        accuracies.append(accuracy(y_, y_test))
+        accuracies.append(accuracy_score(y_, y_test))
     avg_knn_accuracy = np.average(accuracies)
     return avg_knn_accuracy
 

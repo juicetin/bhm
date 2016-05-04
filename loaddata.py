@@ -2,28 +2,30 @@
 
 import numpy as np
 import math
-from sklearn import neighbors
-from sklearn import cross_validation
 from sklearn.preprocessing import normalize
-from sklearn.metrics import mean_squared_error
-from collections import defaultdict
-from pprint import pprint
-import importlib
+from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.preprocessing import scale
+from sklearn.svm import SVC
 
 # Import our ML algorithms
-from knn import kNN
-from random_forests import rf
-from logistic_regression import lr
+from ML.validation import cross_validate_algo
+from ML.knn import kNN
+from ML.random_forests import rf
+from ML.logistic_regression import lr
+
+# Algos
+from sklearn import neighbors
 
 # Load all the data
 def load_data():
-    bath_and_dom_lowres = np.load('./bathAndDomLabel_lowres.npz')
+    bath_and_dom_lowres = np.load('data/bathAndDomLabel_lowres.npz')
     label = bath_and_dom_lowres['label']
     labelcounts = bath_and_dom_lowres['labelcounts']
     bath_locations = bath_and_dom_lowres['locations']
     features = bath_and_dom_lowres['features']
     
-    querypoints_lowres = np.load('./queryPoints_lowres_v2_.npz')
+    querypoints_lowres = np.load('data/queryPoints_lowres_v2_.npz')
     qp_locations = querypoints_lowres['locations']
     validQueryID = querypoints_lowres['validQueryID']
     x_bins = querypoints_lowres['x_bins']
@@ -37,11 +39,24 @@ if __name__ == "__main__":
     # Load and assign all data
     labels, labelcounts, bath_locations, features, querypoints_lowres, qp_locations, validQueryID, x_bins, query, y_bins = load_data()
 
-    # Comment everything out below and call functions accordingly using "python3 -i loaddata.py" to test algorithms interactively
+    features = np.array(features)
+    labels = np.array(list(map(str, labels)))
 
-    # kNN (all defaults) -  50 runs - 64.33%, 100 runs - 64.226%,  500 runs - 64.1495%, 1000 runs - 64.18585
-    # kNN(features, labels, 10)
+    classifiers = [
+            # neighbors.KNeighborsClassifier(n_neighbors=5),                  
+            # LogisticRegression(),                                           
+            # LogisticRegression(multi_class='multinomial', solver='lbfgs'), 
+            # RandomForestClassifier(),                                       
+            SVC()
+            ]
 
-    # Random Forest (defaults) - 10 runs - 70.24%, 50 runs - 70.946%
+    # 10-fold cross-validation for all
+    for classifier in classifiers:
+        cross_validate_algo(features, labels, 10, classifier)
 
-    # Logistic Regression - (defaults, multinomial[lbfgs]) 10 runs - 94.166666666% every time
+    # Whiten
+    features = scale(normalize(features))
+
+    # # 10-fold cross-validation for all
+    # for classifier in classifiers:
+    #     cross_validate_algo(features, labels, 10, classifier)

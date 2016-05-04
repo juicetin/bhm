@@ -1,14 +1,7 @@
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 from sklearn import cross_validation
-
-def accuracy(actual, predicted):
-    correct = 0
-    for (actual, predicted) in zip(actual, predicted):
-        if actual == predicted:
-            correct += 1
-    return correct/len(actual)
-
+from sklearn.metrics import accuracy_score
 
 # Naive k nearest neighbour classifier
 def rf_once(features, label):
@@ -26,7 +19,7 @@ def rf_once(features, label):
         # Execute rf classifier
         rf = RandomForestClassifier()
         y_ = rf.fit(X_train, y_train).predict(X_test)
-        accuracies.append(accuracy(y_, y_test))
+        accuracies.append(accuracy_score(y_, y_test))
     avg_knn_accuracy = np.average(accuracies)
     return avg_knn_accuracy
 
