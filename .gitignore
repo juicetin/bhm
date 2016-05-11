@@ -1,2 +1,4 @@
 *.npz
 *.*.sw*
+
+!bathAndDomLabel_lowres.npz
