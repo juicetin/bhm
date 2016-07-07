@@ -89,7 +89,7 @@ if __name__ == "__main__":
     # kss = gp.K_create(x, x)
     # ks = gp.K_create(x, X)
     # mean = gp.mean_func(X, x, y)
-    y_pred, MSE = gp.predict(x, eval_MSE=True)
+    y_pred, MSE = gp.predict(x)
     sigma = np.sqrt(MSE)
     # var = gp.variance(
 
