@@ -23,11 +23,14 @@ class GaussianProcess:
         self.X = X  # Inputs
         self.y = y  # Outputs
 
-        # slow optimiser method - change to BFGS
-        res = minimize(self.SQE_NLL, [1.27,1,0.3], method='nelder-mead')
+        # x0 = [1.27, 1, 0.3] # initial guess
+        x0 = [1.0, 1.0, 1.0] # initial guess
+        res = minimize(self.SQE_NLL, x0, method='bfgs')
+        # res = minimize(self.SQE_NLL, x0, method='bfgs', jac=self.SQE_der)
 
         # Error     Length scale  Noise error
-        self.f_err, self.l_scale, self.n_err = res['x']
+        [self.f_err, self.l_scale, self.n_err] = res['x']
+        print("ferr: {}, lscale: {}, nerr: {}".format(self.f_err, self.l_scale, self.n_err))
 
         self.L = linalg.cholesky(self.K(X, X))
         self.alpha = linalg.solve(self.L.T, (linalg.solve(self.L, self.y)))
@@ -40,17 +43,14 @@ class GaussianProcess:
         return fs_mean, var
 
     def kernel(self, x, xs, *args):
-        if len(args) == 3:
-            f_err, l_scale, n_err = args
-        else:
-            f_err = self.f_err
-            l_scale = self.l_scale
-            n_err = self.n_err
-
-        return (f_err**2) * math.exp( \
-        -sum((x-xs)**2) \
-        / (2*(l_scale**2)) \
-        + (n_err**2)*KroneckerDelta(x, xs) 
+        f_err, l_scale, n_err = args
+        return (
+            (f_err**2) 
+            * math.exp(
+            -sum((x-xs)**2)
+            / (2*(l_scale**2))
+            + (n_err**2)*KroneckerDelta(x, xs) 
+            )
         )
     
     # K(X, X), K(X, X*), K(X*, X), k*, etc.
@@ -64,70 +64,43 @@ class GaussianProcess:
 
         # TODO fix/slow
         # vectorise
-        matrix = []
-        for x1_point in x1:
-            for x2_point in x2:
-                matrix.append(self.kernel(x1_point, x2_point, f_err, l_scale, n_err))
-        return np.array(matrix).reshape(len(x1), len(x2))
+        return np.array([self.kernel(x1_point, x2_point, f_err, l_scale, n_err)
+                for x2_point in x2 for x1_point in x1]).reshape(len(x2), len(x1))
 
-    def SQE_gradient(self):
-        pass
-    
+    # currently taken from here - https://math.stackexchange.com/questions/1030534/gradients-of-marginal-likelihood-of-gaussian-process-with-squared-exponential-co/1072701#1072701
+    def SQE_der(self, args):
+        # TODO fix - get around buggy scipy
+        if len(args.shape) != 1:
+            args = args[2]
+
+        [f_err, l_scale, n_err] = args
+        #TODO use alpha calculated from SQE_NLL
+        L = linalg.cholesky(self.K(self.X, self.X, f_err, l_scale, n_err))
+        alpha = linalg.solve(L.T, (linalg.solve(L, self.y))) # save for use with derivative func
+        aaT = alpha.dot(alpha.T)
+        K_inv = alpha/self.y
+        dK_dtheta = np.gradient(self.K(self.X, self.X, f_err, l_scale, n_err))[0]
+        der = 0.5 * np.matrix.trace((aaT - K_inv).dot(dK_dtheta))
+        # print('got here der {}'.format(der))
+        return der
+
+        # return 0.5*np.matrix.trace((aaT - K_inv).dot((dK_dtheta)))
+
     # Args is an array to allow for scipy.optimize
     def SQE_NLL(self, args):
+        # TODO fix - get around buggy scipy
+        if len(args.shape) != 1:
+            args = args[2]
+
         [f_err, l_scale, n_err] = args
-        # Minimise NLL
+        # print("sqe nll n_err {}".format(n_err))
+        # print(args)
         L = linalg.cholesky(self.K(self.X, self.X, f_err, l_scale, n_err))
-        alpha = linalg.solve(L.T, (linalg.solve(L, self.y)))
-        return 0.5 * self.y.T.dot(alpha) + \
-        sum([math.log(x) for x in np.diag(L)]) + \
-        L.shape[0]/2 * math.log(2*math.pi)
-        # return 0.5 * self.y.T.dot(linalg.inv(self.K(self.X, self.X, f_err, l_scale, n_err))).dot(self.y) \
-        # + 0.5*math.log(np.linalg.det(self.K(self.X, self.X, f_err, l_scale, n_err))) \
-        # + len(self.y)/2* math.log(2*math.pi)
-    
-    ########################################################################
-    # Squared exponential
-    # e^(-1/2 * |x - y|^2)
-    # def sum_vals(self, vals):
-    #     try:
-    #         return sum(vals)
-    #     except:
-    #         return vals
-
-    # 
-    # def orig_cov_inv(self, x):
-    #     #TODO K(x, x) needs to add error sigma^2*I
-    #     return linalg.inv(self.K(x, x))
-    # 
-    # # E(f*|X,y,X*] = K(X*,X)[K(X,X) + v^2I]^(-1)y
-    # def mean_func(self, x, xs, y):
-    #     return self.K(xs, x) \
-    #     .dot(self.K_inv)            \
-    #     .dot(y)             
-    # 
-    # def variance(self, xs):
-    #     return self.K(xs, xs) 
-    #     - self.K(xs, self.X).T     \
-    #     .dot(self.K_inv)             \
-    #     .dot(self.K(xs, self.X).T) \
-
-    # def predict(self, x, eval_MSE=False):
-    #     avg_pred = self.mean_func(self.X, x, self.y)
-    #     if eval_MSE is True:
-    #         mse = self.variance(x)
-    #         return avg_pred, np.diag(mse)
-    #     return avg_pred
-
-    # # Args is an array to allow for scipy.optimize
-    # def SQE_NLL(self, args):
-    #     [f_err, l_scale, n_err] = args
-    #     # Minimise NLL
-    #     return 0.5 * self.y.T.dot(linalg.inv(self.K(self.X, self.X, f_err, l_scale, n_err))).dot(self.y) \
-    #     + 0.5*math.log(np.linalg.det(self.K(self.X, self.X, f_err, l_scale, n_err))) \
-    #     + len(self.y)/2* math.log(2*math.pi)
-    
-    # x   # training inputs
-    # y   # training outputs
-    # xs  # test inputs
-    
+        alpha = linalg.solve(L.T, (linalg.solve(L, self.y))) # save for use with derivative func
+        nll = (
+            0.5 * self.y.T.dot(alpha) + 
+            np.matrix.trace(L) + # sum of diagonal
+            L.shape[0]/2 * math.log(2*math.pi)
+                )
+        # print('got here NLL {}'.format(nll))
+        return nll

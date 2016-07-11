@@ -82,7 +82,7 @@ if __name__ == "__main__":
     X = X.reshape(len(X), 1)
     y = np.array([-1.70,-1.20,-0.25,0.30,0.5,0.7])
     y = y.reshape(len(y), 1)
-    x = np.array([0.2, 0.3, 0.4, 0.5])
+    x = np.array([0.2])
     x = x.reshape(len(x), 1)
     gp.fit(X, y)
 
@@ -112,15 +112,15 @@ if __name__ == "__main__":
     #     cross_validate_algo(features, labels, 10, classifier)
 
     # Plot function, prediction, and 95% confidence interval based on MSE
-    # confidence = 1.9600
-    # fig = pl.figure()
-    # # pl.plot(x, y, 'r:', label=u'$f(x) = x\, \sin(x)$')
-    # pl.plot(X, y, 'r.', markersize=10, label=u'Observations')
-    # pl.plot(x, y_pred, 'b-', label=u'Prediction')
-    # pl.fill(np.concatenate([x, x[::-1]]),
-    #         np.concatenate([y_pred - confidence * sigma,
-    #                       (y_pred + confidence * sigma)[::-1]]),
-    #         alpha=.5, fc='b', ec='None', label='95% confidence interval')
-    # pl.xlabel('$x$')
-    # pl.ylabel('$y$')
-    # pl.show()
+    confidence = 1.9600
+    fig = pl.figure()
+    # pl.plot(x, y, 'r:', label=u'$f(x) = x\, \sin(x)$')
+    pl.plot(X, y, 'r.', markersize=10, label=u'Observations')
+    pl.plot(x, y_pred, 'b-', label=u'Prediction')
+    pl.fill(np.concatenate([x, x[::-1]]),
+            np.concatenate([y_pred - confidence * sigma,
+                          (y_pred + confidence * sigma)[::-1]]),
+            alpha=.5, fc='b', ec='None', label='95% confidence interval')
+    pl.xlabel('$x$')
+    pl.ylabel('$y$')
+    pl.show()
