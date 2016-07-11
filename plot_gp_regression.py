@@ -1,8 +1,9 @@
 print(__doc__)
 
 import numpy as np
-from sklearn.gaussian_process import GaussianProcess
-# from ML.gp import GaussianProcess
+# from sklearn.gaussian_process import GaussianProcess
+from ML.gp import GaussianProcess
+libraryGP = False
 from matplotlib import pyplot as pl
 
 np.random.seed(1)
@@ -31,8 +32,10 @@ gp = GaussianProcess()
 gp.fit(X, y)
 
 # Make prediction on meshed x-axis (Asking for variance too)
-y_pred, variance = gp.predict(x, eval_MSE=True)
-# y_pred, variance = gp.predict(x)
+if libraryGP == True:
+    y_pred, variance = gp.predict(x, eval_MSE=True)
+else:
+    y_pred, variance = gp.predict(x)
 sigma = np.sqrt(variance)
 
 # Plot function, prediction, and 95% confidence interval based on variance
@@ -74,8 +77,10 @@ gp = GaussianProcess()
 gp.fit(X, y)
 
 # Make prediction on meshed x-axis (ask for variance as well)
-y_pred, variance = gp.predict(x, eval_MSE=True)
-# y_pred, variance = gp.predict(x)
+if libraryGP == True:
+    y_pred, variance = gp.predict(x, eval_MSE=True)
+else:
+    y_pred, variance = gp.predict(x)
 sigma = np.sqrt(variance)
 
 # Plot function, prediction, 95% confidence interval based on variance

@@ -2,6 +2,7 @@ import numpy as np
 from numpy import linalg
 from sympy import KroneckerDelta
 from scipy.optimize import minimize
+from scipy.spatial.distance import cdist
 import math
 
 # TODO when doing K(X, X), simply use (n_err^2)I instead of KroneckerDelta
@@ -24,7 +25,9 @@ class GaussianProcess:
         self.y = y  # Outputs
 
         # x0 = [1.27, 1, 0.3] # initial guess
-        x0 = [1.0, 1.0, 1.0] # initial guess
+        x0 = [1.0] * 3 # initial guess
+
+        # NOTE - works without jac, fails using jac
         res = minimize(self.SQE_NLL, x0, method='bfgs')
         # res = minimize(self.SQE_NLL, x0, method='bfgs', jac=self.SQE_der)
 
@@ -42,18 +45,6 @@ class GaussianProcess:
         var = np.diag(self.K(x, x) - v.T.dot(v))
         return fs_mean, var
 
-    def kernel(self, x, xs, *args):
-        f_err, l_scale, n_err = args
-        return (
-            (f_err**2) 
-            * math.exp(
-            -sum((x-xs)**2)
-            / (2*(l_scale**2))
-            + (n_err**2)*KroneckerDelta(x, xs) 
-            )
-        )
-    
-    # K(X, X), K(X, X*), K(X*, X), k*, etc.
     def K(self, x1, x2, *args):
         if len(args) == 3:
             f_err, l_scale, n_err = args
@@ -62,16 +53,14 @@ class GaussianProcess:
             l_scale = self.l_scale
             n_err = self.n_err
 
-        # TODO fix/slow
-        # vectorise
-        return np.array([self.kernel(x1_point, x2_point, f_err, l_scale, n_err)
-                for x2_point in x2 for x1_point in x1]).reshape(len(x2), len(x1))
+        K = (f_err**2) * (np.exp(-self.dist(x1, x2) / (2*l_scale**2)))
+        return K + (n_err**2) * np.identity(len(self.y))
 
     # currently taken from here - https://math.stackexchange.com/questions/1030534/gradients-of-marginal-likelihood-of-gaussian-process-with-squared-exponential-co/1072701#1072701
     def SQE_der(self, args):
-        # TODO fix - get around buggy scipy
+        # TODO fix - get around apparent bug
         if len(args.shape) != 1:
-            args = args[2]
+            args = args[0]
 
         [f_err, l_scale, n_err] = args
         #TODO use alpha calculated from SQE_NLL
@@ -88,9 +77,9 @@ class GaussianProcess:
 
     # Args is an array to allow for scipy.optimize
     def SQE_NLL(self, args):
-        # TODO fix - get around buggy scipy
+        # TODO fix - get around apparent bug
         if len(args.shape) != 1:
-            args = args[2]
+            args = args[0]
 
         [f_err, l_scale, n_err] = args
         # print("sqe nll n_err {}".format(n_err))
@@ -104,3 +93,17 @@ class GaussianProcess:
                 )
         # print('got here NLL {}'.format(nll))
         return nll
+
+    def dist(self, x, xs):
+        return cdist(x, xs, 'sqeuclidean')
+
+if __name__ == "__main__":
+    gp = GaussianProcess()
+    X = np.array([-1.50,-1.00,-0.75,-0.40,-0.25,0.00])
+    X = X.reshape(len(X), 1)
+    y = np.array([-1.70,-1.20,-0.25,0.30,0.5,0.7])
+    y = y.reshape(len(y), 1)
+    x = np.array([0.2])
+    x = x.reshape(len(x), 1)
+    gp.fit(X, y)
+
