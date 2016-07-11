@@ -39,7 +39,7 @@ class GaussianProcess:
         self.alpha = linalg.solve(self.L.T, (linalg.solve(self.L, self.y)))
 
     def predict(self, x):
-        ks = self.K_se(x, self.X)
+        ks = self.K_se(self.X, x)
         fs_mean = ks.T.dot(self.alpha)
         v = linalg.solve(self.L, ks)
         var = np.diag(self.K_se(x, x) - v.T.dot(v))
@@ -54,9 +54,11 @@ class GaussianProcess:
             n_err = self.n_err
 
         K = (f_err**2) * (np.exp(-self.dist(x1, x2) / (2*l_scale**2)))
-        return K + (n_err**2) * np.identity(len(self.y))
+        # return K + (n_err**2) * np.identity(len(x2))
+        residual = np.zeros((K.shape[0], K.shape[1]), dtype=float)
+        np.fill_diagonal(residual, 1)
+        return K + (n_err**2) * residual
 
-    # currently taken from here - https://math.stackexchange.com/questions/1030534/gradients-of-marginal-likelihood-of-gaussian-process-with-squared-exponential-co/1072701#1072701
     def SE_der(self, args):
         # TODO fix - get around apparent bug
         if len(args.shape) != 1:
@@ -103,7 +105,7 @@ if __name__ == "__main__":
     X = X.reshape(len(X), 1)
     y = np.array([-1.70,-1.20,-0.25,0.30,0.5,0.7])
     y = y.reshape(len(y), 1)
-    x = np.array([0.2])
+    x = np.array([0.2, 0.3, 0.4])
     x = x.reshape(len(x), 1)
     gp.fit(X, y)
-
+    y_pred, MSE = gp.predict(x)

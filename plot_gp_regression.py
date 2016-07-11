@@ -1,9 +1,8 @@
 print(__doc__)
 
 import numpy as np
-# from sklearn.gaussian_process import GaussianProcess
-from ML.gp import GaussianProcess
-libraryGP = False
+from sklearn.gaussian_process import GaussianProcess
+# from ML.gp import GaussianProcess
 from matplotlib import pyplot as pl
 
 np.random.seed(1)
@@ -13,7 +12,7 @@ confidence = 1.9600
 def f(x):
     return x * np.sin(x)
 
-datasize = 100
+datasize = 1000
 
 # Noiseless case
 X = np.atleast_2d([1., 3., 5., 6., 7., 8.]).T
@@ -32,9 +31,9 @@ gp = GaussianProcess()
 gp.fit(X, y)
 
 # Make prediction on meshed x-axis (Asking for variance too)
-if libraryGP == True:
+try:
     y_pred, variance = gp.predict(x, eval_MSE=True)
-else:
+except:
     y_pred, variance = gp.predict(x)
 sigma = np.sqrt(variance)
 
@@ -77,9 +76,9 @@ gp = GaussianProcess()
 gp.fit(X, y)
 
 # Make prediction on meshed x-axis (ask for variance as well)
-if libraryGP == True:
+try:
     y_pred, variance = gp.predict(x, eval_MSE=True)
-else:
+except:
     y_pred, variance = gp.predict(x)
 sigma = np.sqrt(variance)
 
