@@ -24,8 +24,14 @@ y = f(X).ravel()
 x = np.atleast_2d(np.linspace(0, 10, datasize)).T
 
 # Instantiate GP model
-# gp = GaussianProcess(corr='cubic', theta0=1e-2, thetaL=1e-4, thetaU=1e-1, random_start=100)
-gp = GaussianProcess()
+try:
+    # gp = GaussianProcess(corr='cubic', theta0=1e-2, thetaL=1e-4, thetaU=1e-1, random_start=100)
+    gp = GaussianProcess(corr='squared_exponential', theta0=1e-1,
+                         thetaL=1e-3, thetaU=1,
+                         nugget=(dy / y) ** 2,
+                         random_start=100)
+except:
+    gp = GaussianProcess()
 
 # Fit data using MLE of params
 gp.fit(X, y)
@@ -66,11 +72,13 @@ y += noise
 x = np.atleast_2d(np.linspace(0, 10, datasize)).T
 
 # Instantiate GP model
-gp = GaussianProcess()
-# gp = GaussianProcess(corr='squared_exponential', theta0=1e-1,
-#                      thetaL=1e-3, thetaU=1,
-#                      nugget=(dy / y) ** 2,
-#                      random_start=100)
+try:
+    gp = GaussianProcess(corr='squared_exponential', theta0=1e-1,
+                         thetaL=1e-3, thetaU=1,
+                         nugget=(dy / y) ** 2,
+                         random_start=100)
+except:
+    gp = GaussianProcess()
 
 # Fit to data using MLE of params
 gp.fit(X, y)
