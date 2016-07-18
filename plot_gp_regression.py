@@ -1,8 +1,8 @@
 print(__doc__)
 
 import numpy as np
-from sklearn.gaussian_process import GaussianProcess
-# from ML.gp import GaussianProcess
+# from sklearn.gaussian_process import GaussianProcess
+from ML.gp import GaussianProcess
 from matplotlib import pyplot as pl
 
 np.random.seed(1)
@@ -60,7 +60,7 @@ pl.legend(loc='upper left')
 #---------------------------------------------------------------------------------------------------------
 # noisy case
 X = np.linspace(0.1, 9.9, 20)
-X = np.atleast_2d(X).T
+X = np.atleast_2d(X).T 
 
 # Observations and noise
 y = f(X).ravel()
