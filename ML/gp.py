@@ -51,8 +51,8 @@ class GaussianProcess:
         self.K_inv = np.linalg.inv(self.L.T).dot(np.linalg.inv(self.L))
         self.alpha = linalg.solve(self.L.T, (linalg.solve(self.L, self.y)))
 
-    def L_create(self, f_err, l_scale, n_err):
-        return linalg.cholesky(self.K_se(self.X, self.X, f_err, l_scale) 
+    def L_create(self, X, f_err, l_scale, n_err):
+        return linalg.cholesky(self.K_se(X, X, f_err, l_scale) 
                 + (n_err**2) * np.identity(self.X.shape[0]))
 
     def predict(self, x):
@@ -74,7 +74,7 @@ class GaussianProcess:
 
         [f_err, l_scale, n_err] = args
         # TODO use alpha calculated from SE_NLL
-        L = self.L_create(f_err, l_scale, n_err)
+        L = self.L_create(self.X, f_err, l_scale, n_err)
         alpha = linalg.solve(L.T, (linalg.solve(L, self.y))) # save for use with derivative func
         aaT = alpha.dot(alpha.T)
         K_inv = np.linalg.inv(L.T).dot(np.linalg.inv(L))
@@ -104,7 +104,7 @@ class GaussianProcess:
             args = args[0]
 
         [f_err, l_scale, n_err] = args
-        L = self.L_create(f_err, l_scale, n_err)
+        L = self.L_create(self.X, f_err, l_scale, n_err)
         
         alpha = linalg.solve(L.T, (linalg.solve(L, self.y))) # save for use with derivative func
         nll = (
@@ -119,77 +119,54 @@ class GaussianProcess:
         return cdist(x, xs, 'sqeuclidean')
         # return (x - xs.T)**2
 
+    ####################################################
     ####################### PLSC #######################
-    # TODO repeated operations here. eliminate to improve performance
+    ####################################################
+
     def sigmoid(self, x):
         return 1/(1+np.exp**(-x))
 
+    #################### Negative LOO log predictive probability ####################
     def LLOO(self, args):
-        [a_param, b_param] = args
-        return sum(np.log([self.LOO_prob_one(i, a_param, b_param) for i in range(0,self.size)]))
 
-    def LOO_prob_one(self, i, a_param, b_param):
-        inner = self.y[i] * ((a_param * self.LOO_mean_one(i) + b_param) 
-                / (np.sqrt(1 + a_param**2 * self.LOO_var_one(i))))
+        return -sum([self.LOOP(i, args) for i in arange(self.size)])
 
-        return norm.cdf(inner)
+    # Leave one out probability
+    def LOOP(self, i, args):
+        [f_err, l_scale, n_err, a_param, b_param] = args
 
-    def LOO_mean_one(self, i):
-        # TODO
-        new_alpha = self.alpha
-        new_K_inv = self.K_inv
-        return self.y[i] - ( new_alpha / new_K_inv )
+        # Leave one out datasets (omit i-th point)
+        X = np.array(self.X[:i] + self.X[i+1:])
+        y = np.array(self.y[:i] + self.y[i+1:])
 
-    def LOO_var_one(self, i):
-        # TODO
-        new_K_inv = self.K_inv
-        return 1/(new_K_inv)
+        # Calculate alpha and inverse matrix based on LOO dataset
+        L = self.L_create(X, f_err, l_scale, n_err)
+        alpha = linalg.solve(L.T, (linalg.solve(L, y))) # save for use with derivative func
+        K_inv = np.linalg.inv(L.T).dot(np.linalg.inv(L))
 
-    def LLOO_hyperparams_grad(self, a_param, b_param):
-        # mean, var, r, pdf_on_cdf = self.LLOO_grad_params(y, a_param, b_param)
-        self.LLOO_grad_params(y, a_param, b_param)
-        denom = 1 + a_param**2 * self.var
-        mid = self.y*a_param/np.sqrt(denom)
+        # Return cumulative Gaussian for single training point
+        return norm.cdf(
+            self.y[i] * ( a_param * self.mean_one(i, alpha, K_inv) + b_param) /
+            np.sqrt( 1 + a_param**2 * self.var_one(i, K_inv) )
+        )
 
-        dK_dtheta = np.gradient(self.K_se(self.X, self.X, self.f_err, self.l_scale))[0] # TODO already above, don't recalculate here
-        Z = self.K_inv * dK_dtheta
-        dmean_dtheta = Z.dot(self.alpha)/np.diag(self.K_inv) - np.diag(self.alpha.dot(Z.dot(self.K_inv)))/np.diag(np.linalg.matrix_power(self.K_inv, 2))
-        dvar_dtheta = np.diag(Z.dot(self.K_inv))/np.diag(np.linalg.matrix_power(self.K_inv, 2))
-        right = dmean_dtheta - (a_param*(a_param*mean + b_param))/(2*(denom)) * dvar_dtheta
+    def mean_one(self, i, alpha, K_inv):
+        return self.y[i] - alpha[i]/K_inv[i][i]
 
-        return self.pdf_on_cdf * mid * right
+    def var_one(self, i, K_inv):
+        return 1/K_inv[i][i]
 
-    def LLOO_a_grad(self, a_param, b_param):
-        # mean, var, r, pdf_on_cdf = self.LLOO_grad_params(y, a_param, b_param)
-        self.LLOO_grad_params(a_param, b_param)
-        denom = 1 + a_param**2 * self.var
-        mid = self.y/np.sqrt(denom)
-        right = (self.mean - b_param * a_param * self.var) / denom
-        return sum(self.pdf_on_cdf * mid * right)
+    #################### Derivative ####################
+    def LLOO_der(self, args):
+        [f_err, l_scale, n_err, a_param, b_param] = args
 
-    def LLOO_b_grad(self, y, a_param, b_param):
-        # mean, var, r, pdf_on_cdf = self.LLOO_grad_params(y, a_param, b_param)
-        self.LLOO_grad_params(a_param, b_param)
-        denom = 1 + a_param**2 * self.var
-        right = self.y/np.sqrt(denom)
-        return sum(self.pdf_on_cdf * right)
-
-    def LLOO_grad_params(self, a_param, b_param):
-        try:
-            self.mean
-        except NameError:
-            self.mean = self.y - (self.alpha/np.diag(self.K_inv))
-            self.var = 1/(np.diag(self.K_inv))
-            self.r = (a_param * self.mean + b_param) / np.sqrt(1 + a_param**2 * self.var)
-            self.pdf_on_cdf = norm.pdf(r)/norm.cdf(self.y*r)
-        # return mean, var, r, pdf_on_cdf
-
+    #################### Prediction ####################
     # Classification
     def predict_class(self, x):
         for label in set(self.y):
 
             # One vs. all. Set all other labels to 'false'
-            y_binary = np.array([1 if i == label else 0 for i in self.y])
+            y_binary = np.array([1 if i == label else -1 for i in self.y])
 
             # Do classification prediction
             y_pred, MSE = self.predict_for_binary(y_binary)
