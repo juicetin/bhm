@@ -60,14 +60,20 @@ class GaussianProcess:
         var = np.diag(self.K_se(x, x, self.f_err, self.l_scale) - v.T.dot(v))
         return fs_mean, var
 
+    def se_term_one_length_scale(self, x1, x2, l_scales):
+        return (1/l_scales**2) * self.dist(x1, x2)
+
+    def se_term_length_scale_per_d(self, x1, x2, l_scales):
+        return (
+            np.array([sum((i-j)/l_scales) for i in x1 for j in x2 ])
+                .reshape(len(x1), len(x2)) ** 2
+        )
+
     def K_se(self, x1, x2, f_err, l_scales):
         return (
             (f_err**2) * 
-            (np.exp(-0.5 * 
-                # (self.dist(x1, x2) / l_scales) ** 2
-                # ((x1-x2.T) / l_scales) ** 2
-                np.array([sum((i-j)/l_scales) for i in x1 for j in x2 ])
-                    .reshape(len(x1), len(x2)) ** 2
+            np.exp(-0.5 * # (1/l_scales**2) * self.dist(x1, x2)
+                self.se_term(x1, x2, l_scales
             ))
         )
 
@@ -138,8 +144,13 @@ class GaussianProcess:
 
     # Leave one out probability
     def LOOP(self, i, args):
-        f_err, l_scales, n_err, a_param, b_param = self.unpack_LLOO_args(args)
-        # [f_err, l_scales, n_err, a_param, b_param] = args
+
+        if len(args) == 5:
+            f_err, l_scales, n_err, a_param, b_param = args
+            self.se_term = self.se_term_one_length_scale
+        else:
+            self.se_term = self.se_term_length_scale_per_d
+            f_err, l_scales, n_err, a_param, b_param = self.unpack_LLOO_args(args)
 
         X = np.delete(self.X, (i), axis=0)
         y = np.delete(self.y, i)
@@ -181,10 +192,10 @@ class GaussianProcess:
         # Build OvA classifier for each unique class in y
         for c in set(y):
             self.classifier_params[c] = {}
-            # x0 = [1, np.array([1] * X.shape[1]), 1, 1, 1]
 
             # f_err, l_scales (for each dimension), n_err, alpha, beta
-            x0 = [1] + [1] * X.shape[1] + [1, 1, 1]
+            # x0 = [1] + [1] * X.shape[1] + [1, 1, 1]
+            x0 = [1, 1, 1, 1, 1] # original
 
             # Set binary labels for OvA classifier
             self.y = np.array([1 if label == c else 0 for label in y])

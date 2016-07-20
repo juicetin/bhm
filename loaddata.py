@@ -138,7 +138,7 @@ if __name__ == "__main__":
     # print(d2-d1)
 
     for i in range(10):
-        X, y = datasets.make_circles(n_samples=100)
+        X, y = datasets.make_circles(n_samples=12)
 
         from sklearn import cross_validation
         X_train, X_test, y_train, y_test = cross_validation.train_test_split(X, y, test_size=0.1)
