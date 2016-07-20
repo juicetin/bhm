@@ -43,17 +43,15 @@ class GaussianProcess:
         res = minimize(self.SE_NLL, gp_hp_guess, method='bfgs')
         # res = minimize(self.SE_NLL, gp_hp_guess, method='bfgs', jac=self.SE_der, tol=1e-4)
         [self.f_err, self.l_scale, self.n_err] = res['x']
-        print(res)
-        print("ferr: {}, lscale: {}, nerr: {}".format(self.f_err, self.l_scale, self.n_err))
 
         # Set a few 'fixed' variables once GP HPs are determined for later use (with classifier)
-        self.L = self.L_create(self.f_err, self.l_scale, self.n_err)
+        self.L = self.L_create(self.X, self.f_err, self.l_scale, self.n_err)
         self.K_inv = np.linalg.inv(self.L.T).dot(np.linalg.inv(self.L))
         self.alpha = linalg.solve(self.L.T, (linalg.solve(self.L, self.y)))
 
-    def L_create(self, X, f_err, l_scale, n_err):
-        return linalg.cholesky(self.K_se(X, X, f_err, l_scale) 
-                + (n_err**2) * np.identity(self.X.shape[0]))
+    def L_create(self, X, f_err, l_scales, n_err):
+        return linalg.cholesky(self.K_se(X, X, f_err, l_scales) 
+                + (n_err**2) * np.identity(X.shape[0]))
 
     def predict(self, x):
         ks = self.K_se(self.X, x, self.f_err, self.l_scale)
@@ -62,9 +60,16 @@ class GaussianProcess:
         var = np.diag(self.K_se(x, x, self.f_err, self.l_scale) - v.T.dot(v))
         return fs_mean, var
 
-    def K_se(self, x1, x2, f_err, l_scale):
-        K = (f_err**2) * (np.exp(-self.dist(x1, x2) / (2*l_scale**2)))
-        return K 
+    def K_se(self, x1, x2, f_err, l_scales):
+        return (
+            (f_err**2) * 
+            (np.exp(-0.5 * 
+                # (self.dist(x1, x2) / l_scales) ** 2
+                # ((x1-x2.T) / l_scales) ** 2
+                np.array([sum((i-j)/l_scales) for i in x1 for j in x2 ])
+                    .reshape(len(x1), len(x2)) ** 2
+            ))
+        )
 
     def SE_der(self, args):
         # TODO fix - get around apparent bug
@@ -74,33 +79,24 @@ class GaussianProcess:
 
         [f_err, l_scale, n_err] = args
         # TODO use alpha calculated from SE_NLL
+
         L = self.L_create(self.X, f_err, l_scale, n_err)
         alpha = linalg.solve(L.T, (linalg.solve(L, self.y))) # save for use with derivative func
         aaT = alpha.dot(alpha.T)
         K_inv = np.linalg.inv(L.T).dot(np.linalg.inv(L))
 
-        # dK_dtheta = np.gradient(self.K_se(self.X, self.X, f_err, l_scale))[0]
-        # dK/dtheta elementwise derivaties
-        # m = sympy.Matrix(f_err_sym**2 * math.e**(-self.dist(self.X, self.X)/(2*l_scale_sym**2)) + n_err_sym**2 * np.identity(self.size))
-        # dK_dthetas = [
-        #              np.matrix(m.diff(f_err_sym).subs({ f_err_sym:f_err , l_scale_sym:l_scale , n_err_sym:n_err })),
-        #              np.matrix(m.diff(l_scale_sym).subs({ f_err_sym:f_err , l_scale_sym:l_scale , n_err_sym:n_err })),
-        #              np.matrix(m.diff(n_err_sym).subs({ f_err_sym:f_err , l_scale_sym:l_scale , n_err_sym:n_err }))
-        #              ]
-
+        # Calculate dK/dtheta over each hyperparameter
         eval_dK_dthetas = [np.array(m.subs( { self.f_err_sym:f_err , self.l_scale_sym:l_scale , self.n_err_sym:n_err } )) 
                 for m in self.dK_dthetas]
+
+        # Incorporate each dK/dt into gradient
         derivatives = [float(-0.5 * np.matrix.trace((aaT - K_inv).dot(dK_dtheta))) for dK_dtheta in eval_dK_dthetas]
-        print("param vals: {}".format(args))
-        print("derivatives: {}".format(derivatives))
-        # a = -0.5 * np.matrix.trace((aaT - K_inv).dot(dK_dthetas[0]))
         return np.array(derivatives)
 
     # Args is an array to allow for scipy.optimize
     def SE_NLL(self, args):
         # TODO fix - get around apparent bug
         if len(args.shape) != 1:
-            # print(args)
             args = args[0]
 
         [f_err, l_scale, n_err] = args
@@ -124,23 +120,36 @@ class GaussianProcess:
     ####################################################
 
     def sigmoid(self, x):
-        return 1/(1+np.exp**(-x))
+        return 1/(1+np.exp(-x))
 
     #################### Negative LOO log predictive probability ####################
-    def LLOO(self, args):
 
-        return -sum([self.LOOP(i, args) for i in arange(self.size)])
+    # Unpacks arguments to deal with list of length scales in list of arguments
+    def unpack_LLOO_args(self, args):
+        f_err = args[0]
+        l_scales = args[1:self.X.shape[1]+1]
+        n_err = args[self.X.shape[1]+1]
+        a_param = args[self.X.shape[1]+2]
+        b_param = args[self.X.shape[1]+3]
+        return f_err, l_scales, n_err, a_param, b_param
+
+    def LLOO(self, args):
+        return -sum([self.LOOP(i, args) for i in range(self.size)])
 
     # Leave one out probability
     def LOOP(self, i, args):
-        [f_err, l_scale, n_err, a_param, b_param] = args
+        f_err, l_scales, n_err, a_param, b_param = self.unpack_LLOO_args(args)
+        # [f_err, l_scales, n_err, a_param, b_param] = args
 
-        # Leave one out datasets (omit i-th point)
-        X = np.array(self.X[:i] + self.X[i+1:])
-        y = np.array(self.y[:i] + self.y[i+1:])
+        X = np.delete(self.X, (i), axis=0)
+        y = np.delete(self.y, i)
+
+        # NOTE Hack here. How is this actually meant to work...?
+        if i == self.size-1:
+            i = self.size-2
 
         # Calculate alpha and inverse matrix based on LOO dataset
-        L = self.L_create(X, f_err, l_scale, n_err)
+        L = self.L_create(X, f_err, l_scales, n_err)
         alpha = linalg.solve(L.T, (linalg.solve(L, y))) # save for use with derivative func
         K_inv = np.linalg.inv(L.T).dot(np.linalg.inv(L))
 
@@ -162,19 +171,77 @@ class GaussianProcess:
 
     #################### Prediction ####################
     # Classification
+    def fit_class(self, X, y):
+
+        self.size = len(y)
+        self.X = X
+        self.classifier_params = {}
+        params = ['f_err', 'l_scales', 'n_err', 'a_param', 'b_param']
+
+        # Build OvA classifier for each unique class in y
+        for c in set(y):
+            self.classifier_params[c] = {}
+            # x0 = [1, np.array([1] * X.shape[1]), 1, 1, 1]
+
+            # f_err, l_scales (for each dimension), n_err, alpha, beta
+            x0 = [1] + [1] * X.shape[1] + [1, 1, 1]
+
+            # Set binary labels for OvA classifier
+            self.y = np.array([1 if label == c else 0 for label in y])
+
+            # Optimise and save hyper/parameters for current binary class pair
+            res = minimize(self.LLOO, x0, method='bfgs')
+            # res = minimize(self.LLOO, x0, method='bfgs', jac=self.SE_der, tol=1e-4)
+
+            # Set params for current binary regressor (classifier)
+            for param, val in zip(params, res['x']):
+                self.classifier_params[c][param] = val
+
+        # Build all OvA binary classifiers
+        # for label in set(self.y):
+
+        #     # One vs. all. Set all other labels to 'false'
+        #     y_binary = np.array([1 if i == label else -1 for i in self.y])
+
+        #     # Do classification prediction
+        #     y_pred, MSE = self.predict_for_binary(y_binary)
+        #     sigma = np.root(MSE)
+
     def predict_class(self, x):
-        for label in set(self.y):
+        y = np.copy(self.y)
 
-            # One vs. all. Set all other labels to 'false'
-            y_binary = np.array([1 if i == label else -1 for i in self.y])
+        y_preds = [
+            self.predict_class_single(x, y, label, params)
+            for label, params in self.classifier_params.items()
+        ]
 
-            # Do classification prediction
-            y_pred, MSE = self.predict_for_binary(y_binary)
-            sigma = np.root(MSE)
+        # print(y_preds)
 
-    def predict_for_binary(self, y):
-        gp_ab_guess = [1.0] * 2
-        res = minimize(self.LLOO, gp_ab_guess, method='bfgs')
-        # # res = minimize(self.LLOO, gp_ab_guess, method='bfgs', jac=self.)
-        [self.a_param, self.b_param] = res['x']
-        # print("alpha: {}, beta: {}".format(self.a_param, self.b_param))
+        # Reset y to its original values
+        self.y = y
+
+        # Return max squashed value for each data point
+        return np.argmax(y_preds, axis=0)
+
+    def predict_class_single(self, x, y, label, params):
+        # Set parameters
+        self.f_err = params['f_err']
+        self.l_scale = params['l_scales']
+        self.n_err = params['n_err']
+
+        # Set y to binary one vs. all labels
+        self.y = np.array([1 if y_i == label else -1 for y_i in y])
+
+        # Set L and alpha matrices
+        self.L = self.L_create(self.X, self.f_err, self.l_scale, self.n_err)
+        self.alpha = linalg.solve(self.L.T, (linalg.solve(self.L, self.y)))
+
+        # Get predictions of resulting mean and variances
+        y_pred, var = self.predict(x)
+        # sigma = np.sqrt(var)
+        y_squashed = self.sigmoid(y_pred)
+
+        return y_squashed
+
+    def score(self, y_, y):
+        return sum(y_ == y)/len(y_)

@@ -65,7 +65,7 @@ if __name__ == "__main__":
     # qp_locations, validQueryID, x_bins, query, y_bins = load_test_data()
 
     features = np.array(features)
-    # labels = np.array(list(map(str, labels)))
+    labels = np.array(labels)
 
     # classifiers = [
     #         # neighbors.KNeighborsClassifier(n_neighbors=5),                  
@@ -94,34 +94,56 @@ if __name__ == "__main__":
     # for classifier in classifiers:
     #     cross_validate_algo(features, labels, 10, classifier)
 
-    a = np.array([i for i in range(1,10)]).reshape(3,3)
-    b = np.array([2,2,2])
+    ####################################################################################
+    # Dummy testing
+    ####################################################################################
+
+    # a = np.array([i for i in range(1,10)]).reshape(3,3)
+    # b = np.array([2,2,2])
+
+    # from ML.gp import GaussianProcess
+    # # from sklearn.gaussian_process import GaussianProcess
+    # gp = GaussianProcess()
+    # X = np.array([-1.50,-1.00,-0.75,-0.40,-0.25,0.00])
+    # X = X.reshape(len(X), 1)
+    # y = np.array([-1.70,-1.20,-0.25,0.30,0.5,0.7])
+    # # y = y.reshape(len(y), 1)
+
+    # # x = np.array([-1.45, -1.32, -0.5, -0.32, -0.10, 0.2, 0.3, 0.4])
+    # x = np.array([0.2])
+    # x = x.reshape(len(x), 1)
+    # gp.fit(X, y)
+
+    # y_pred, MSE = gp.predict(x)
+    # sigma = np.sqrt(MSE)
+
+    # # Plot function, prediction, and 95% confidence interval based on MSE
+    # from visualisation import plot
+    # # plot(X, y, x, y_pred, sigma)
+
+    ####################################################################################
+    # Dummy testing - classification
+    ####################################################################################
 
     from ML.gp import GaussianProcess
-    # from sklearn.gaussian_process import GaussianProcess
     gp = GaussianProcess()
-    X = np.array([-1.50,-1.00,-0.75,-0.40,-0.25,0.00])
-    X = X.reshape(len(X), 1)
-    y = np.array([-1.70,-1.20,-0.25,0.30,0.5,0.7])
-    # y = y.reshape(len(y), 1)
 
-    # x = np.array([-1.45, -1.32, -0.5, -0.32, -0.10, 0.2, 0.3, 0.4])
-    x = np.array([0.2])
-    x = x.reshape(len(x), 1)
-    gp.fit(X, y)
+    from sklearn import datasets
+    from datetime import datetime
 
-    # kss = gp.K_create(x, x)
-    # ks = gp.K_create(x, X)
-    # mean = gp.mean_func(X, x, y)
-    y_pred, MSE = gp.predict(x)
-    sigma = np.sqrt(MSE)
-    # var = gp.variance(
-    # Plot function, prediction, and 95% confidence interval based on MSE
-    from visualisation import plot
-    plot(X, y, x, y_pred, sigma)
+    # d1 = datetime.now()
+    # X, y = datasets.make_circles(n_samples=10)
+    # gp.fit_class(X, y)
+    # d2 = datetime.now()
+    # print(d2-d1)
 
-    # import sympy
-    # import math
-    # f_err, l_scale, n_err = sympy.symbols("f_err, l_scale, n_err")
-    # m = f_err**2 * math.e**(-gp.dist(x, x)/(2*l_scale**2)) + n_err**2 * np.identity(len(x))
-    # a = sympy.Matrix(m)
+    for i in range(10):
+        X, y = datasets.make_circles(n_samples=100)
+
+        from sklearn import cross_validation
+        X_train, X_test, y_train, y_test = cross_validation.train_test_split(X, y, test_size=0.1)
+
+        gp.fit_class(X_train, y_train)
+        y_pred = gp.predict_class(X_test)
+
+        print("Accuracy is: {}".format(gp.score(y_pred, y_test)))
