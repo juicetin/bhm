@@ -137,13 +137,43 @@ if __name__ == "__main__":
     # d2 = datetime.now()
     # print(d2-d1)
 
-    for i in range(10):
-        X, y = datasets.make_circles(n_samples=12)
+    #X, y = datasets.make_circles(n_samples=12)
+    X, y = datasets.make_classification(n_samples=1000,
+            n_features=7, 
+            n_clusters_per_class=1,
+            n_redundant=0, 
+            n_informative=4,
+            n_classes=3)
 
-        from sklearn import cross_validation
-        X_train, X_test, y_train, y_test = cross_validation.train_test_split(X, y, test_size=0.1)
+    # Testing best performance to create K matrix with length scale per D
+    # d1 = datetime.now()
+    # alpha = np.array([sum((i-j)**2) for i in X for j in X])
+
+    # d2 = datetime.now()
+    # print(d2 - d1)
+
+    # beta = np.sum(np.array([((i-j)**2) for i in X for j in X]), axis=1)
+    # d3 = datetime.now()
+    # print(d3-d2)
+
+    d1 = datetime.now()
+
+    from sklearn.cross_validation import StratifiedKFold
+    kf = StratifiedKFold(y, n_folds = 5)
+    accuracies = []
+    for train_index, test_index in kf:
+        X_train, X_test = X[train_index], X[test_index]
+        y_train, y_test = y[train_index], y[test_index]
 
         gp.fit_class(X_train, y_train)
         y_pred = gp.predict_class(X_test)
 
-        print("Accuracy is: {}".format(gp.score(y_pred, y_test)))
+        accuracy = gp.score(y_pred, y_test)
+        accuracies.append(accuracy)
+        print("Accuracy is: {}".format(accuracy))
+
+    print("Average accuracy: {}".format(np.average(accuracies)))
+
+    d2 = datetime.now()
+
+    print(d2-d1)

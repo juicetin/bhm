@@ -60,21 +60,40 @@ class GaussianProcess:
         var = np.diag(self.K_se(x, x, self.f_err, self.l_scale) - v.T.dot(v))
         return fs_mean, var
 
+    # One length scale across all dimensions
     def se_term_one_length_scale(self, x1, x2, l_scales):
         return (1/l_scales**2) * self.dist(x1, x2)
+        # return (
+        #     np.array([sum(((i-j)/l_scales)**2) for i in x1 for j in x2 ])
+        #         .reshape(len(x1), len(x2))
+        # )
 
+    # One length scale for each dimension
     def se_term_length_scale_per_d(self, x1, x2, l_scales):
+        # print(l_scales)
+        # print(x1[0])
+        # print(x2[3])
+        # print(x1[0]-x2[3])
+        # print((x1[0]-x2[3])/l_scales)
+        # print(
+        #     ((x1[0] - x2[3])/l_scales)**2
+        # )
+        # print(
+        #     sum(((x1[0] - x2[3])/l_scales)**2)
+        # )
+        # import sys
+        # sys.exit(0)
         return (
-            np.array([sum((i-j)/l_scales) for i in x1 for j in x2 ])
-                .reshape(len(x1), len(x2)) ** 2
+            np.sum(np.array([((i-j)/l_scales)**2 for i in x1 for j in x2 ]), axis=1)
+                .reshape(len(x1), len(x2))
         )
 
     def K_se(self, x1, x2, f_err, l_scales):
         return (
             (f_err**2) * 
-            np.exp(-0.5 * # (1/l_scales**2) * self.dist(x1, x2)
-                self.se_term(x1, x2, l_scales
-            ))
+            np.exp(
+                -0.5 * self.se_term(x1, x2, l_scales)
+            )
         )
 
     def SE_der(self, args):
@@ -152,6 +171,8 @@ class GaussianProcess:
             self.se_term = self.se_term_length_scale_per_d
             f_err, l_scales, n_err, a_param, b_param = self.unpack_LLOO_args(args)
 
+        # print(l_scales)
+
         X = np.delete(self.X, (i), axis=0)
         y = np.delete(self.y, i)
 
@@ -194,8 +215,8 @@ class GaussianProcess:
             self.classifier_params[c] = {}
 
             # f_err, l_scales (for each dimension), n_err, alpha, beta
-            # x0 = [1] + [1] * X.shape[1] + [1, 1, 1]
-            x0 = [1, 1, 1, 1, 1] # original
+            x0 = [1] + [1] * X.shape[1] + [1, 1, 1]
+            # x0 = [1, 1, 1, 1, 1] # original
 
             # Set binary labels for OvA classifier
             self.y = np.array([1 if label == c else 0 for label in y])
