@@ -63,38 +63,40 @@ class GaussianProcess:
     # One length scale across all dimensions
     def se_term_one_length_scale(self, x1, x2, l_scales):
         return (1/l_scales**2) * self.dist(x1, x2)
-        # return (
-        #     np.array([sum(((i-j)/l_scales)**2) for i in x1 for j in x2 ])
-        #         .reshape(len(x1), len(x2))
-        # )
 
     # One length scale for each dimension
     def se_term_length_scale_per_d(self, x1, x2, l_scales):
-        # print(l_scales)
-        # print(x1[0])
-        # print(x2[3])
-        # print(x1[0]-x2[3])
-        # print((x1[0]-x2[3])/l_scales)
-        # print(
-        #     ((x1[0] - x2[3])/l_scales)**2
-        # )
-        # print(
-        #     sum(((x1[0] - x2[3])/l_scales)**2)
-        # )
-        # import sys
-        # sys.exit(0)
-        return (
-            np.sum(np.array([((i-j)/l_scales)**2 for i in x1 for j in x2 ]), axis=1)
-                .reshape(len(x1), len(x2))
-        )
+        # Dividing by length scale first before passing into cdist to
+        #   accounts for different length scale for each dimension
+        return self.dist(x1/l_scales, x2/l_scales)
 
     def K_se(self, x1, x2, f_err, l_scales):
-        return (
+        return np.array(
             (f_err**2) * 
-            np.exp(
-                -0.5 * self.se_term(x1, x2, l_scales)
-            )
+            np.exp(-0.5 * self.se_term(x1, x2, l_scales))
         )
+        # try:
+        #     return np.array(
+        #         (f_err**2) * 
+        #         np.exp(-0.5 * self.se_term(x1, x2, l_scales))
+        #     )
+
+        # except:
+        #     print('failed')
+        #     print(self.se_term)
+        #     print(l_scales)
+        #     # print(self.se_term(x1, x2, l_scales))
+        #     print(None in self.se_term(x1, x2, l_scales))
+        #     print(type(self.se_term(x1, x2, l_scales)))
+        #     for j in self.se_term(x1, x2, l_scales):
+        #         print (j)
+        #     # print(np.exp(-self.se_term(x1, x2, l_scales)/2))
+        #     import sys
+        #     sys.exit(1)
+
+    def build_dK_dthetas(self, f_err, l_scale, n_err):
+        return [np.array(m.subs( { self.f_err_sym:f_err , self.l_scale_sym:l_scale , self.n_err_sym:n_err } )) 
+                for m in self.dK_dthetas]
 
     def SE_der(self, args):
         # TODO fix - get around apparent bug
@@ -111,8 +113,7 @@ class GaussianProcess:
         K_inv = np.linalg.inv(L.T).dot(np.linalg.inv(L))
 
         # Calculate dK/dtheta over each hyperparameter
-        eval_dK_dthetas = [np.array(m.subs( { self.f_err_sym:f_err , self.l_scale_sym:l_scale , self.n_err_sym:n_err } )) 
-                for m in self.dK_dthetas]
+        eval_dK_dthetas = self.build_dK_dthetas(f_err, l_scale, n_err)
 
         # Incorporate each dK/dt into gradient
         derivatives = [float(-0.5 * np.matrix.trace((aaT - K_inv).dot(dK_dtheta))) for dK_dtheta in eval_dK_dthetas]
@@ -159,10 +160,29 @@ class GaussianProcess:
         return f_err, l_scales, n_err, a_param, b_param
 
     def LLOO(self, args):
-        return -sum([self.LOOP(i, args) for i in range(self.size)])
+        if len(args) == 5:
+            f_err, l_scales, n_err, a_param, b_param = args
+            self.se_term = self.se_term_one_length_scale
+        else:
+            self.se_term = self.se_term_length_scale_per_d
+            f_err, l_scales, n_err, a_param, b_param = self.unpack_LLOO_args(args)
 
-    # Leave one out probability
-    def LOOP(self, i, args):
+        L = self.L_create(self.X, f_err, l_scales, n_err)
+        alpha = linalg.solve(L.T, (linalg.solve(L, self.y))) # save for use with derivative func
+        K_inv = np.linalg.inv(L.T).dot(np.linalg.inv(L))
+
+        mu = self.y - alpha/np.diag(K_inv)
+        sigma_sq = 1/np.diag(K_inv)
+
+        return -sum(norm.cdf(
+            self.y * (a_param * mu + b_param) /
+            np.sqrt(1 + a_param**2 * sigma_sq)
+        ))
+
+    #################### Derivative ####################
+
+    # NOTE likely incorrect - currently doesn't recalculate K per datapoint
+    def LLOO_der(self, args):
 
         if len(args) == 5:
             f_err, l_scales, n_err, a_param, b_param = args
@@ -171,35 +191,50 @@ class GaussianProcess:
             self.se_term = self.se_term_length_scale_per_d
             f_err, l_scales, n_err, a_param, b_param = self.unpack_LLOO_args(args)
 
-        # print(l_scales)
-
-        X = np.delete(self.X, (i), axis=0)
-        y = np.delete(self.y, i)
-
-        # NOTE Hack here. How is this actually meant to work...?
-        if i == self.size-1:
-            i = self.size-2
-
-        # Calculate alpha and inverse matrix based on LOO dataset
-        L = self.L_create(X, f_err, l_scales, n_err)
-        alpha = linalg.solve(L.T, (linalg.solve(L, y))) # save for use with derivative func
+        L = self.L_create(self.X, f_err, l_scales, n_err)
+        alpha = linalg.solve(L.T, (linalg.solve(L, self.y))) # save for use with derivative func
         K_inv = np.linalg.inv(L.T).dot(np.linalg.inv(L))
+        Zs = [K_inv * dK_dtheta for dK_dtheta in self.build_dK_dthetas(f_err, l_scales, n_err)]
 
-        # Return cumulative Gaussian for single training point
-        return norm.cdf(
-            self.y[i] * ( a_param * self.mean_one(i, alpha, K_inv) + b_param) /
-            np.sqrt( 1 + a_param**2 * self.var_one(i, K_inv) )
+        mu = self.y - alpha/np.diag(K_inv)
+        sigma_sq = 1/np.diag(K_inv)
+        r = a_param * mu + b_param
+        dmu_dthetas = [(Z.dot(alpha)) / np.diag(K_inv) - alpha * np.diag(Z.dot(K_inv))/np.diag(K_inv)**2 for Z in Zs]
+        dvar_dthetas = [np.diag(Z.dot(K_inv))/np.diag(K_inv)**2 for Z in Zs]
+
+        # Dervative over LLOO for each of the hyperparameters
+        dLLOO_dthetas = (
+            [
+                -sum((norm.pdf(r) / norm.cdf(self.y * r)) * 
+                (self.y * a_param / np.sqrt(1 + a_param**2 * sigma_sq)) * 
+                (dmu_dtheta - 0.5 * a_param * (a_param * mu + b_param) / (1 + a_param**2 + sigma_sq) * dvar_dtheta))
+                for dmu_dtheta, dvar_dtheta in zip(dmu_dthetas, dvar_dthetas)
+            ]
         )
 
-    def mean_one(self, i, alpha, K_inv):
-        return self.y[i] - alpha[i]/K_inv[i][i]
+        # Derivative of LLOO w.r.t a_param
+        dLLOO_da = -sum(
+            norm.pdf(r) / norm.cdf(self.y * r) *
+            self.y/np.sqrt(1 + a_param**2 * sigma_sq) *
+            (mu - b_param * a_param * sigma_sq) / (1 + a_param**2 * sigma_sq)
+        )
 
-    def var_one(self, i, K_inv):
-        return 1/K_inv[i][i]
+        # Derivative of LLOO w.r.t b_param
+        dLLOO_db = -sum(
+            norm.pdf(r) / norm.cdf(self.y*r) *
+            self.y / np.sqrt(a_param**2 * sigma_sq)
+        )
 
-    #################### Derivative ####################
-    def LLOO_der(self, args):
-        [f_err, l_scale, n_err, a_param, b_param] = args
+        return dLLOO_dthetas + [dLLOO_da] + [dLLOO_db]
+
+    def LLOO_der_one(self, args):
+        pass
+
+    def dLLOO_da(self):
+        pass
+
+    def dLLOO_db(self):
+        pass
 
     #################### Prediction ####################
     # Classification
@@ -209,6 +244,15 @@ class GaussianProcess:
         self.X = X
         self.classifier_params = {}
         params = ['f_err', 'l_scales', 'n_err', 'a_param', 'b_param']
+
+        # Pre-calculate derivatives of inverted matrix to substitute values in the Squared Exponential NLL gradient
+        self.f_err_sym, self.l_scale_sym, self.n_err_sym = sympy.symbols("f_err, l_scale, n_err")
+        m = sympy.Matrix(self.f_err_sym**2 * math.e**(-self.dist(self.X, self.X)/(2*self.l_scale_sym**2)) + self.n_err_sym**2 * np.identity(self.size))
+        self.dK_dthetas = [
+                     m.diff(self.f_err_sym),
+                     m.diff(self.l_scale_sym),
+                     m.diff(self.n_err_sym)
+                     ]
 
         # Build OvA classifier for each unique class in y
         for c in set(y):
@@ -223,7 +267,7 @@ class GaussianProcess:
 
             # Optimise and save hyper/parameters for current binary class pair
             res = minimize(self.LLOO, x0, method='bfgs')
-            # res = minimize(self.LLOO, x0, method='bfgs', jac=self.SE_der, tol=1e-4)
+            # res = minimize(self.LLOO, x0, method='bfgs', jac=self.LLOO_der)
 
             # Set params for current binary regressor (classifier)
             for param, val in zip(params, res['x']):
@@ -246,8 +290,6 @@ class GaussianProcess:
             self.predict_class_single(x, y, label, params)
             for label, params in self.classifier_params.items()
         ]
-
-        # print(y_preds)
 
         # Reset y to its original values
         self.y = y

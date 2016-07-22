@@ -10,13 +10,15 @@ from sklearn.preprocessing import scale
 from sklearn.svm import SVC
 from sklearn.cross_validation import train_test_split
 
-from matplotlib import pyplot as pl
+from matplotlib import pyplot as plt
 
 # Import our ML algorithms
 from ML.validation import cross_validate_algo
 from ML.knn import kNN
 from ML.random_forests import rf
 from ML.logistic_regression import lr
+
+import visualisation as vis
 
 # Algos
 from sklearn import neighbors
@@ -41,31 +43,18 @@ def load_test_data():
 
     return (qp_locations, validQueryID, x_bins, query, y_bins)
 
-def show_map(labels, locations):
-    x_min = min(locations[:,0])
-    x_max = max(locations[:,0])
-    y_min = min(locations[:,1])
-    y_max = max(locations[:,1])
-
-    my_cmap = copy.copy(pl.cm.get_cmap('gray')) # get a copy of gray color map
-    my_cmap.set_bad(alpha=1)                     # set how colourmap handles 'bad' values
-
-    blank = [[50]] * len(locations)
-    pl.imshow(blank, extent=[x_min, x_max, y_min, y_max], interpolation='nearest', cmap=my_cmap)
-
-    # Plot points which were surveyed
-    pl.plot(locations[:,0], locations[:,1], 'ro')
-    pl.show()
 
 # Main function
 if __name__ == "__main__":
     # Load and assign all data
     # labels, labelcounts, bath_locations, features, querypoints_lowres, qp_locations, validQueryID, x_bins, query, y_bins = load_data()
     labels, labelcounts, bath_locations, features = load_training_data()
-    # qp_locations, validQueryID, x_bins, query, y_bins = load_test_data()
+    qp_locations, validQueryID, x_bins, query, y_bins = load_test_data()
 
     features = np.array(features)
     labels = np.array(labels)
+    # x_bins_training, y_bins_training = np.meshgrid(list(set(bath_locations[:,0])), list(set(bath_locations[:,1])))
+    x_bins_training, y_bins_training = list(set(bath_locations[:,0])), list(set(bath_locations[:,1]))
 
     # classifiers = [
     #         # neighbors.KNeighborsClassifier(n_neighbors=5),                  
@@ -80,7 +69,8 @@ if __name__ == "__main__":
     # rf = RandomForestClassifier()
     # y_ = rf.fit(X_train, y_train).predict(X_test)
 
-    # show_map(labels, bath_locations)
+    # vis.show_map(labels, qp_locations, x_bins, y_bins)
+    Z = vis.show_map(bath_locations, labels, x_bins_training, y_bins_training)
 
     # 10-fold cross-validation for all
     # results = []
@@ -125,55 +115,66 @@ if __name__ == "__main__":
     # Dummy testing - classification
     ####################################################################################
 
-    from ML.gp import GaussianProcess
-    gp = GaussianProcess()
+    # from ML.gp import GaussianProcess
+    # gp = GaussianProcess()
 
-    from sklearn import datasets
-    from datetime import datetime
+    # from sklearn import datasets
+    # from datetime import datetime
 
-    # d1 = datetime.now()
-    # X, y = datasets.make_circles(n_samples=10)
-    # gp.fit_class(X, y)
-    # d2 = datetime.now()
-    # print(d2-d1)
+    # #X, y = datasets.make_circles(n_samples=12)
+    # X, y = datasets.make_classification(n_samples=100,
+    #         n_features=2, 
+    #         n_clusters_per_class=1,
+    #         n_redundant=0, 
+    #         n_repeated=0,
+    #         n_informative=1,
+    #         n_classes=2)
 
-    #X, y = datasets.make_circles(n_samples=12)
-    X, y = datasets.make_classification(n_samples=1000,
-            n_features=7, 
-            n_clusters_per_class=1,
-            n_redundant=0, 
-            n_informative=4,
-            n_classes=3)
+    # cmaps = [('Perceptually Uniform Sequential',
+    #                             ['viridis', 'inferno', 'plasma', 'magma']),
+    #          ('Sequential',     ['Blues', 'BuGn', 'BuPu',
+    #                              'GnBu', 'Greens', 'Greys', 'Oranges', 'OrRd',
+    #                              'PuBu', 'PuBuGn', 'PuRd', 'Purples', 'RdPu',
+    #                              'Reds', 'YlGn', 'YlGnBu', 'YlOrBr', 'YlOrRd']),
+    #          ('Sequential (2)', ['afmhot', 'autumn', 'bone', 'cool',
+    #                              'copper', 'gist_heat', 'gray', 'hot',
+    #                              'pink', 'spring', 'summer', 'winter']),
+    #          ('Diverging',      ['BrBG', 'bwr', 'coolwarm', 'PiYG', 'PRGn', 'PuOr',
+    #                              'RdBu', 'RdGy', 'RdYlBu', 'RdYlGn', 'Spectral',
+    #                              'seismic']),
+    #          ('Qualitative',    ['Accent', 'Dark2', 'Paired', 'Pastel1',
+    #                              'Pastel2', 'Set1', 'Set2', 'Set3']),
+    #          ('Miscellaneous',  ['gist_earth', 'terrain', 'ocean', 'gist_stern',
+    #                              'brg', 'CMRmap', 'cubehelix',
+    #                              'gnuplot', 'gnuplot2', 'gist_ncar',
+    #                              'nipy_spectral', 'jet', 'rainbow',
+    #                              'gist_rainbow', 'hsv', 'flag', 'prism'])]
 
-    # Testing best performance to create K matrix with length scale per D
-    # d1 = datetime.now()
-    # alpha = np.array([sum((i-j)**2) for i in X for j in X])
+    # import pylab
+    # from matplotlib import pyplot as plt
+    # # colours = [int(i % 23) for i in range(100)]
+    # # print(colours)
+    # plt.scatter(X[:,0], X[:,1], c=y, cmap=plt.get_cmap('ocean'))
+    # plt.show()
 
-    # d2 = datetime.now()
-    # print(d2 - d1)
+    # # d1 = datetime.now()
 
-    # beta = np.sum(np.array([((i-j)**2) for i in X for j in X]), axis=1)
-    # d3 = datetime.now()
-    # print(d3-d2)
+    # # from sklearn.cross_validation import StratifiedKFold
+    # # kf = StratifiedKFold(y, n_folds = 10)
+    # # accuracies = []
+    # # for train_index, test_index in kf:
+    # #     X_train, X_test = X[train_index], X[test_index]
+    # #     y_train, y_test = y[train_index], y[test_index]
 
-    d1 = datetime.now()
+    # #     gp.fit_class(X_train, y_train)
+    # #     y_pred = gp.predict_class(X_test)
 
-    from sklearn.cross_validation import StratifiedKFold
-    kf = StratifiedKFold(y, n_folds = 5)
-    accuracies = []
-    for train_index, test_index in kf:
-        X_train, X_test = X[train_index], X[test_index]
-        y_train, y_test = y[train_index], y[test_index]
+    # #     accuracy = gp.score(y_pred, y_test)
+    # #     accuracies.append(accuracy)
+    # #     print("Accuracy is: {}".format(accuracy))
 
-        gp.fit_class(X_train, y_train)
-        y_pred = gp.predict_class(X_test)
+    # # print("Average accuracy: {}".format(np.average(accuracies)))
 
-        accuracy = gp.score(y_pred, y_test)
-        accuracies.append(accuracy)
-        print("Accuracy is: {}".format(accuracy))
+    # # d2 = datetime.now()
 
-    print("Average accuracy: {}".format(np.average(accuracies)))
-
-    d2 = datetime.now()
-
-    print(d2-d1)
+    # # print(d2-d1)

@@ -20,3 +20,32 @@ def plot(X, y, x, y_pred, sigma):
     plt.ylim(-10, 20)
     plt.legend(loc='upper left')
     plt.show()
+
+def show_map(locations, labels, x_bins, y_bins):
+    x_bins.sort()
+    y_bins.sort()
+
+    x_min = min(x_bins)
+    x_max = max(x_bins)
+    y_min = min(y_bins)
+    y_max = max(y_bins)
+
+    print("Creating x, y index map to determine where to plot...")
+    x_bin_coord_map = dict( zip( x_bins, range(len(x_bins)) ) )
+    y_bin_coord_map = dict( zip( y_bins, range(len(y_bins)) ) )
+
+    print("Building coordinate matrix with NaNs except where actual measurements exist...")
+    X, Y = np.meshgrid(x_bins, y_bins)
+
+    Z = np.zeros((X.shape[0], X.shape[1]))
+    Z[:] = None
+    x_locations = [x_bin_coord_map[x] for x, y in locations]
+    y_locations = [y_bin_coord_map[y] for y, y in locations]
+    Z[(y_locations, x_locations)] = labels
+
+    print("Bulding image...")
+    plt.imshow(Z, extent=[x_min, x_max, y_min, y_max])
+    print("Built! Showing image...")
+    plt.show()
+
+    return Z
