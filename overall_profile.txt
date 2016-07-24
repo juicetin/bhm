@@ -1,0 +1,3 @@
+         306111800 function calls (271585843 primitive calls) in 259.936 seconds
+   Ordered by: standard name
+

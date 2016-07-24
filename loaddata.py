@@ -54,7 +54,7 @@ if __name__ == "__main__":
     features = np.array(features)
     labels = np.array(labels)
     # x_bins_training, y_bins_training = np.meshgrid(list(set(bath_locations[:,0])), list(set(bath_locations[:,1])))
-    x_bins_training, y_bins_training = list(set(bath_locations[:,0])), list(set(bath_locations[:,1]))
+    # x_bins_training, y_bins_training = list(set(bath_locations[:,0])), list(set(bath_locations[:,1]))
 
     # classifiers = [
     #         # neighbors.KNeighborsClassifier(n_neighbors=5),                  
@@ -69,8 +69,9 @@ if __name__ == "__main__":
     # rf = RandomForestClassifier()
     # y_ = rf.fit(X_train, y_train).predict(X_test)
 
-    # vis.show_map(labels, qp_locations, x_bins, y_bins)
-    Z = vis.show_map(bath_locations, labels, x_bins_training, y_bins_training)
+    # Visualisation
+    # vis.show_map(qp_locations, query[:,3], x_bins, y_bins)
+    # vis.show_map(bath_locations, labels, x_bins_training, y_bins_training)
 
     # 10-fold cross-validation for all
     # results = []
@@ -115,66 +116,40 @@ if __name__ == "__main__":
     # Dummy testing - classification
     ####################################################################################
 
-    # from ML.gp import GaussianProcess
-    # gp = GaussianProcess()
+    from ML.gp import GaussianProcess
+    gp = GaussianProcess()
 
-    # from sklearn import datasets
-    # from datetime import datetime
+    from sklearn import datasets
+    from datetime import datetime
 
-    # #X, y = datasets.make_circles(n_samples=12)
-    # X, y = datasets.make_classification(n_samples=100,
-    #         n_features=2, 
-    #         n_clusters_per_class=1,
-    #         n_redundant=0, 
-    #         n_repeated=0,
-    #         n_informative=1,
-    #         n_classes=2)
+    #X, y = datasets.make_circles(n_samples=12)
+    X, y = datasets.make_classification(n_samples=30,
+            n_features=2, 
+            n_clusters_per_class=1,
+            n_redundant=0, 
+            n_repeated=0,
+            n_informative=1,
+            n_classes=2)
 
-    # cmaps = [('Perceptually Uniform Sequential',
-    #                             ['viridis', 'inferno', 'plasma', 'magma']),
-    #          ('Sequential',     ['Blues', 'BuGn', 'BuPu',
-    #                              'GnBu', 'Greens', 'Greys', 'Oranges', 'OrRd',
-    #                              'PuBu', 'PuBuGn', 'PuRd', 'Purples', 'RdPu',
-    #                              'Reds', 'YlGn', 'YlGnBu', 'YlOrBr', 'YlOrRd']),
-    #          ('Sequential (2)', ['afmhot', 'autumn', 'bone', 'cool',
-    #                              'copper', 'gist_heat', 'gray', 'hot',
-    #                              'pink', 'spring', 'summer', 'winter']),
-    #          ('Diverging',      ['BrBG', 'bwr', 'coolwarm', 'PiYG', 'PRGn', 'PuOr',
-    #                              'RdBu', 'RdGy', 'RdYlBu', 'RdYlGn', 'Spectral',
-    #                              'seismic']),
-    #          ('Qualitative',    ['Accent', 'Dark2', 'Paired', 'Pastel1',
-    #                              'Pastel2', 'Set1', 'Set2', 'Set3']),
-    #          ('Miscellaneous',  ['gist_earth', 'terrain', 'ocean', 'gist_stern',
-    #                              'brg', 'CMRmap', 'cubehelix',
-    #                              'gnuplot', 'gnuplot2', 'gist_ncar',
-    #                              'nipy_spectral', 'jet', 'rainbow',
-    #                              'gist_rainbow', 'hsv', 'flag', 'prism'])]
+    # d1 = datetime.now()
 
-    # import pylab
-    # from matplotlib import pyplot as plt
-    # # colours = [int(i % 23) for i in range(100)]
-    # # print(colours)
-    # plt.scatter(X[:,0], X[:,1], c=y, cmap=plt.get_cmap('ocean'))
-    # plt.show()
+    from sklearn.cross_validation import StratifiedKFold
+    kf = StratifiedKFold(y, n_folds = 10)
+    accuracies = []
+    for train_index, test_index in kf:
+        X_train, X_test = X[train_index], X[test_index]
+        y_train, y_test = y[train_index], y[test_index]
 
-    # # d1 = datetime.now()
+        gp.fit_class(X_train, y_train)
+        y_pred = gp.predict_class(X_test)
 
-    # # from sklearn.cross_validation import StratifiedKFold
-    # # kf = StratifiedKFold(y, n_folds = 10)
-    # # accuracies = []
-    # # for train_index, test_index in kf:
-    # #     X_train, X_test = X[train_index], X[test_index]
-    # #     y_train, y_test = y[train_index], y[test_index]
+        accuracy = gp.score(y_pred, y_test)
+        accuracies.append(accuracy)
+        print("Accuracy is: {}".format(accuracy))
+        break
 
-    # #     gp.fit_class(X_train, y_train)
-    # #     y_pred = gp.predict_class(X_test)
+    print("Average accuracy: {}".format(np.average(accuracies)))
 
-    # #     accuracy = gp.score(y_pred, y_test)
-    # #     accuracies.append(accuracy)
-    # #     print("Accuracy is: {}".format(accuracy))
+    # d2 = datetime.now()
 
-    # # print("Average accuracy: {}".format(np.average(accuracies)))
-
-    # # d2 = datetime.now()
-
-    # # print(d2-d1)
+    # print(d2-d1)
