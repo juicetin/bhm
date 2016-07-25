@@ -3,6 +3,7 @@ from numpy import linalg
 from sympy import KroneckerDelta
 from scipy.optimize import minimize
 from scipy.spatial.distance import cdist
+from sympy.utilities.lambdify import lambdify, implemented_function
 from scipy.stats import norm
 import math
 import sympy
@@ -95,21 +96,10 @@ class GaussianProcess:
         # return np.array((f_err**2) * np.exp(-0.5 * m), dtype=np.float64)
         return f_err**2 * np.exp(-0.5 * m)
 
+    # Evaluates each dK_dtheta pre-calculated symbolic lambda with current iteration's hyperparameters
     def eval_dK_dthetas(self, f_err, l_scales, n_err):
-        # l_scales = l_scales.reshape(1, len(l_scales))
         l_scales = sympy.Matrix(l_scales.reshape(1, len(l_scales)))
-
-        # Unpack all the dK/dthetas
-        dK_df, dK_dls, dK_dn = self.dK_dthetas
-        dK_df_eval = dK_df.subs( { self.f_err_sym:f_err , self.l_scale_sym:l_scales, self.n_err_sym:n_err } ).doit()
-        dK_dls_eval = [dK_dl.subs( { self.f_err_sym:f_err , self.l_scale_sym:l_scales, self.n_err_sym:n_err } ).doit() for dK_dl in dK_dls]
-        dK_dn_eval = dK_dn.subs( { self.f_err_sym:f_err , self.l_scale_sym:l_scales, self.n_err_sym:n_err } ).doit()
-
-        return [dK_df_eval] + dK_dls_eval + [dK_dn_eval]
-        
-        # dK_dthetas = np.array([m[0].subs( { self.f_err_sym:f_err , self.l_scale_sym:l_scales, self.n_err_sym:n_err } ).doit()
-        #         for m in self.dK_dthetas])
-        # return dK_dthetas
+        return self.dK_dthetas(f_err, l_scales, n_err)
 
     # def SE_der(self, args):
     #     # TODO fix - get around apparent bug
@@ -150,7 +140,6 @@ class GaussianProcess:
 
     #     return nll
 
-
     ####################################################
     ####################### PLSC #######################
     ####################################################
@@ -170,10 +159,7 @@ class GaussianProcess:
         return f_err, l_scales, n_err, a, b
 
     def LLOO(self, args):
-        if len(args) == 5:
-            f_err, l_scales, n_err, a, b = args
-        else:
-            f_err, l_scales, n_err, a, b = self.unpack_LLOO_args(args)
+        f_err, l_scales, n_err, a, b = self.unpack_LLOO_args(args)
 
         L = self.L_create(self.X, f_err, l_scales, n_err)
         alpha = linalg.solve(L.T, (linalg.solve(L, self.y))) # save for use with derivative func
@@ -199,10 +185,7 @@ class GaussianProcess:
         self.count += 1
         print("Iterated [{}] times for current fitting...".format(self.count))
 
-        if len(args) == 5:
-            f_err, l_scales, n_err, a, b = args
-        else:
-            f_err, l_scales, n_err, a, b = self.unpack_LLOO_args(args)
+        f_err, l_scales, n_err, a, b = self.unpack_LLOO_args(args)
 
         L = self.L_create(self.X, f_err, l_scales, n_err)
         alpha = linalg.solve(L.T, (linalg.solve(L, self.y))) # save for use with derivative func
@@ -262,17 +245,13 @@ class GaussianProcess:
         m = sympy.Matrix(self.f_err_sym**2 * math.e**(-0.5 * self.sqeucl_dist(self.X/self.l_scale_sym, self.X/self.l_scale_sym)) 
                          + self.n_err_sym**2 * np.identity(self.size))
 
-        dK_df = m.diff(self.f_err_sym)
-        dK_dls = [m.diff(l_scale_sym) for l_scale_sym in self.l_scale_sym]
-        dK_dn = m.diff(self.n_err_sym)
+        dK_df   = m.diff(self.f_err_sym)
+        dK_dls  = [m.diff(l_scale_sym) for l_scale_sym in self.l_scale_sym]
+        dK_dn   = m.diff(self.n_err_sym)
 
-        self.dK_dthetas = (dK_df, dK_dls, dK_dn)
-
-        # self.dK_dthetas = np.array(
-        #     [[m.diff(self.f_err_sym)],                                          # Function variance
-        #     [m.diff(l_scale_sym) for l_scale_sym in self.l_scale_sym],     # Length scale for each dimension
-        #     [m.diff(self.n_err_sym)]]                                            # Noise variance
-        # )
+        # self.dK_dthetas = (dK_df, dK_dls, dK_dn)
+        self.dK_dthetas = [dK_df] + dK_dls + [dK_dn]
+        self.dK_dthetas = sympy.lambdify((self.f_err_sym, self.l_scale_sym, self.n_err_sym), self.dK_dthetas, 'numpy')
 
         # Build OvA classifier for each unique class in y
         for c in set(y):
@@ -280,14 +259,13 @@ class GaussianProcess:
 
             # f_err, l_scales (for each dimension), n_err, alpha, beta
             x0 = [1] + [1] * X.shape[1] + [1, 1, 1]
-            # x0 = [1, 1, 1, 1, 1] # original
 
             # Set binary labels for OvA classifier
             self.y = np.array([1 if label == c else 0 for label in y])
 
             # Optimise and save hyper/parameters for current binary class pair
             # res = minimize(self.LLOO, x0, method='bfgs')
-            res = minimize(self.LLOO, x0, method='bfgs', jac=self.LLOO_der, options={'maxiter':5})
+            res = minimize(self.LLOO, x0, method='bfgs', jac=self.LLOO_der)
 
             # Set params for current binary regressor (classifier)
             for param, val in zip(params, res['x']):

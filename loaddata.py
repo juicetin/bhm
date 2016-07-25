@@ -123,13 +123,13 @@ if __name__ == "__main__":
     from datetime import datetime
 
     #X, y = datasets.make_circles(n_samples=12)
-    X, y = datasets.make_classification(n_samples=30,
-            n_features=2, 
+    X, y = datasets.make_classification(n_samples=100,
+            n_features=5, 
             n_clusters_per_class=1,
             n_redundant=0, 
             n_repeated=0,
-            n_informative=1,
-            n_classes=2)
+            n_informative=3,
+            n_classes=3)
 
     # d1 = datetime.now()
 
