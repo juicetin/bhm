@@ -239,17 +239,19 @@ class GaussianProcess:
         # Pre-calculate derivatives of inverted matrix to substitute values in the Squared Exponential NLL gradient
         self.f_err_sym, self.n_err_sym = sympy.symbols("f_err, n_err")
 
+        # (1,n) shape 'matrix' (vector) of length scales for each dimension
         self.l_scale_sym= sympy.MatrixSymbol('l', 1, X.shape[1])
-        # self.l_scales_sym = sympy.symbols(['l' + str(i) for i in range(X.shape[1])])
 
+        # K matrix
         m = sympy.Matrix(self.f_err_sym**2 * math.e**(-0.5 * self.sqeucl_dist(self.X/self.l_scale_sym, self.X/self.l_scale_sym)) 
                          + self.n_err_sym**2 * np.identity(self.size))
 
+        # Element-wise derivative of K matrix over each of the hyperparameters
         dK_df   = m.diff(self.f_err_sym)
         dK_dls  = [m.diff(l_scale_sym) for l_scale_sym in self.l_scale_sym]
         dK_dn   = m.diff(self.n_err_sym)
 
-        # self.dK_dthetas = (dK_df, dK_dls, dK_dn)
+        # Lambdify each of the dK/dts to speed up substitutions per optimization iteration
         self.dK_dthetas = [dK_df] + dK_dls + [dK_dn]
         self.dK_dthetas = sympy.lambdify((self.f_err_sym, self.l_scale_sym, self.n_err_sym), self.dK_dthetas, 'numpy')
 
