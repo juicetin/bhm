@@ -123,18 +123,19 @@ if __name__ == "__main__":
     from datetime import datetime
 
     #X, y = datasets.make_circles(n_samples=12)
-    X, y = datasets.make_classification(n_samples=30,
-            n_features=2, 
-            n_clusters_per_class=1,
+    # n_informative
+    # n_redundant
+    # n_repeated
+    X, y = datasets.make_classification(n_samples=500,
+            n_features=5, 
+            n_clusters_per_class=2,
             n_redundant=0, 
             n_repeated=0,
-            n_informative=1,
-            n_classes=2)
-
-    # d1 = datetime.now()
+            n_informative=5,
+            n_classes=5)
 
     from sklearn.cross_validation import StratifiedKFold
-    kf = StratifiedKFold(y, n_folds = 10)
+    kf = StratifiedKFold(y, n_folds = 5)
     accuracies = []
     for train_index, test_index in kf:
         X_train, X_test = X[train_index], X[test_index]
@@ -146,7 +147,9 @@ if __name__ == "__main__":
         accuracy = gp.score(y_pred, y_test)
         accuracies.append(accuracy)
         print("Accuracy is: {}".format(accuracy))
-        break
+
+        print(y_test)
+        print(y_pred)
 
     print("Average accuracy: {}".format(np.average(accuracies)))
 
