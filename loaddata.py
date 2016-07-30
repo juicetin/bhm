@@ -126,16 +126,17 @@ if __name__ == "__main__":
     # n_informative
     # n_redundant
     # n_repeated
-    X, y = datasets.make_classification(n_samples=500,
-            n_features=5, 
-            n_clusters_per_class=2,
+    num = 4
+    X, y = datasets.make_classification(n_samples=150,
+            n_features=num, 
+            n_clusters_per_class=num,
             n_redundant=0, 
             n_repeated=0,
-            n_informative=5,
-            n_classes=5)
+            n_informative=num,
+            n_classes=num)
 
     from sklearn.cross_validation import StratifiedKFold
-    kf = StratifiedKFold(y, n_folds = 5)
+    kf = StratifiedKFold(y, n_folds = 10)
     accuracies = []
     for train_index, test_index in kf:
         X_train, X_test = X[train_index], X[test_index]

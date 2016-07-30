@@ -8,10 +8,7 @@ from sympy.utilities.lambdify import lambdify, implemented_function
 from scipy.stats import norm
 import math
 import sympy
-from sympy.tensor.array import Array
-from sympy.utilities.autowrap import ufuncify
-import theano
-from sympy.printing.theanocode import theano_function
+from sympy.utilities.autowrap import autowrap
 
 from datetime import datetime
 
@@ -28,6 +25,9 @@ from datetime import datetime
 class GaussianProcess:
     def __init__(self):
         pass
+
+    def derivs(self, data_sym, f_err_sym, l_scales_sym, n_err_sym):
+        2*f_err_sym 
 
     # def fit(self, X, y):
 
@@ -95,8 +95,6 @@ class GaussianProcess:
             np.repeat(x[:,None,:], len(self.X), axis=1) - 
             np.resize(xs, (len(self.X), xs.shape[0], xs.shape[1])), 
             2), axis=2)
-        # elif self.lib == 'theano':
-        #     m = np.power([i-j for i in x for j in xs], 2).reshape(x.shape[0], xs.shape[0])
 
         return m
 
@@ -113,22 +111,16 @@ class GaussianProcess:
 
     # Evaluates each dK_dtheta pre-calculated symbolic lambda with current iteration's hyperparameters
     def eval_dK_dthetas(self, f_err, l_scales, n_err):
-        # Sympy
-        if self.lib == 'sympy':
+        # NOTE won't need to branch here in future
+        if self.eval == 'autowrap':
+            l_scales = l_scales.reshape(1, len(l_scales))
+            dK_df_eval = self.dK_df(f_err, l_scales)
+            dK_dl_evals = [dK_dl(f_err, l_scales) for dK_dl in self.dK_dls]
+            dK_dn_eval = self.dK_dn(n_err)
+            return np.array([dK_df_eval] + dK_dl_evals + [dK_dn_eval], dtype=np.float64)
+        else:
             l_scales = sympy.Matrix(l_scales.reshape(1, len(l_scales)))
             return np.array(self.dK_dthetas(f_err, l_scales, n_err), dtype=np.float64)
-
-        elif self.lib == 'theano':
-        # Theano
-        # Break down dK_dls into partial derivative over each length scale
-            dK_df_raw, dK_dls_merged_raw, dK_dn_raw = self.dK_dthetas
-            dK_df, dK_dls_merged, dK_dn = [dK_df_raw(f_err, l_scales, n_err), dK_dls_merged_raw(f_err, l_scales, n_err), dK_dn_raw(f_err, l_scales, n_err)]
-
-            dimensions = self.X.shape[1]
-            idxs = [np.arange(i, self.X.shape[0] * dimensions, dimensions) for i in range(dimensions)]
-            dK_dls = [dK_dls_merged[idx] for idx in idxs]
-
-            return np.array([dK_df] + dK_dls + [dK_dn], dtype=np.float64)
 
     # def SE_der(self, args):
     #     # TODO fix - get around apparent bug
@@ -275,46 +267,52 @@ class GaussianProcess:
         # (1,n) shape 'matrix' (vector) of length scales for each dimension
         self.l_scale_sym= sympy.MatrixSymbol('l', 1, self.X.shape[1])
 
+        # (n, n) shape matrix of data
+        self.data_sym = sympy.MatrixSymbol('m', self.X.shape[0], self.X.shape[1])
+
         # K matrix
         print("Building sympy matrix...")
-        m = sympy.Matrix(self.f_err_sym**2 * math.e**(-0.5 * self.sqeucl_dist(self.X/self.l_scale_sym, self.X/self.l_scale_sym)) 
-                         + self.n_err_sym**2 * np.identity(self.size))
-
+        m_t1 = datetime.now()
+        sq_eucl_dists = self.sqeucl_dist(self.X/self.l_scale_sym, self.X/self.l_scale_sym)
+        m = sympy.Matrix(self.f_err_sym**2 * math.e**(-0.5 * sq_eucl_dists) + self.n_err_sym**2 * np.identity(self.size))
+        m_t2 = datetime.now()
+        print("Took: {}".format(m_t2 - m_t1))
 
         # Element-wise derivative of K matrix over each of the hyperparameters
         print("Getting partial derivatives over all hyperparameters...")
+        pd_t1 = datetime.now()
+        print("Getting dK_df...")
         dK_df   = m.diff(self.f_err_sym)
+        print("Getting dK_dls...")
         dK_dls  = [m.diff(l_scale_sym) for l_scale_sym in self.l_scale_sym]
+        print("Getting dK_dn...")
         dK_dn   = m.diff(self.n_err_sym)
+        print("Took: {}".format(datetime.now() - pd_t1))
 
         # Lambdify each of the dK/dts to speed up substitutions per optimization iteration
-        print("Lambdifying ")
+        print("Lambdifying/Autowrapping...")
+        l_t1 = datetime.now()
         self.dK_dthetas = [dK_df] + dK_dls + [dK_dn]
-        self.dK_dthetas = sympy.lambdify((self.f_err_sym, self.l_scale_sym, self.n_err_sym), self.dK_dthetas, 'numpy')
+
+        # NOTE Won't need to branch here in future, always autowrap
+        if self.eval == 'autowrap':
+            # self.dK_dthetas = [autowrap(dk_dt, backend='cython') for dK_dt in self.dK_dthetas]
+            print("Autowrapping dK_df...")
+            self.dK_df = autowrap(dK_df)
+            print("Autowrapping dK_dls...")
+            self.dK_dls = [autowrap(dK_dl) for dK_dl in dK_dls]
+            print("Autowrapping dK_dn...")
+            self.dK_dn = autowrap(dK_dn)
+        else:
+            self.dK_dthetas = sympy.lambdify((self.f_err_sym, self.l_scale_sym, self.n_err_sym), self.dK_dthetas, 'numpy')
+        print("Took: {}".format(datetime.now() - l_t1))
         # self.dK_dthetas = sympy.lambdify((self.f_err_sym, self.l_scale_sym, self.n_err_sym), self.dK_dthetas, [{'ImmutableMatrix':np.array, "numpy"])
-
-    def build_symbolic_derivatives_theano(self):
-        self.f_err_sym = theano.tensor.dscalar('f_err')
-        self.n_err_sym = theano.tensor.dscalar('n_err')
-        self.l_scale_sym = theano.tensor.dvector('l_scales')
-
-        m = (self.f_err_sym**2 * math.e**(-0.5 * self.sqeucl_dist(self.X/self.l_scale_sym, self.X/self.l_scale_sym))
-                + self.n_err_sym**2 * np.identity(self.size))
-
-        # Partial derivatives over all hyperparameters
-        dK_df, dK_dls_merged, dK_dn = theano.gradient.jacobian(m.flatten(), [self.f_err_sym, self.l_scale_sym, self.n_err_sym])
-        args = [self.f_err_sym, self,l_scale_sym, self.n_err_sym]
-
-        dK_df_eval = theano.function(args, dK_df)
-        dK_dls_merged_eval = theano.function(args, dK_dls_merged)
-        dK_dn_eval = theano.function(args, dK_dn)
-
-        self.dK_dthetas = [dK_df_eval, dK_dls_merged_eval, dK_dn_eval]
 
     # Classification
     def fit_class(self, X, y):
         self.lib = 'sympy'
-        # self.lib = 'theano'
+        # self.eval = 'sympy'
+        self.eval = 'autowrap'
 
         self.count = 0
 
@@ -324,10 +322,7 @@ class GaussianProcess:
         params = ['f_err', 'l_scales', 'n_err', 'a', 'b']
 
         # Build lambdified partial derivatives
-        if self.lib == 'sympy':
-            self.build_symbolic_derivatives()
-        elif self.lib == 'theano':
-            self.build_symbolic_derivatives_theano()
+        self.build_symbolic_derivatives()
 
         # Build OvA classifier for each unique class in y
         print("Starting to build OvA classifier per class...")
