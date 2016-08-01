@@ -14,6 +14,16 @@ def sqeucl_dist(x, xs):
         2), axis=2)
     return m
 
+def dK_dls(x, xs):
+    M = np.repeat(x[:,None,:], len(xs), axis=1)
+    M_ds = np.array([[M[:,:,i], M[:,:,i].T] for i in range(x.shape[1])])
+
+
+    # m = np.sum(np.power(
+    #     np.repeat(x[:,None,:], len(xs), axis=1) -
+    #     np.resize(xs, (len(x), xs.shape[0], xs.shape[1])),
+    #     2), axis=2)
+    return m
 
 def build_symbolic_derivatives(X):
     # Pre-calculate derivatives of inverted matrix to substitute values in the Squared Exponential NLL gradient
@@ -65,9 +75,11 @@ def build_symbolic_derivatives(X):
 # print(datetime.now() - t1)
 
 # Sample data
-size = 10
+size = 3
+dims = 2
 print("Data size: {}".format(size))
-data = np.array(np.array(10*np.random.rand(size, size), dtype='int64'), dtype='float64')
+#data = np.array(np.array(10*np.random.rand(size, size), dtype='int64'), dtype='float64')
+data = np.arange(size*dims).reshape(size, dims)
 l_scales = np.random.rand(size)
 f_err = np.random.rand()
 n_err = np.random.rand()
@@ -75,44 +87,61 @@ n_err = np.random.rand()
 ######################### Sympy #########################
 # Symbols
 f_err_sym = sympy.Symbol('f_err')
-data_sym = sympy.MatrixSymbol('m', data.shape[0], data.shape[1])
+# data_sym = sympy.MatrixSymbol('m', data.shape[0], data.shape[1])
 l_scales_sym = sympy.MatrixSymbol('l', 1, data.shape[1])
 n_err_sym = sympy.Symbol("n_err")
 l_scales = l_scales.reshape(1, len(l_scales))
+scaled_data = data/l_scales_sym
+sqeucl_dists = sqeucl_dist(scaled_data, scaled_data)
 
-m = sympy.Matrix(f_err_sym**2 * data/l_scales_sym) # + n_err_sym**2 * np.identity(data.shape[0]))
+# m = sympy.Matrix(f_err_sym**2 * data/l_scales_sym) # + n_err_sym**2 * np.identity(data.shape[0]))
+from ML.gp import GaussianProcess
+gp = GaussianProcess()
+gp.X = data
+m = gp.build_symbolic_K(f_err_sym, l_scales_sym, n_err_sym)
+dK_dls = gp.build_dK_dls(m, l_scales_sym)
 
-# t_t1 = datetime.now()
-# dm_df = m.diff(f_err_sym)
-# dm_df_eval = sympy.lambdify([f_err_sym, l_scales_sym], dm_df)
-# dm_df_eval = autowrap(dm_df, backend='cython')
-# dm_df_eval = binary_function('dm_df', dm_df)
-# t_t2 = datetime.now()
-# print("Sympy creating deriv function: {}".format(t_t2 - t_t1))
-
-# t_t3 = datetime.now()
-# dm_df_eval(f_err, l_scales)
-# t_t4 = datetime.now()
-# print("Sympy evaluating function: {}".format(t_t4 - t_t3))
-
-m_1 = f_err_sym**2 * np.array(data_sym) / np.array(l_scales_sym) + n_err_sym**2 * np.identity(data.shape[0])
+exp_sqeucl_dists = math.e ** (-0.5 * sqeucl_dists)
+m_1 = f_err_sym**2 * exp_sqeucl_dists + n_err_sym**2 * np.identity(data.shape[0])
 m_1 = sympy.Matrix(m_1)
 
-#### Using diff for each respective dimension 
-d_t1 = datetime.now()
-dK_df = m_1.diff(f_err_sym)
-dK_dls = [m_1.diff(l_scale_sym) for l_scale_sym in l_scales_sym]
-dK_dn = m_1.diff(n_err_sym)
-d_t2 = datetime.now()
-print("Using diff for each dimension separately took: {}".format(d_t2 - d_t1))
+# Using diff
+t1 = datetime.now()
+# foo = m_1.diff(f_err_sym)
+# foo = m_1.diff(n_err_sym)
+foo = m_1.diff(l_scales_sym[0])
+print(datetime.now()-t1)
 
-#### Using jacobian all at once instead of individual diffs
-j_t1 = datetime.now()
-d_wrt = sympy.Matrix([f_err_sym] + list(l_scales_sym) + [n_err_sym])
-m_1_flat = sympy.Matrix(sympy.flatten(m_1))
-m_1_ds_flat = m_1_flat.jacobian(d_wrt)
-j_t2 = datetime.now()
-print("Using jacobian over all dimensions took: {}".format(j_t2 - j_t1))
+# Manual
+t2 = datetime.now()
+bar = None
+# bar = sympy.Matrix(np.full(sqeucl_dists.shape, 2*f_err_sym, dtype='object') * exp_sqeucl_dists)
+# bar = 2*f_err_sym * np.exp(-0.5*sqeucl_dists)
+# bar = np.diag(np.array([2*n_err_sym]*data.shape[0]))
+print(datetime.now()-t2)
+
+print(np.sum(np.array(foo) == np.array(bar)))
+
+# #### Using diff for each respective dimension 
+# d_t1 = datetime.now()
+# dK_df = m_1.diff(f_err_sym)
+# dK_dls = [m_1.diff(l_scale_sym) for l_scale_sym in l_scales_sym]
+# dK_dn = m_1.diff(n_err_sym)
+# d_t2 = datetime.now()
+# print("Using diff for each dimension separately took: {}".format(d_t2 - d_t1))
+# 
+# #### Using jacobian all at once instead of individual diffs
+# j_t1 = datetime.now()
+# d_wrt = sympy.Matrix([f_err_sym] + list(l_scales_sym) + [n_err_sym])
+# m_1_flat = sympy.Matrix(sympy.flatten(m_1))
+# m_1_ds_flat = m_1_flat.jacobian(d_wrt)
+# j_t2 = datetime.now()
+# print("Using jacobian over all dimensions took: {}".format(j_t2 - j_t1))
+
+#### Theano
+import theano.tensor as T
+x = theano.shared(data)
+l = theano.shared(l_scales)
 
 # t_t1 = datetime.now()
 # dm1_df = m_1.diff(f_err_sym)

@@ -1,16 +1,21 @@
-import numpy as np
 import sys
+import math
+from datetime import datetime
+
+# Numpy
+import numpy as np
 from numpy import linalg
+
+# Numpy
+import sympy as sp
 from sympy import KroneckerDelta
+from sympy.utilities.autowrap import autowrap
+from sympy.utilities.lambdify import lambdify, implemented_function
+
+# Scipy
 from scipy.optimize import minimize
 from scipy.spatial.distance import cdist
-from sympy.utilities.lambdify import lambdify, implemented_function
 from scipy.stats import norm
-import math
-import sympy
-from sympy.utilities.autowrap import autowrap
-
-from datetime import datetime
 
 # TODO when doing K(X, X), simply use (n_err^2)I instead of KroneckerDelta
 
@@ -21,6 +26,13 @@ from datetime import datetime
 # a = a.reshape(5,1) # 5 rows, 1 column
 # b = np.array([6,7,8])
 # b = np.reshape(1,3) # 1 row, 3 columns
+
+def timing(f):
+    def wrap(*args):
+        t1 = datetime.now()
+        ret = f(*args)
+        t2 = datetime.now()
+        print("{} function took {}".format(f.func_name, t2-t1))
 
 class GaussianProcess:
     def __init__(self):
@@ -37,10 +49,10 @@ class GaussianProcess:
     #     self.size = len(X)
 
     #     # Pre-calculate derivatives of inverted matrix to substitute values in the Squared Exponential NLL gradient
-    #     # self.f_err_sym, self.l_scale_sym, self.n_err_sym = sympy.symbols("f_err, l_scale, n_err")
-    #     self.f_err_sym, self.n_err_sym = sympy.symbols("f_err, n_err")
-    #     self.l_scale_sym = sympy.MatrixSymbol('l', 1, self.size)
-    #     m = sympy.Matrix(self.f_err_sym**2 * math.e**(-0.5 * self.dist(self.X/self.l_scale_sym, self.X/self.l_scale_sym)) 
+    #     # self.f_err_sym, self.l_scale_sym, self.n_err_sym = sp.symbols("f_err, l_scale, n_err")
+    #     self.f_err_sym, self.n_err_sym = sp.symbols("f_err, n_err")
+    #     self.l_scale_sym = sp.MatrixSymbol('l', 1, self.size)
+    #     m = sp.Matrix(self.f_err_sym**2 * math.e**(-0.5 * self.dist(self.X/self.l_scale_sym, self.X/self.l_scale_sym)) 
     #                      + self.n_err_sym**2 * np.identity(self.size))
     #     self.dK_dthetas = [
     #                  m.diff(self.f_err_sym),
@@ -79,48 +91,61 @@ class GaussianProcess:
         var = np.diag(self.K_se(x, x, self.f_err, self.l_scales) - v.T.dot(v))
         return fs_mean, var
 
-    def se_term(self, x1, x2, l_scales):
+    def dist(self, x1, x2, l_scales):
         # Dividing by length scale first before passing into cdist to
         #   accounts for different length scale for each dimension
-        # return self.sqeucl_dist(x1/l_scales, x2/l_scales)
-        return cdist(x1/l_scales, x2/l_scales)
+        return cdist(x1/l_scales, x2/l_scales, 'sqeuclidean')
 
     # NOTE cdist can't deal with sympy symbols :(
     def sqeucl_dist(self, x, xs, x_len=0, xs_len=0):
-        # BAD. Need to get cdist to work with symbols, or make this way more efficient
-        # m = np.sum( np.power([i-j for i in x for j in xs], 2), axis=1).reshape(x.shape[0], xs.shape[0])
-
-        # if self.lib == 'sympy':
         m = np.sum(np.power(
-            np.repeat(x[:,None,:], len(self.X), axis=1) - 
-            np.resize(xs, (len(self.X), xs.shape[0], xs.shape[1])), 
+            np.repeat(x[:,None,:], len(x), axis=1) - 
+            np.resize(xs, (len(x), xs.shape[0], xs.shape[1])), 
             2), axis=2)
 
         return m
 
-        # return cdist(x, xs, 'sqeuclidean')
-        # return (x - xs.T)**2
-
     def K_se(self, x1, x2, f_err, l_scales):
-
-        # m = np.array(self.se_term(x1, x2, l_scales), dtype=np.float32)
-        m = self.se_term(x1, x2, l_scales).astype(float)
-        # m = cdist(x1/l_scales, x2/l_scales)
-        # return np.array((f_err**2) * np.exp(-0.5 * m), dtype=np.float64)
+        m = self.dist(x1, x2, l_scales)
         return f_err**2 * np.exp(-0.5 * m)
+
+    def dK_df_eval(self, m, f_err, l_scales):
+        return 2*f_err * m
+
+    def dK_dls_eval(self, k, f_err, l_scales):
+
+        k_ = np.copy(k)
+        k_ = f_err**2 * k_
+
+        # Repeats each row along axis=1
+        M = np.repeat(self.X[:,None,:], len(self.X), axis=1) 
+
+        # Separates Ms into every dimension of original dataset
+        M_ds = np.array([[M[:,:,i], M[:,:,i].T] for i in range(self.X.shape[1])]) 
+
+        # Derivative over length scale for each dimension
+        dK_dls = [l_scale**(-3) * (m-mt)**2 * k_ for l_scale, (m, mt) in zip(l_scales, M_ds)]
+
+        return dK_dls
+
+    def dK_dn_eval(self, n_err):
+        dK_dn = np.diag(np.array([2*n_err]*self.X.shape[0]))
+        return dK_dn
 
     # Evaluates each dK_dtheta pre-calculated symbolic lambda with current iteration's hyperparameters
     def eval_dK_dthetas(self, f_err, l_scales, n_err):
-        # NOTE won't need to branch here in future
-        if self.eval == 'autowrap':
-            l_scales = l_scales.reshape(1, len(l_scales))
-            dK_df_eval = self.dK_df(f_err, l_scales)
-            dK_dl_evals = [dK_dl(f_err, l_scales) for dK_dl in self.dK_dls]
-            dK_dn_eval = self.dK_dn(n_err)
-            return np.array([dK_df_eval] + dK_dl_evals + [dK_dn_eval], dtype=np.float64)
-        else:
-            l_scales = sympy.Matrix(l_scales.reshape(1, len(l_scales)))
-            return np.array(self.dK_dthetas(f_err, l_scales, n_err), dtype=np.float64)
+        # Reshape length scales into a 1x matrix
+        l_scales = np.array(l_scales)
+
+        # exp(...) block of squared exponential function
+        m = np.exp(-0.5 * self.dist(self.X, self.X, l_scales))
+
+        # Evaluate all the partial derivatives
+        dK_df = self.dK_df_eval(m, f_err, l_scales)
+        dK_dls = self.dK_dls_eval(m, f_err, l_scales)
+        dK_dn = self.dK_dn_eval(n_err)
+
+        return np.array([dK_df] + dK_dls + [dK_dn], dtype=np.float64)
 
     # def SE_der(self, args):
     #     # TODO fix - get around apparent bug
@@ -193,6 +218,9 @@ class GaussianProcess:
             np.sqrt(1 + a**2 * sigma_sq)
         ))
 
+        # grads = self.LLOO_der(args)
+        # print(grads)
+
         return LLOO
 
     #################### Derivative ####################
@@ -203,7 +231,7 @@ class GaussianProcess:
         
         self.count += 1
         # print("Iterated [{}] times for current fitting...".format(self.count))
-        print(self.count, end=" ", flush=True)
+        # print(self.count, end=" ", flush=True)
 
         f_err, l_scales, n_err, a, b = self.unpack_LLOO_args(args)
 
@@ -260,74 +288,21 @@ class GaussianProcess:
 
     #################### Prediction ####################
 
-    def build_symbolic_derivatives(self):
-        # Pre-calculate derivatives of inverted matrix to substitute values in the Squared Exponential NLL gradient
-        self.f_err_sym, self.n_err_sym = sympy.symbols("f_err, n_err")
-
-        # (1,n) shape 'matrix' (vector) of length scales for each dimension
-        self.l_scale_sym= sympy.MatrixSymbol('l', 1, self.X.shape[1])
-
-        # (n, n) shape matrix of data
-        self.data_sym = sympy.MatrixSymbol('m', self.X.shape[0], self.X.shape[1])
-
-        # K matrix
-        print("Building sympy matrix...")
-        m_t1 = datetime.now()
-        sq_eucl_dists = self.sqeucl_dist(self.X/self.l_scale_sym, self.X/self.l_scale_sym)
-        m = sympy.Matrix(self.f_err_sym**2 * math.e**(-0.5 * sq_eucl_dists) + self.n_err_sym**2 * np.identity(self.size))
-        m_t2 = datetime.now()
-        print("Took: {}".format(m_t2 - m_t1))
-
-        # Element-wise derivative of K matrix over each of the hyperparameters
-        print("Getting partial derivatives over all hyperparameters...")
-        pd_t1 = datetime.now()
-        print("Getting dK_df...")
-        dK_df   = m.diff(self.f_err_sym)
-        print("Getting dK_dls...")
-        dK_dls  = [m.diff(l_scale_sym) for l_scale_sym in self.l_scale_sym]
-        print("Getting dK_dn...")
-        dK_dn   = m.diff(self.n_err_sym)
-        print("Took: {}".format(datetime.now() - pd_t1))
-
-        # Lambdify each of the dK/dts to speed up substitutions per optimization iteration
-        print("Lambdifying/Autowrapping...")
-        l_t1 = datetime.now()
-        self.dK_dthetas = [dK_df] + dK_dls + [dK_dn]
-
-        # NOTE Won't need to branch here in future, always autowrap
-        if self.eval == 'autowrap':
-            # self.dK_dthetas = [autowrap(dk_dt, backend='cython') for dK_dt in self.dK_dthetas]
-            print("Autowrapping dK_df...")
-            self.dK_df = autowrap(dK_df)
-            print("Autowrapping dK_dls...")
-            self.dK_dls = [autowrap(dK_dl) for dK_dl in dK_dls]
-            print("Autowrapping dK_dn...")
-            self.dK_dn = autowrap(dK_dn)
-        else:
-            self.dK_dthetas = sympy.lambdify((self.f_err_sym, self.l_scale_sym, self.n_err_sym), self.dK_dthetas, 'numpy')
-        print("Took: {}".format(datetime.now() - l_t1))
-        # self.dK_dthetas = sympy.lambdify((self.f_err_sym, self.l_scale_sym, self.n_err_sym), self.dK_dthetas, [{'ImmutableMatrix':np.array, "numpy"])
-
     # Classification
     def fit_class(self, X, y):
-        self.lib = 'sympy'
-        # self.eval = 'sympy'
-        self.eval = 'autowrap'
-
-        self.count = 0
 
         self.size = len(y)
         self.X = X
         self.classifier_params = {}
         params = ['f_err', 'l_scales', 'n_err', 'a', 'b']
 
-        # Build lambdified partial derivatives
-        self.build_symbolic_derivatives()
-
         # Build OvA classifier for each unique class in y
         print("Starting to build OvA classifier per class...")
-        print("Current iterations... ", end=" ", flush=True)
+        # print("Current iterations... ", end=" ", flush=True)
         for c in set(y):
+            # Count iterations needed per optimize.minimize
+            self.count = 0
+
             self.classifier_params[c] = {}
 
             # f_err, l_scales (for each dimension), n_err, alpha, beta
@@ -340,16 +315,20 @@ class GaussianProcess:
             # res = minimize(self.LLOO, x0, method='bfgs')
             res = minimize(self.LLOO, x0, method='bfgs', jac=self.LLOO_der)
 
+            print ("Iterations: {}".format(self.count))
+
             # Set params for current binary regressor (classifier)
             for param, val in zip(params, res['x']):
                 self.classifier_params[c][param] = val
+
+            print("Current params: {}".format(self.classifier_params[c]))
 
             # Reset ys
             self.y = y
         print()
 
     def predict_class(self, x):
-        print("Original: {}".format(self.y))
+        # print("Original classes: {}".format(self.y))
 
         # Copy y for modification and resetting/restoring
         y = np.copy(self.y)
@@ -360,9 +339,11 @@ class GaussianProcess:
             for label, params in self.classifier_params.items()
         ]
 
-        print("Regression values for binary cases:")
-        for y_pred in y_preds:
-            print(y_pred)
+        # Printed in loop to format on each row nicely
+        # print("-----Regression values for binary cases-----")
+        # for y_pred in y_preds:
+        #     print(y_pred)
+        # print("--------------------------------------------")
 
         # Return max squashed value for each data point representing class prediction
         return np.argmax(y_preds, axis=0)
@@ -383,6 +364,7 @@ class GaussianProcess:
         # Get predictions of resulting mean and variances
         y_pred, var = self.predict(x)
         # sigma = np.sqrt(var)
+        # print(y_pred)
         y_squashed = self.sigmoid(y_pred)
 
         # Restore y
