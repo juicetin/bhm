@@ -53,7 +53,8 @@ def stratified_micro_batch(features, labels, point_count):
     sss = StratifiedShuffleSplit(labels, 1, test_size=point_count/len(features))
     for train_index, test_index in sss:
         pass
-    return features[test_index], labels[test_index]
+    # return features[test_index], labels[test_index]
+    return test_index
 
 def summarised_labels(labels):
     label_map={1:0,2:0,3:1,4:3,5:1,6:3,7:3,8:3,9:3,10:1,11:3,12:3,13:2,14:2,15:2,16:1,17:1,18:0,19:1,20:0,21:0,22:1,23:0,24:0}
@@ -72,7 +73,7 @@ def classification_bathy_testing(features, labels):
     # cv = LeaveOneOut(len(labels))
     cv = StratifiedKFold(labels, n_folds=10)
     # cv = StratifiedShuffleSplit(labels, 1, test_size=4/len(features))
-    accuracies = []
+    f1s = []
     for train_index, test_index in cv:
         X_train, X_test = features[train_index], features[test_index]
         y_train, y_test = labels[train_index], labels[test_index]
@@ -80,13 +81,15 @@ def classification_bathy_testing(features, labels):
         gp.fit_class(X_train, y_train)
         y_pred = gp.predict_class(X_test)
 
-        accuracy = gp.score(y_pred, y_test)
-        accuracies.append(accuracy)
-        print("Accuracy is: {}".format(accuracy))
+        f1 = gp.score(y_pred, y_test)
+        f1s.append(f1)
+        print("F-score is: {}".format(f1))
 
-        print("P: {}\n, A: {}".format(y_pred, y_test))
+        print("A: {}, \nP: {}".format(y_test, y_pred))
 
-    print("Average accuracy: {}".format(np.average(accuracies)))
+    avg_f1 = np.average(f1s)
+    print("Average f-score: {}".format(avg_f1))
+    return avg_f1
 
 def regression_dummy_testing():
     ####################################################################################
@@ -128,7 +131,7 @@ def classification_dummy_testing():
     # n_redundant
     # n_repeated
     num = 3
-    X, y = datasets.make_classification(n_samples=1000,
+    X, y = datasets.make_classification(n_samples=400,
             n_features=num, 
             n_clusters_per_class=2,
             n_redundant=0, 
@@ -137,8 +140,8 @@ def classification_dummy_testing():
             n_classes=num)
 
     from sklearn.cross_validation import StratifiedKFold
-    cv = StratifiedKFold(y, n_folds = 20)
-    # cv = StratifiedShuffleSplit(y, 1, test_size=33/len(X))
+    # cv = StratifiedKFold(y, n_folds = 20)
+    cv = StratifiedShuffleSplit(y, 1, test_size=20/len(X))
     accuracies = []
     for train_index, test_index in cv:
         X_train, X_test = X[train_index], X[test_index]
@@ -149,26 +152,68 @@ def classification_dummy_testing():
 
         accuracy = gp.score(y_pred, y_test)
         accuracies.append(accuracy)
-        print("Accuracy is: {}".format(accuracy))
+        print("GP F-score is: {}".format(accuracy))
 
-    print("Average accuracy: {}".format(np.average(accuracies)))
+        #clf = LogisticRegression()
+        clf = RandomForestClassifier()
+        clf.fit(X_train, y_train)
+        y_pred = clf.predict(X_test)
+        accuracy = gp.score(y_pred, y_test)
+        print("RF F-score is: {}".format(accuracy))
+
+        clf = LogisticRegression()
+        clf.fit(X_train, y_train)
+        y_pred = clf.predict(X_test)
+        accuracy = gp.score(y_pred, y_test)
+        print("LR F-score is: {}".format(accuracy))
+
+        clf = SVC()
+        clf.fit(X_train, y_train)
+        y_pred = clf.predict(X_test)
+        accuracy = gp.score(y_pred, y_test)
+        print("SVM F-score is: {}".format(accuracy))
+    # print("Average accuracy: {}".format(np.average(accuracies)))
 
 # Main function
 if __name__ == "__main__":
     # Load and assign all data
     # labels, labelcounts, bath_locations, features, querypoints_lowres, qp_locations, validQueryID, x_bins, query, y_bins = load_data()
 
-    print("Loading data from npzs...")
-    labels, labelcounts, bath_locations, features = load_training_data()
-    qp_locations, validQueryID, x_bins, query, y_bins = load_test_data()
+    # print("Loading data from npzs...")
+    # labels, labelcounts, bath_locations, features = load_training_data()
+    # qp_locations, validQueryID, x_bins, query, y_bins = load_test_data()
 
-    print("Extracting features/etc...")
-    features = np.array(features)
-    features = scale(normalize(features)) # Whiten
-    labels = np.array(labels)
-    # labels = summarised_labels(labels)
+    # print("Loading features...")
+    # features = np.array(features)
 
-    mini_features, mini_labels = stratified_micro_batch(features, labels, 300)
+    # print("Normalising features...")
+    # features_n = normalize(features)
+
+    # print("Scaling features...")
+    # features_s = scale(features)
+
+    # print("Normalizing-scaling features...")
+    # features_ns = normalize(scale(features))
+
+    # print("Scaling-normalizing features...")
+    # features_sn = scale(normalize(features))
+
+    # labels = np.array(labels)
+    # labels_simple = summarised_labels(labels)
+
+    # # [0.13911784653850162,   0.62549115824070989,  0.80419877283841434,  0.80067072027980024, 0.77420703810759661, 
+    # #  0.0014678899082568807, 0.017750714162373553, 0.012602890116646892, 0.02482014086796169, 0.029004894912527762]
+    # f1s = []
+    # feature_perms = [features, features_n, features_s, features_ns, features_sn]
+    # idx = stratified_micro_batch(features, labels_simple, 1000)
+    # for feature_set in feature_perms:
+    #     f1 = classification_bathy_testing(feature_set[idx], labels_simple[idx])
+    #     f1s.append(f1)
+
+    # idx = stratified_micro_batch(features, labels, 1000)
+    # for feature_set in feature_perms:
+    #     f1 = classification_bathy_testing(feature_set[idx], labels[idx])
+    #     f1s.append(f1)
 
     # x_bins_training, y_bins_training = np.meshgrid(list(set(bath_locations[:,0])), list(set(bath_locations[:,1])))
     # x_bins_training, y_bins_training = list(set(bath_locations[:,0])), list(set(bath_locations[:,1]))
@@ -198,5 +243,4 @@ if __name__ == "__main__":
     # for classifier in classifiers:
     #     cross_validate_algo(features, labels, 10, classifier)
 
-    classification_bathy_testing(mini_features, mini_labels)
-    # classification_dummy_testing():
+    classification_dummy_testing()

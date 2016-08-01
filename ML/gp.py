@@ -17,6 +17,9 @@ from scipy.optimize import minimize
 from scipy.spatial.distance import cdist
 from scipy.stats import norm
 
+# Sklearn
+from sklearn.metrics import f1_score
+
 # TODO when doing K(X, X), simply use (n_err^2)I instead of KroneckerDelta
 
 # using http://www.robots.ox.ac.uk/~mebden/reports/GPtutorial.pdf
@@ -373,4 +376,5 @@ class GaussianProcess:
         return y_squashed
 
     def score(self, y_, y):
-        return sum(y_ == y)/len(y_)
+        # return sum(y_ == y)/len(y_)
+        return f1_score(y, y_, average='weighted')

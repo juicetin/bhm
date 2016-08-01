@@ -21,6 +21,11 @@ def plot(X, y, x, y_pred, sigma):
     plt.legend(loc='upper left')
     plt.show()
 
+def plot_classes(X, y, x, y_pred):
+    fig = plt.figure()
+    plt.plot(X, y, 'r.', label=u'Observations')
+    plt.plot(x, y_pred, 'b-', label=u'Prediction')
+
 def show_map(locations, labels, x_bins, y_bins):
     x_bins.sort()
     y_bins.sort()
