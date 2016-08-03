@@ -130,14 +130,22 @@ def classification_dummy_testing():
     # n_informative
     # n_redundant
     # n_repeated
-    num = 3
-    X, y = datasets.make_classification(n_samples=400,
-            n_features=num, 
-            n_clusters_per_class=2,
-            n_redundant=0, 
-            n_repeated=0,
-            n_informative=num,
-            n_classes=num)
+    redundant = 0
+    repeated = 0
+    classes = 2
+    clusters = 2
+    informative = math.ceil(math.sqrt(classes*clusters))
+    features = informative + repeated + redundant
+
+    # classes * clusters <= 2**informative
+    # informative + redundant + repeated < features
+    X, y = datasets.make_classification(n_samples=200,
+            n_features=features, 
+            n_clusters_per_class=clusters,
+            n_redundant=redundant, 
+            n_repeated=repeated,
+            n_informative=informative,
+            n_classes=classes)
 
     from sklearn.cross_validation import StratifiedKFold
     # cv = StratifiedKFold(y, n_folds = 20)
@@ -147,41 +155,42 @@ def classification_dummy_testing():
         X_train, X_test = X[train_index], X[test_index]
         y_train, y_test = y[train_index], y[test_index]
 
-        gp.fit_class(X_train, y_train)
-        y_pred = gp.predict_class(X_test)
-
-        accuracy = gp.score(y_pred, y_test)
-        accuracies.append(accuracy)
-        print("GP F-score is: {}".format(accuracy))
-
-        #clf = LogisticRegression()
-        clf = RandomForestClassifier()
-        clf.fit(X_train, y_train)
-        y_pred = clf.predict(X_test)
-        accuracy = gp.score(y_pred, y_test)
-        print("RF F-score is: {}".format(accuracy))
-
+        # LR
         clf = LogisticRegression()
         clf.fit(X_train, y_train)
         y_pred = clf.predict(X_test)
         accuracy = gp.score(y_pred, y_test)
         print("LR F-score is: {}".format(accuracy))
+        vis.plot_classes(X_test, y_test, y_pred)
+
+        clf = RandomForestClassifier()
+        clf.fit(X_train, y_train)
+        y_pred = clf.predict(X_test)
+        accuracy = gp.score(y_pred, y_test)
+        print("RF F-score is: {}".format(accuracy))
+        vis.plot_classes(X_test, y_test, y_pred)
 
         clf = SVC()
         clf.fit(X_train, y_train)
         y_pred = clf.predict(X_test)
         accuracy = gp.score(y_pred, y_test)
         print("SVM F-score is: {}".format(accuracy))
+        vis.plot_classes(X_test, y_test, y_pred)
+
+        # GP
+        gp.fit_class(X_train, y_train)
+        y_pred = gp.predict_class(X_test)
+        accuracy = gp.score(y_pred, y_test)
+        accuracies.append(accuracy)
+        print("GP F-score is: {}".format(accuracy))
+        vis.plot_classes(X_test, y_test, y_pred)
     # print("Average accuracy: {}".format(np.average(accuracies)))
 
 # Main function
 if __name__ == "__main__":
-    # Load and assign all data
-    # labels, labelcounts, bath_locations, features, querypoints_lowres, qp_locations, validQueryID, x_bins, query, y_bins = load_data()
-
-    # print("Loading data from npzs...")
-    # labels, labelcounts, bath_locations, features = load_training_data()
-    # qp_locations, validQueryID, x_bins, query, y_bins = load_test_data()
+    print("Loading data from npzs...")
+    labels, labelcounts, bath_locations, features = load_training_data()
+    qp_locations, validQueryID, x_bins, query, y_bins = load_test_data()
 
     # print("Loading features...")
     # features = np.array(features)
@@ -192,20 +201,21 @@ if __name__ == "__main__":
     # print("Scaling features...")
     # features_s = scale(features)
 
-    # print("Normalizing-scaling features...")
-    # features_ns = normalize(scale(features))
+    # print("Normalizing-scaling features...") # NOTE best for summarised classes
+    features_ns = normalize(scale(features))
 
     # print("Scaling-normalizing features...")
     # features_sn = scale(normalize(features))
 
     # labels = np.array(labels)
-    # labels_simple = summarised_labels(labels)
+    labels_simple = summarised_labels(labels)
 
+    # NOTE best for simple classes - scaling, then normalising features
     # # [0.13911784653850162,   0.62549115824070989,  0.80419877283841434,  0.80067072027980024, 0.77420703810759661, 
     # #  0.0014678899082568807, 0.017750714162373553, 0.012602890116646892, 0.02482014086796169, 0.029004894912527762]
     # f1s = []
     # feature_perms = [features, features_n, features_s, features_ns, features_sn]
-    # idx = stratified_micro_batch(features, labels_simple, 1000)
+    idx = stratified_micro_batch(features, labels_simple, 1000)
     # for feature_set in feature_perms:
     #     f1 = classification_bathy_testing(feature_set[idx], labels_simple[idx])
     #     f1s.append(f1)
@@ -215,8 +225,8 @@ if __name__ == "__main__":
     #     f1 = classification_bathy_testing(feature_set[idx], labels[idx])
     #     f1s.append(f1)
 
-    # x_bins_training, y_bins_training = np.meshgrid(list(set(bath_locations[:,0])), list(set(bath_locations[:,1])))
-    # x_bins_training, y_bins_training = list(set(bath_locations[:,0])), list(set(bath_locations[:,1]))
+    # classification_bathy_testing(features, labels_simple, 200)
+
 
     # classifiers = [
     #         # neighbors.KNeighborsClassifier(n_neighbors=5),                  
@@ -231,7 +241,8 @@ if __name__ == "__main__":
     # y_ = rf.fit(X_train, y_train).predict(X_test)
 
     # Visualisation
-    # vis.show_map(qp_locations, query[:,3], x_bins, y_bins)
+    # x_bins_training, y_bins_training = list(set(bath_locations[:,0])), list(set(bath_locations[:,1]))
+    # vis.show_map(qp_locations, query[:,2], x_bins, y_bins)
     # vis.show_map(bath_locations, labels, x_bins_training, y_bins_training)
 
     # 10-fold cross-validation for all
@@ -243,4 +254,6 @@ if __name__ == "__main__":
     # for classifier in classifiers:
     #     cross_validate_algo(features, labels, 10, classifier)
 
-    classification_dummy_testing()
+    # classification_dummy_testing()
+
+    pass
