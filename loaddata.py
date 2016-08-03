@@ -71,8 +71,8 @@ def classification_bathy_testing(features, labels):
     gp = GaussianProcess()
 
     # cv = LeaveOneOut(len(labels))
-    cv = StratifiedKFold(labels, n_folds=10)
-    # cv = StratifiedShuffleSplit(labels, 1, test_size=4/len(features))
+    # cv = StratifiedKFold(labels, n_folds=10)
+    cv = StratifiedShuffleSplit(labels, 1, test_size=50/len(features))
     f1s = []
     for train_index, test_index in cv:
         X_train, X_test = features[train_index], features[test_index]
@@ -180,17 +180,19 @@ if __name__ == "__main__":
     # labels, labelcounts, bath_locations, features, querypoints_lowres, qp_locations, validQueryID, x_bins, query, y_bins = load_data()
 
     # print("Loading data from npzs...")
-    # labels, labelcounts, bath_locations, features = load_training_data()
-    # qp_locations, validQueryID, x_bins, query, y_bins = load_test_data()
+    labels, labelcounts, bath_locations, features = load_training_data()
+    qp_locations, validQueryID, x_bins, query, y_bins = load_test_data()
 
-    # print("Loading features...")
-    # features = np.array(features)
+    print("Loading features...")
+    features = np.array(features)
+    # Remove long/lat coordinates
+    features = features[:,2:]
 
     # print("Normalising features...")
     # features_n = normalize(features)
 
-    # print("Scaling features...")
-    # features_s = scale(features)
+    print("Scaling features...")
+    features_s = scale(features)
 
     # print("Normalizing-scaling features...")
     # features_ns = normalize(scale(features))
@@ -198,17 +200,19 @@ if __name__ == "__main__":
     # print("Scaling-normalizing features...")
     # features_sn = scale(normalize(features))
 
-    # labels = np.array(labels)
-    # labels_simple = summarised_labels(labels)
+    labels = np.array(labels)
+    labels_simple = summarised_labels(labels)
 
     # # [0.13911784653850162,   0.62549115824070989,  0.80419877283841434,  0.80067072027980024, 0.77420703810759661, 
     # #  0.0014678899082568807, 0.017750714162373553, 0.012602890116646892, 0.02482014086796169, 0.029004894912527762]
-    # f1s = []
     # feature_perms = [features, features_n, features_s, features_ns, features_sn]
-    # idx = stratified_micro_batch(features, labels_simple, 1000)
-    # for feature_set in feature_perms:
-    #     f1 = classification_bathy_testing(feature_set[idx], labels_simple[idx])
-    #     f1s.append(f1)
+
+    # [0.74880756856008601, 0.67981634815766179, 0.70133102810814296]
+    # [0.72739502569246961, 0.71183799527284519, 0.65632134135368103]
+    # feature_perms = [features_s, features_ns, features_sn]
+
+    idx = stratified_micro_batch(features, labels_simple, 1000)
+    f1 = classification_bathy_testing(features_s[idx], labels_simple[idx])
 
     # idx = stratified_micro_batch(features, labels, 1000)
     # for feature_set in feature_perms:
@@ -243,4 +247,4 @@ if __name__ == "__main__":
     # for classifier in classifiers:
     #     cross_validate_algo(features, labels, 10, classifier)
 
-    classification_dummy_testing()
+    # classification_dummy_testing()
