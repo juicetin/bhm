@@ -3,6 +3,8 @@
 import numpy as np
 import copy
 import math
+from datetime import datetime
+
 from sklearn.preprocessing import normalize
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
@@ -13,7 +15,8 @@ from sklearn.cross_validation import StratifiedShuffleSplit
 from sklearn.cross_validation import LeaveOneOut
 from sklearn.cross_validation import StratifiedKFold
 from sklearn import datasets
-from datetime import datetime
+from sklearn.metrics import roc_auc_score
+from sklearn import neighbors
 
 from matplotlib import pyplot as plt
 
@@ -26,8 +29,6 @@ from ML.gp import GaussianProcess
 
 import visualisation as vis
 
-# Algos
-from sklearn import neighbors
 
 # Load all the data
 def load_training_data():
@@ -72,24 +73,26 @@ def classification_bathy_testing(features, labels):
 
     # cv = LeaveOneOut(len(labels))
     # cv = StratifiedKFold(labels, n_folds=10)
-    cv = StratifiedShuffleSplit(labels, 1, test_size=50/len(features))
-    f1s = []
+    cv = StratifiedShuffleSplit(labels, 1, test_size=0.05)
+    scores = []
     for train_index, test_index in cv:
         X_train, X_test = features[train_index], features[test_index]
         y_train, y_test = labels[train_index], labels[test_index]
 
         gp.fit_class(X_train, y_train)
-        y_pred = gp.predict_class(X_test)
+        y_pred = gp.predict_class(X_test, keep_probs=True)
+        # return y_pred
 
-        f1 = gp.score(y_pred, y_test)
-        f1s.append(f1)
-        print("F-score is: {}".format(f1))
+        score = gp.roc_auc_score_multi(y_test, y_pred)
+        # score = roc_auc_score(y_test, y_pred)
+        scores.append(score)
+        print("AUROC score is: {}".format(score))
 
         print("A: {}, \nP: {}".format(y_test, y_pred))
 
-    avg_f1 = np.average(f1s)
-    print("Average f-score: {}".format(avg_f1))
-    return avg_f1
+    avg_score = np.average(scores)
+    print("Average AUROC score: {}".format(avg_score))
+    return avg_score
 
 def regression_dummy_testing():
     ####################################################################################
@@ -223,8 +226,7 @@ if __name__ == "__main__":
     # feature_perms = [features_s, features_ns, features_sn]
 
     idx = stratified_micro_batch(features, labels_simple, 1000)
-    f1 = classification_bathy_testing(features_s[idx], labels_simple[idx])
-    idx = stratified_micro_batch(features, labels_simple, 1000)
+    classification_bathy_testing(features_s[idx], labels_simple[idx])
     # for feature_set in feature_perms:
     #     f1 = classification_bathy_testing(feature_set[idx], labels_simple[idx])
     #     f1s.append(f1)

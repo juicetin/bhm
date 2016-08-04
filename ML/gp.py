@@ -6,7 +6,7 @@ from datetime import datetime
 import numpy as np
 from numpy import linalg
 
-# Numpy
+# Sympy 
 import sympy as sp
 from sympy import KroneckerDelta
 from sympy.utilities.autowrap import autowrap
@@ -19,6 +19,7 @@ from scipy.stats import norm
 
 # Sklearn
 from sklearn.metrics import f1_score
+from sklearn.metrics import roc_auc_score
 
 # TODO when doing K(X, X), simply use (n_err^2)I instead of KroneckerDelta
 
@@ -221,9 +222,6 @@ class GaussianProcess:
             np.sqrt(1 + a**2 * sigma_sq)
         ))
 
-        # grads = self.LLOO_der(args)
-        # print(grads)
-
         return LLOO
 
     #################### Derivative ####################
@@ -330,23 +328,21 @@ class GaussianProcess:
             self.y = y
         print()
 
-    def predict_class(self, x):
+    def predict_class(self, x, keep_probs=False):
         # print("Original classes: {}".format(self.y))
 
         # Copy y for modification and resetting/restoring
         y = np.copy(self.y)
 
         # Generate squashed y precidtions
-        y_preds = [
+        y_preds = np.array([
             self.predict_class_single(x, y, label, params)
             for label, params in self.classifier_params.items()
-        ]
+        ])
 
-        # Printed in loop to format on each row nicely
-        # print("-----Regression values for binary cases-----")
-        # for y_pred in y_preds:
-        #     print(y_pred)
-        # print("--------------------------------------------")
+        # Return raw OvA squashed probabilities per class (primarily for AUROC calcs)
+        if keep_probs == True:
+            return y_preds
 
         # Return max squashed value for each data point representing class prediction
         return np.argmax(y_preds, axis=0)
@@ -378,3 +374,23 @@ class GaussianProcess:
     def score(self, y_, y):
         # return sum(y_ == y)/len(y_)
         return f1_score(y, y_, average='weighted')
+
+    def roc_auc_score_multi(self, y_actuals, y_preds):
+        # Calculate AUROC for each each binary class case
+        aurocs = np.zeros(y_preds.shape[0])
+        print(y_actuals.shape)
+        for cur_class, cur_ova_pred in enumerate(y_preds):
+            # Compare class *i* with the rest
+            cur_y_actual = np.copy(y_actuals)
+            cur_y_actual[np.where(cur_y_actual != cur_class)] = -1
+            cur_y_actual[np.where(cur_y_actual == cur_class)] = 1
+            cur_auroc = roc_auc_score(cur_y_actual, cur_ova_pred)
+            aurocs[cur_class] = cur_auroc
+            print("Class {} had squashed predictions: {}".format(cur_class, cur_ova_pred))
+            print("Actual labels were: {}".format(cur_y_actual))
+            print("Class {} had an OvR AUROC of: {}".format(cur_class, cur_auroc))
+
+        print(aurocs)
+        print(aurocs.shape)
+        # TODO weight AUROCS in future?
+        return np.average(aurocs)
