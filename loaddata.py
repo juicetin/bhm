@@ -18,8 +18,6 @@ from sklearn import datasets
 from sklearn.metrics import roc_auc_score
 from sklearn import neighbors
 
-from matplotlib import pyplot as plt
-
 # Import our ML algorithms
 from ML.validation import cross_validate_algo
 from ML.knn import kNN
@@ -61,28 +59,19 @@ def mini_batch_idxs(labels, point_count, split_type):
 
     # Have even number of labels ignoring original ratios
     elif split_type == 'even':
+
         # Find how many of each class to generate
         uniq_classes = np.unique(labels)
-        print("unique classes: {}".format(uniq_classes))
         num_classes = len(uniq_classes)
-        print("num classes: {}".format(num_classes))
         class_size = point_count/num_classes
-        print("class size: {}".format(class_size))
         class_sizes = np.full(num_classes, class_size)
-        print("class sizes: {}".format(class_sizes))
 
         # Adjust for non-divisiblity
         rem = point_count % class_size
         if rem != 0:
             class_sizes[-1] += rem
 
-        # Get indexes
-        # for cur_class, cur_class_size in zip(uniq_classes, class_sizes):
-        #     cur_class_idxs = np.where(labels==cur_class)[0]
-        #     print(cur_class_idxs.shape)
-        #     idxs = np.random.choice(cur_class_idxs, cur_class_size)
-        #     print(idxs.shape)
-
+        # Generate even class index list
         class_idxs = np.concatenate(np.array(
             [np.random.choice(np.where(labels==cur_class)[0], cur_class_size, replace=False)
                 for cur_class, cur_class_size 
@@ -109,8 +98,8 @@ def classification_bathy_testing(features, labels):
     gp = GaussianProcess()
 
     # cv = LeaveOneOut(len(labels))
-    # cv = StratifiedKFold(labels, n_folds=10)
-    cv = StratifiedShuffleSplit(labels, 1, test_size=0.1)
+    cv = StratifiedKFold(labels, n_folds=10)
+    # cv = StratifiedShuffleSplit(labels, 1, test_size=0.1)
     scores = []
     for train_index, test_index in cv:
         X_train, X_test = features[train_index], features[test_index]
@@ -123,9 +112,7 @@ def classification_bathy_testing(features, labels):
         score = gp.roc_auc_score_multi(y_test, y_pred)
         # score = roc_auc_score(y_test, y_pred)
         scores.append(score)
-        print("AUROC score is: {}".format(score))
-
-        print("A: {}, \nP: {}".format(y_test, y_pred))
+        print("Average AUROC score for this round is: {}".format(score))
 
     avg_score = np.average(scores)
     print("Average AUROC score: {}".format(avg_score))
@@ -262,8 +249,27 @@ if __name__ == "__main__":
     # [0.72739502569246961, 0.71183799527284519, 0.65632134135368103]
     # feature_perms = [features_s, features_ns, features_sn]
 
-    idx = mini_batch_idxs(labels_simple, 1000, 'stratified')
-    classification_bathy_testing(features_s[idx], labels_simple[idx])
+    # size = 500
+    # print("For even split")
+    # # idx = mini_batch_idxs(labels_simple, size, 'even')
+    # # s1 = classification_bathy_testing(features_s[idx], labels_simple[idx])
+    # s1s = []
+    # for i in range(10):
+    #     idx = mini_batch_idxs(labels_simple, size, 'even')
+    #     s1s.append(classification_bathy_testing(features_s[idx], labels_simple[idx]))
+
+
+    # print("For stratified split")
+    # idx = mini_batch_idxs(labels_simple, size, 'stratified')
+    # s2 = classification_bathy_testing(features_s[idx], labels_simple[idx])
+    # s2s = []
+    # for i in range(10):
+    #     idx = mini_batch_idxs(labels_simple, size, 'stratified')
+    #     s2s.append(classification_bathy_testing(features_s[idx], labels_simple[idx]))
+
+    # print(np.average(s1s))
+    # print(np.average(s2s))
+
     # for feature_set in feature_perms:
     #     f1 = classification_bathy_testing(feature_set[idx], labels_simple[idx])
     #     f1s.append(f1)
@@ -290,7 +296,7 @@ if __name__ == "__main__":
 
     # Visualisation
     # x_bins_training, y_bins_training = list(set(bath_locations[:,0])), list(set(bath_locations[:,1]))
-    # vis.show_map(qp_locations, query[:,2], x_bins, y_bins)
+    vis.show_map(qp_locations, query[:,2], x_bins, y_bins)
     # vis.show_map(bath_locations, labels, x_bins_training, y_bins_training)
 
     # 10-fold cross-validation for all

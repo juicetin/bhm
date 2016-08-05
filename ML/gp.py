@@ -298,8 +298,10 @@ class GaussianProcess:
         params = ['f_err', 'l_scales', 'n_err', 'a', 'b']
 
         # Build OvA classifier for each unique class in y
-        print("Starting to build OvA classifier per class...")
+        print("Starting to build OvR classifier per class...")
         print("Class list: {}. Current class progress: ".format(set(y)), end=" ", flush=True)
+
+        # OvR here - also TODO an OvO!
         for c in set(y):
             print(c, end=" ", flush=True)
 
@@ -318,13 +320,13 @@ class GaussianProcess:
             # res = minimize(self.LLOO, x0, method='bfgs')
             res = minimize(self.LLOO, x0, method='bfgs', jac=self.LLOO_der)
 
-            print ("Iterations: {}".format(self.count))
 
             # Set params for current binary regressor (classifier)
             for param, val in zip(params, res['x']):
                 self.classifier_params[c][param] = val
 
-            print("Current params: {}".format(self.classifier_params[c]))
+            # print ("Iterations: {}".format(self.count))
+            # print("Current params: {}".format(self.classifier_params[c]))
 
             # Reset ys
             self.y = y
@@ -380,7 +382,6 @@ class GaussianProcess:
     def roc_auc_score_multi(self, y_actuals, y_preds):
         # Calculate AUROC for each each binary class case
         aurocs = np.zeros(y_preds.shape[0])
-        print(y_actuals.shape)
         for cur_class, cur_ova_pred in enumerate(y_preds):
             # Compare class *i* with the rest
             cur_y_actual = np.copy(y_actuals)
@@ -389,7 +390,6 @@ class GaussianProcess:
             cur_auroc = roc_auc_score(cur_y_actual, cur_ova_pred)
             aurocs[cur_class] = cur_auroc
 
-        print(aurocs)
-        print(aurocs.shape)
+        print("AUROC score for each class: {}".format(aurocs))
         # TODO weight AUROCS in future?
         return np.average(aurocs)

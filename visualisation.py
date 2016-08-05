@@ -1,4 +1,6 @@
 import numpy as np
+import matplotlib as mpl
+mpl.use('Agg')
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.cm as cm
@@ -76,7 +78,7 @@ def plot_classes(X, Y, Y_pred):
 
         plt.show()
 
-def show_map(locations, labels, x_bins, y_bins):
+def show_map(locations, labels, x_bins, y_bins, display=True):
     x_bins.sort()
     y_bins.sort()
 
@@ -104,5 +106,8 @@ def show_map(locations, labels, x_bins, y_bins):
     print("Setting colourbar (legend)...")
     plt.colorbar()
 
-    print("Built! Showing image...")
-    plt.show()
+    print("Image generated!")
+    if display == True:
+        plt.show()
+    else:
+        plt.savefig('map.pdf')
