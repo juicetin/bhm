@@ -101,7 +101,7 @@ def show_map(locations, labels, x_bins, y_bins, display=True):
     Z[(y_locations, x_locations)] = labels
 
     print("Bulding image...")
-    plt.imshow(Z, extent=[x_min, x_max, y_min, y_max])
+    plt.imshow(Z, extent=[x_min, x_max, y_min, y_max], origin='lower')
 
     print("Setting colourbar (legend)...")
     plt.colorbar()

@@ -296,7 +296,7 @@ if __name__ == "__main__":
 
     # Visualisation
     # x_bins_training, y_bins_training = list(set(bath_locations[:,0])), list(set(bath_locations[:,1]))
-    vis.show_map(qp_locations, query[:,2], x_bins, y_bins)
+    vis.show_map(qp_locations, query[:,2], x_bins, y_bins, display=False)
     # vis.show_map(bath_locations, labels, x_bins_training, y_bins_training)
 
     # 10-fold cross-validation for all
