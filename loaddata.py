@@ -50,15 +50,49 @@ def load_test_data():
 
     return (qp_locations, validQueryID, x_bins, query, y_bins)
 
-def mini_batch_idxs(, labels, point_count, split_type):
+def mini_batch_idxs(labels, point_count, split_type):
+
+    # Match ratios of original labels
     if split_type == 'stratified':
         sss = StratifiedShuffleSplit(labels, 1, test_size=point_count/len(labels))
         for train_index, test_index in sss:
             pass
+        return test_index
+
+    # Have even number of labels ignoring original ratios
     elif split_type == 'even':
-        pass
-    # return features[test_indx],l labels[test_index]
-    return test_index
+        # Find how many of each class to generate
+        uniq_classes = np.unique(labels)
+        print("unique classes: {}".format(uniq_classes))
+        num_classes = len(uniq_classes)
+        print("num classes: {}".format(num_classes))
+        class_size = point_count/num_classes
+        print("class size: {}".format(class_size))
+        class_sizes = np.full(num_classes, class_size)
+        print("class sizes: {}".format(class_sizes))
+
+        # Adjust for non-divisiblity
+        rem = point_count % class_size
+        if rem != 0:
+            class_sizes[-1] += rem
+
+        # Get indexes
+        # for cur_class, cur_class_size in zip(uniq_classes, class_sizes):
+        #     cur_class_idxs = np.where(labels==cur_class)[0]
+        #     print(cur_class_idxs.shape)
+        #     idxs = np.random.choice(cur_class_idxs, cur_class_size)
+        #     print(idxs.shape)
+
+        class_idxs = np.concatenate(np.array(
+            [np.random.choice(np.where(labels==cur_class)[0], cur_class_size, replace=False)
+                for cur_class, cur_class_size 
+                in zip(uniq_classes, class_sizes)
+            ]
+        ), axis=0)
+
+        return class_idxs
+
+        # 
 
 def summarised_labels(labels):
     label_map={1:0,2:0,3:1,4:3,5:1,6:3,7:3,8:3,9:3,10:1,11:3,12:3,13:2,14:2,15:2,16:1,17:1,18:0,19:1,20:0,21:0,22:1,23:0,24:0}
@@ -75,8 +109,8 @@ def classification_bathy_testing(features, labels):
     gp = GaussianProcess()
 
     # cv = LeaveOneOut(len(labels))
-    cv = StratifiedKFold(labels, n_folds=10)
-    # cv = StratifiedShuffleSplit(labels, 1, test_size=0.05)
+    # cv = StratifiedKFold(labels, n_folds=10)
+    cv = StratifiedShuffleSplit(labels, 1, test_size=0.1)
     scores = []
     for train_index, test_index in cv:
         X_train, X_test = features[train_index], features[test_index]
@@ -228,7 +262,7 @@ if __name__ == "__main__":
     # [0.72739502569246961, 0.71183799527284519, 0.65632134135368103]
     # feature_perms = [features_s, features_ns, features_sn]
 
-    idx = mini_batch(labels_simple, 3000, split='stratified')
+    idx = mini_batch_idxs(labels_simple, 1000, 'stratified')
     classification_bathy_testing(features_s[idx], labels_simple[idx])
     # for feature_set in feature_perms:
     #     f1 = classification_bathy_testing(feature_set[idx], labels_simple[idx])

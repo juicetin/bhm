@@ -299,8 +299,10 @@ class GaussianProcess:
 
         # Build OvA classifier for each unique class in y
         print("Starting to build OvA classifier per class...")
-        # print("Current iterations... ", end=" ", flush=True)
+        print("Class list: {}. Current class progress: ".format(set(y)), end=" ", flush=True)
         for c in set(y):
+            print(c, end=" ", flush=True)
+
             # Count iterations needed per optimize.minimize
             self.count = 0
 
