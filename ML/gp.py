@@ -386,9 +386,6 @@ class GaussianProcess:
             cur_y_actual[np.where(cur_y_actual == cur_class)] = 1
             cur_auroc = roc_auc_score(cur_y_actual, cur_ova_pred)
             aurocs[cur_class] = cur_auroc
-            print("Class {} had squashed predictions: {}".format(cur_class, cur_ova_pred))
-            print("Actual labels were: {}".format(cur_y_actual))
-            print("Class {} had an OvR AUROC of: {}".format(cur_class, cur_auroc))
 
         print(aurocs)
         print(aurocs.shape)

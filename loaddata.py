@@ -50,11 +50,14 @@ def load_test_data():
 
     return (qp_locations, validQueryID, x_bins, query, y_bins)
 
-def stratified_micro_batch(features, labels, point_count):
-    sss = StratifiedShuffleSplit(labels, 1, test_size=point_count/len(features))
-    for train_index, test_index in sss:
+def mini_batch_idxs(, labels, point_count, split_type):
+    if split_type == 'stratified':
+        sss = StratifiedShuffleSplit(labels, 1, test_size=point_count/len(labels))
+        for train_index, test_index in sss:
+            pass
+    elif split_type == 'even':
         pass
-    # return features[test_index], labels[test_index]
+    # return features[test_indx],l labels[test_index]
     return test_index
 
 def summarised_labels(labels):
@@ -72,8 +75,8 @@ def classification_bathy_testing(features, labels):
     gp = GaussianProcess()
 
     # cv = LeaveOneOut(len(labels))
-    # cv = StratifiedKFold(labels, n_folds=10)
-    cv = StratifiedShuffleSplit(labels, 1, test_size=0.05)
+    cv = StratifiedKFold(labels, n_folds=10)
+    # cv = StratifiedShuffleSplit(labels, 1, test_size=0.05)
     scores = []
     for train_index, test_index in cv:
         X_train, X_test = features[train_index], features[test_index]
@@ -225,7 +228,7 @@ if __name__ == "__main__":
     # [0.72739502569246961, 0.71183799527284519, 0.65632134135368103]
     # feature_perms = [features_s, features_ns, features_sn]
 
-    idx = stratified_micro_batch(features, labels_simple, 1000)
+    idx = mini_batch(labels_simple, 3000, split='stratified')
     classification_bathy_testing(features_s[idx], labels_simple[idx])
     # for feature_set in feature_perms:
     #     f1 = classification_bathy_testing(feature_set[idx], labels_simple[idx])
