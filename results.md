@@ -43,9 +43,13 @@ X, y = datasets.make_classification(n_samples=100,
 | None (unbounded)   | As above                    | 04:04:26          | 02:42:00             | 00:23:94            |
 
 # Class sampling - is even or stratified split of the training data better?
-| Total sample size | Split method | Test method | Number of runs | Average AUROC |
-|:-----------------:|:------------:|:-----------:|:--------------:|:-------------:|
-|        500        |     Even     |    10F-CV   |       10       |    0.74197    |
-|        500        |  Stratified  |    10F-CV   |       10       |    0.70983    |
+| Total sample size | Split method | Test method | Number of runs | Average AUROC | Notes               |
+|:-----------------:|:------------:|:-----------:|:--------------:|:-------------:|---------------------|
+|        500        |     Even     |    10F-CV   |       10       |    0.74197    | Coords not included |
+|        500        |  Stratified  |    10F-CV   |       10       |    0.70983    | Coords not included |
+|        500        |     Even     |    10F-CV   |        1       |    0.82214    | Coords included     |
+|        500        |  Stratified  |    10F-CV   |        1       |    0.77466    | Coords included     |
+|        500        |     Even     |    10F-CV   |       10       |    0.86534    | Coords included     |
+|        500        |  Stratified  |    10F-CV   |       10       |    0.80136    | Coords included     |
 |        1000       |     Even     |    10F-CV   |       100      |       ?       |
 |        1000       |  Stratified  |    10F-CV   |       100      |       ?       |

@@ -220,27 +220,27 @@ if __name__ == "__main__":
     labels, labelcounts, bath_locations, features = load_training_data()
     qp_locations, validQueryID, x_bins, query, y_bins = load_test_data()
 
+    print("Filter down to non-nan queries and locations...")
+    valid_query_idxs = np.where( (~np.isnan(query).any(axis=1) & np.isfinite(query).all(axis=1)) )[0]
+    query = query[valid_query_idxs]
+    qp_locations = qp_locations[valid_query_idxs]
+    infinite_idx = np.where(~np.isfinite(query).all(axis=1))[0]
+
     print("Loading features...")
     features = np.array(features)
     # Remove long/lat coordinates
-    features = features[:,2:]
+    # features = features[:,2:]
 
-    # print("Normalising features...")
-    # features_n = normalize(features)
-
+    # NOTE _s suffix kept here for clarity
     print("Scaling features...")
     features_s = scale(features)
-
-    # print("Normalizing-scaling features...") # NOTE best for summarised classes
-    features_ns = normalize(scale(features))
-
-    # print("Scaling-normalizing features...")
-    # features_sn = scale(normalize(features))
+    query_s = scale(query)
 
     # labels = np.array(labels)
     labels_simple = summarised_labels(labels)
 
     # NOTE best for simple classes - scaling, then normalising features
+    # order: original, normalised, scaled, normalised-scaled, scaled-normalised
     # # [0.13911784653850162,   0.62549115824070989,  0.80419877283841434,  0.80067072027980024, 0.77420703810759661, 
     # #  0.0014678899082568807, 0.017750714162373553, 0.012602890116646892, 0.02482014086796169, 0.029004894912527762]
     # feature_perms = [features, features_n, features_s, features_ns, features_sn]
@@ -249,26 +249,49 @@ if __name__ == "__main__":
     # [0.72739502569246961, 0.71183799527284519, 0.65632134135368103]
     # feature_perms = [features_s, features_ns, features_sn]
 
-    # size = 500
+    ########################################### Actual prediction ###########################################
+    # size = 1000
+    # idx = mini_batch_idxs(labels_simple, size, 'even')
+    # gp = GaussianProcess()
+    # gp.fit_class(features_s[idx], labels_simple[idx])
+    # predictions = np.full(len(query), -1)
+
+    # # Incrementally predict. TODO embarassingly parallelise
+    # for i in range(0, len(query), 1000):
+    #     print("Current start: {}".format(i))
+    #     start = i
+    #     end = start+1000
+    #     if (end > len(query)):
+    #         end = len(query)
+    #     iter_preds = gp.predict_class(query[start:end])
+    #     predictions[start:end] = iter_preds
+        
+    # gp.predict_class(query)
+    #########################################################################################################
+
+    #################################### Test performance on bathy data  ####################################
+    # size = 1000
     # print("For even split")
     # # idx = mini_batch_idxs(labels_simple, size, 'even')
     # # s1 = classification_bathy_testing(features_s[idx], labels_simple[idx])
     # s1s = []
-    # for i in range(10):
+    # for i in range(100):
+    #     print("Round {} for even".format(i))
     #     idx = mini_batch_idxs(labels_simple, size, 'even')
     #     s1s.append(classification_bathy_testing(features_s[idx], labels_simple[idx]))
 
-
     # print("For stratified split")
-    # idx = mini_batch_idxs(labels_simple, size, 'stratified')
-    # s2 = classification_bathy_testing(features_s[idx], labels_simple[idx])
+    # # idx = mini_batch_idxs(labels_simple, size, 'stratified')
+    # # s2 = classification_bathy_testing(features_s[idx], labels_simple[idx])
     # s2s = []
-    # for i in range(10):
+    # for i in range(100):
+    #     print("Round {} for stratified".format(i))
     #     idx = mini_batch_idxs(labels_simple, size, 'stratified')
     #     s2s.append(classification_bathy_testing(features_s[idx], labels_simple[idx]))
 
     # print(np.average(s1s))
     # print(np.average(s2s))
+    #########################################################################################################
 
     # for feature_set in feature_perms:
     #     f1 = classification_bathy_testing(feature_set[idx], labels_simple[idx])
@@ -282,6 +305,7 @@ if __name__ == "__main__":
     # classification_bathy_testing(features, labels_simple, 200)
 
 
+    ########################################## Compare other Algos ###########################################
     # classifiers = [
     #         # neighbors.KNeighborsClassifier(n_neighbors=5),                  
     #         # LogisticRegression(),                                           
@@ -294,11 +318,6 @@ if __name__ == "__main__":
     # rf = RandomForestClassifier()
     # y_ = rf.fit(X_train, y_train).predict(X_test)
 
-    # Visualisation
-    # x_bins_training, y_bins_training = list(set(bath_locations[:,0])), list(set(bath_locations[:,1]))
-    vis.show_map(qp_locations, query[:,2], x_bins, y_bins, display=False)
-    # vis.show_map(bath_locations, labels, x_bins_training, y_bins_training)
-
     # 10-fold cross-validation for all
     # results = []
     # for classifier in classifiers:
@@ -307,6 +326,13 @@ if __name__ == "__main__":
     # # 10-fold cross-validation for all
     # for classifier in classifiers:
     #     cross_validate_algo(features, labels, 10, classifier)
+    #########################################################################################################
+
+    ############################################ Visualisation #############################################
+    # x_bins_training, y_bins_training = list(set(bath_locations[:,0])), list(set(bath_locations[:,1]))
+    # vis.show_map(qp_locations, query[:,2], x_bins, y_bins, display=False)
+    # vis.show_map(bath_locations, labels, x_bins_training, y_bins_training)
+    #########################################################################################################
 
     # classification_dummy_testing()
     pass
