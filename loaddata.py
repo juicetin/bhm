@@ -233,8 +233,9 @@ if __name__ == "__main__":
 
     # NOTE _s suffix kept here for clarity
     print("Scaling features...")
-    features_s = scale(features)
-    query_s = scale(query)
+    # features_s = scale(features)
+    features_sn = scale(normalize(features))
+    query_sn = scale(normalize(query))
 
     # labels = np.array(labels)
     labels_simple = summarised_labels(labels)
@@ -250,44 +251,45 @@ if __name__ == "__main__":
     # feature_perms = [features_s, features_ns, features_sn]
 
     ########################################### Actual prediction ###########################################
-    # size = 1000
-    # idx = mini_batch_idxs(labels_simple, size, 'even')
-    # gp = GaussianProcess()
-    # gp.fit_class(features_s[idx], labels_simple[idx])
-    # predictions = np.full(len(query), -1)
+    size = 100
+    idx = mini_batch_idxs(labels_simple, size, 'even')
+    gp = GaussianProcess()
+    gp.fit_class(features_sn[idx], labels_simple[idx])
+    predictions = np.full(len(query_sn), -1)
 
-    # # Incrementally predict. TODO embarassingly parallelise
-    # for i in range(0, len(query), 1000):
+    # Incrementally predict. TODO embarassingly parallelisable
+    # for i in range(0, len(query_sn), 1000):
     #     print("Current start: {}".format(i))
     #     start = i
     #     end = start+1000
-    #     if (end > len(query)):
-    #         end = len(query)
-    #     iter_preds = gp.predict_class(query[start:end])
+    #     if (end > len(query_sn)):
+    #         end = len(query_sn)
+    #     iter_preds = gp.predict_class(query_sn[start:end])
     #     predictions[start:end] = iter_preds
-        
-    # gp.predict_class(query)
+      
+    # gp.predict_class(query_sn)
     #########################################################################################################
 
     #################################### Test performance on bathy data  ####################################
-    # size = 1000
-    # print("For even split")
+    # size = 500
     # # idx = mini_batch_idxs(labels_simple, size, 'even')
-    # # s1 = classification_bathy_testing(features_s[idx], labels_simple[idx])
+    # # s10 = classification_bathy_testing(features_s[idx], labels_simple[idx])
+    # # s11 = classification_bathy_testing(features_sn[idx], labels_simple[idx])
+    # print("For even split")
     # s1s = []
     # for i in range(100):
     #     print("Round {} for even".format(i))
     #     idx = mini_batch_idxs(labels_simple, size, 'even')
-    #     s1s.append(classification_bathy_testing(features_s[idx], labels_simple[idx]))
+    #     s1s.append(classification_bathy_testing(features_sn[idx], labels_simple[idx]))
 
-    # print("For stratified split")
     # # idx = mini_batch_idxs(labels_simple, size, 'stratified')
-    # # s2 = classification_bathy_testing(features_s[idx], labels_simple[idx])
+    # # s2 = classification_bathy_testing(features_sn[idx], labels_simple[idx])
+    # print("For stratified split")
     # s2s = []
     # for i in range(100):
     #     print("Round {} for stratified".format(i))
     #     idx = mini_batch_idxs(labels_simple, size, 'stratified')
-    #     s2s.append(classification_bathy_testing(features_s[idx], labels_simple[idx]))
+    #     s2s.append(classification_bathy_testing(features_sn[idx], labels_simple[idx]))
 
     # print(np.average(s1s))
     # print(np.average(s2s))
@@ -331,7 +333,7 @@ if __name__ == "__main__":
     ############################################ Visualisation #############################################
     # x_bins_training, y_bins_training = list(set(bath_locations[:,0])), list(set(bath_locations[:,1]))
     # vis.show_map(qp_locations, query[:,2], x_bins, y_bins, display=False)
-    # vis.show_map(bath_locations, labels, x_bins_training, y_bins_training)
+    # vis.show_map(bath_locations, labels, x_bins_training, y_bins_training, display=False)
     #########################################################################################################
 
     # classification_dummy_testing()

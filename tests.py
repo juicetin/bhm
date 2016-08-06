@@ -11,7 +11,7 @@ import math
 class TestGPMethods(unittest.TestCase):
 
     def test_multi_length_scale(self):
-        print("Testing if pre-processing of arrays to account for multiple length scales before using cdist is equivalent to the 'dumb' method\n")
+        print("\nTesting if pre-processing of arrays to account for multiple length scales before using cdist is equivalent to the 'dumb' method\n")
         gp = GaussianProcess()
         vec = np.random.rand(7,7)
         l_scales = np.random.rand(7)
@@ -26,7 +26,7 @@ class TestGPMethods(unittest.TestCase):
         np_test.assert_almost_equal(SE_term_lib, SE_term)
 
     def test_dK_dl_equivalence(self):
-        print("Testing if 'fast' creation of dK_dls is equivalent to using sympy matrix differentiation\n")
+        print("\nTesting if 'fast' creation of dK_dls is equivalent to using sympy matrix differentiation\n")
 
         # Setup
         gp = GaussianProcess()
@@ -62,6 +62,16 @@ class TestGPMethods(unittest.TestCase):
 
         # Check float equalities
         self.assertEqual(True, np.allclose(eval_lib, eval_cf))
+
+    def test_index_splitting(self):
+        print("\nTesting that indexes are split up properly based on cores/length")
+
+        gp = GaussianProcess()
+        idxs = gp.parallelism_indexes(100, 3)
+        self.assertEqual([(0,33), (33,66), (66,100)], idxs)
+
+        idxs = gp.parallelism_indexes(5, 3)
+        self.assertEqual([(0,1), (1,2), (2,5)], idxs)
 
 if __name__ == '__main__':
     unittest.main()

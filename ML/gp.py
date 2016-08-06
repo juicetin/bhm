@@ -2,6 +2,9 @@ import sys
 import math
 from datetime import datetime
 
+import multiprocessing as mp
+from multiprocessing import Pool
+
 # Numpy
 import numpy as np
 from numpy import linalg
@@ -332,8 +335,29 @@ class GaussianProcess:
             self.y = y
         print()
 
-    def predict_class(self, x, keep_probs=False):
-        # print("Original classes: {}".format(self.y))
+    def parallelism_indexes(self, length, blocks):
+        block_size = int(length/blocks)
+        idxs = []
+        for i in range(blocks):
+            idxs.append((i*block_size, (i+1)*block_size))
+        idxs[-1] = (idxs[-1][0], length)
+        return idxs
+
+    def predict_class_parallel(self, x, keep_probs):
+
+        # Set up the parallel jobs on separate processes, to overcome 
+        # Python's GIL for proper parallelisation
+        nprocs = mp.cpu_count() - 1
+        jobs = self.parallelism_indexes(x.shape[0], nprocs)
+        args = [(x[start:end], keep_probs) for start, end in jobs]
+        predict_results = Pool(nprocs).starmap(self.predict_class, args)
+        return np.concatenate(predict_results, axis=0)
+
+    def predict_class(self, x, keep_probs=False, parallel=False):
+
+        # Split predict job over number of cores available-1!
+        if parallel == True:
+            return self.predict_class_parallel(x, keep_probs)
 
         # Copy y for modification and resetting/restoring
         y = np.copy(self.y)
