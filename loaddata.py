@@ -23,10 +23,11 @@ from ML.validation import cross_validate_algo
 from ML.knn import kNN
 from ML.random_forests import rf
 from ML.logistic_regression import lr
-from ML.gp import GaussianProcess
+from ML.gp.gp import GaussianProcess
+from ML.gp.poe import PoGPE
+from ML import helpers
 
 import visualisation as vis
-
 
 # Load all the data
 def load_training_data():
@@ -63,8 +64,8 @@ def mini_batch_idxs(labels, point_count, split_type):
         # Find how many of each class to generate
         uniq_classes = np.unique(labels)
         num_classes = len(uniq_classes)
-        class_size = point_count/num_classes
-        class_sizes = np.full(num_classes, class_size)
+        class_size = int(point_count/num_classes)
+        class_sizes = np.full(num_classes, class_size, dtype='int64')
 
         # Adjust for non-divisiblity
         rem = point_count % class_size
@@ -126,7 +127,6 @@ def regression_dummy_testing():
     a = np.array([i for i in range(1,10)]).reshape(3,3)
     b = np.array([2,2,2])
 
-    from ML.gp import GaussianProcess
     # from sklearn.gaussian_process import GaussianProcess
     gp = GaussianProcess()
     X = np.array([-1.50,-1.00,-0.75,-0.40,-0.25,0.00])
@@ -250,12 +250,42 @@ if __name__ == "__main__":
     # [0.72739502569246961, 0.71183799527284519, 0.65632134135368103]
     # feature_perms = [features_s, features_ns, features_sn]
 
-    ########################################### Actual prediction ###########################################
-    size = 100
-    idx = mini_batch_idxs(labels_simple, size, 'even')
+    ########################################### Product of Experts ###########################################
+    # gp = PoGPE()
     gp = GaussianProcess()
-    gp.fit_class(features_sn[idx], labels_simple[idx])
-    predictions = np.full(len(query_sn), -1)
+    # size = 3800
+    # idx = mini_batch_idxs(labels_simple, size, 'even')
+    idx = np.load('data/semi-optimal-1000-subsample.npy')
+    rem_idx = np.array(list(set(np.arange(16502)) - set(idx)))
+    gp.fit(features_sn[idx], labels_simple[idx])
+    means, var = gp.predict(features_sn[rem_idx], keep_probs=True)
+    #########################################################################################################
+
+    ########################################### Actual prediction ###########################################
+    # size = 200
+    # # idx = np.load('data/semi-optimal-500-subsample.npy')
+    # idx = mini_batch_idxs(labels_simple, size, 'even')
+    # rem_idx = np.array(list(set(np.arange(16502)) - set(idx)))
+    # gp = GaussianProcess()
+    # gp.fit_class(features_sn[idx], labels_simple[idx])
+    # preds = gp.predict_class(features_sn[rem_idx], keep_probs=True, parallel=True)
+    # score = np.average(gp.roc_auc_score_multi(labels_simple[rem_idx], preds))
+
+    # best_score = 0
+    # for i in range(20):
+    #     size = 1000
+    #     idx = mini_batch_idxs(labels_simple, size, 'even')
+    #     rem_idx = np.array(list(set(np.arange(16502)) - set(idx)))
+    #     gp = GaussianProcess()
+    #     gp.fit_class(features_sn[idx], labels_simple[idx])
+    #     # predictions = np.full(len(query_sn), -1, dtype='int64')
+    #     preds = gp.predict_class(features_sn[rem_idx], keep_probs=True, parallel=True)
+    #     score = np.average(gp.roc_auc_score_multi(labels_simple[rem_idx], preds))
+    #     print("Average AUROC for this round: {}".format(score))
+
+    #     if score > best_score:
+    #         best_score = score
+    #         best_idxs = idx
 
     # Incrementally predict. TODO embarassingly parallelisable
     # for i in range(0, len(query_sn), 1000):

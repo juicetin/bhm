@@ -2,8 +2,14 @@ import sys
 import math
 from datetime import datetime
 
+from collections import OrderedDict
+
 import multiprocessing as mp
 from multiprocessing import Pool
+
+# Project-internals
+from ML.helpers import partition_indexes
+from ML.helpers import sigmoid
 
 # Numpy
 import numpy as np
@@ -19,10 +25,6 @@ from sympy.utilities.lambdify import lambdify, implemented_function
 from scipy.optimize import minimize
 from scipy.spatial.distance import cdist
 from scipy.stats import norm
-
-# Sklearn
-from sklearn.metrics import f1_score
-from sklearn.metrics import roc_auc_score
 
 # TODO when doing K(X, X), simply use (n_err^2)I instead of KroneckerDelta
 
@@ -45,9 +47,8 @@ class GaussianProcess:
     def __init__(self):
         pass
 
-    def derivs(self, data_sym, f_err_sym, l_scales_sym, n_err_sym):
-        2*f_err_sym 
-
+    # Regression fit
+    # NOTE unneeded, broken
     # def fit(self, X, y):
 
     #     # Set basic data
@@ -80,22 +81,16 @@ class GaussianProcess:
     #     self.alpha = linalg.solve(self.L.T, (linalg.solve(self.L, self.y)))
 
     def L_create(self, X, f_err, l_scales, n_err):
-        self.f_err = f_err
-        self.l_scales = l_scales
-        self.n_err = n_err
-        self.X_1 = X
 
         m = self.K_se(X, X, f_err, l_scales) + n_err**2 * np.identity(X.shape[0])
         m = np.array(m, dtype=np.float64)
         return linalg.cholesky(m)
-        # return linalg.cholesky(self.K_se(X, X, f_err, l_scales) 
-        #         + float(n_err**2) * np.identity(X.shape[0]))
 
-    def predict(self, x):
-        ks = self.K_se(self.X, x, self.f_err, self.l_scales)
-        fs_mean = ks.T.dot(self.alpha)
-        v = linalg.solve(self.L, ks)
-        var = np.diag(self.K_se(x, x, self.f_err, self.l_scales) - v.T.dot(v))
+    def predict_reg(self, x, L, alpha, f_err, l_scales):
+        ks = self.K_se(self.X, x, f_err, l_scales)
+        fs_mean = ks.T.dot(alpha)
+        v = linalg.solve(L, ks)
+        var = np.diag(self.K_se(x, x, f_err, l_scales) - v.T.dot(v))
         return fs_mean, var
 
     def dist(self, x1, x2, l_scales):
@@ -154,51 +149,48 @@ class GaussianProcess:
 
         return np.array([dK_df] + dK_dls + [dK_dn], dtype=np.float64)
 
-    # def SE_der(self, args):
-    #     # TODO fix - get around apparent bug
-    #     # if len(args.shape) != 1:
-    #     #     # print(args)
-    #     #     args = args[0]
+    def SE_der(self, args):
+        # TODO fix - get around apparent bug
+        # if len(args.shape) != 1:
+        #     # print(args)
+        #     args = args[0]
 
-    #     [f_err, l_scale, n_err] = args
-    #     # TODO use alpha calculated from SE_NLL
+        [f_err, l_scale, n_err] = args
+        # TODO use alpha calculated from SE_NLL
 
-    #     L = self.L_create(self.X, f_err, l_scale, n_err)
-    #     alpha = linalg.solve(L.T, (linalg.solve(L, self.y))) # save for use with derivative func
-    #     aaT = alpha.dot(alpha.T)
-    #     K_inv = np.linalg.inv(L.T).dot(np.linalg.inv(L))
+        L = self.L_create(self.X, f_err, l_scale, n_err)
+        alpha = linalg.solve(L.T, (linalg.solve(L, self.y))) # save for use with derivative func
+        aaT = alpha.dot(alpha.T)
+        K_inv = np.linalg.inv(L.T).dot(np.linalg.inv(L))
 
-    #     # Calculate dK/dtheta over each hyperparameter
-    #     eval_dK_dthetas = self.eval_dK_dthetas(f_err, l_scale, n_err)
+        # Calculate dK/dtheta over each hyperparameter
+        eval_dK_dthetas = self.eval_dK_dthetas(f_err, l_scale, n_err)
 
-    #     # Incorporate each dK/dt into gradient
-    #     derivatives = [float(-0.5 * np.matrix.trace((aaT - K_inv).dot(dK_dtheta))) for dK_dtheta in eval_dK_dthetas]
-    #     return np.array(derivatives)
+        # Incorporate each dK/dt into gradient
+        derivatives = [float(-0.5 * np.matrix.trace((aaT - K_inv).dot(dK_dtheta))) for dK_dtheta in eval_dK_dthetas]
+        return np.array(derivatives)
 
-    # # Args is an array to allow for scipy.optimize
-    # def SE_NLL(self, args):
-    #     # TODO fix - get around apparent bug
-    #     if len(args.shape) != 1:
-    #         args = args[0]
+    # Args is an array to allow for scipy.optimize
+    def SE_NLL(self, args):
+        # TODO fix - get around apparent bug
+        if len(args.shape) != 1:
+            args = args[0]
 
-    #     [f_err, l_scale, n_err] = args
-    #     L = self.L_create(self.X, f_err, l_scale, n_err)
-    #     
-    #     alpha = linalg.solve(L.T, (linalg.solve(L, self.y))) # save for use with derivative func
-    #     nll = (
-    #         0.5 * self.y.T.dot(alpha) + 
-    #         0.5 * np.matrix.trace(L) + # sum of diagonal
-    #         0.5 * self.size * math.log(2*math.pi)
-    #             )
+        [f_err, l_scale, n_err] = args
+        L = self.L_create(self.X, f_err, l_scale, n_err)
+        
+        alpha = linalg.solve(L.T, (linalg.solve(L, self.y))) # save for use with derivative func
+        nll = (
+            0.5 * self.y.T.dot(alpha) + 
+            0.5 * np.matrix.trace(L) + # sum of diagonal
+            0.5 * self.size * math.log(2*math.pi)
+                )
 
-    #     return nll
+        return nll
 
     ####################################################
     ####################### PLSC #######################
     ####################################################
-
-    def sigmoid(self, x):
-        return 1/(1+np.exp(-x))
 
     #################### Negative LOO log predictive probability ####################
 
@@ -234,8 +226,6 @@ class GaussianProcess:
         d1 = datetime.now()
         
         self.count += 1
-        # print("Iterated [{}] times for current fitting...".format(self.count))
-        # print(self.count, end=" ", flush=True)
 
         f_err, l_scales, n_err, a, b = self.unpack_LLOO_args(args)
 
@@ -248,18 +238,11 @@ class GaussianProcess:
 
         r = a * mu + b
 
-        ####################### This block takes 99.75% of the entire derivative function's timeshare #######################
         K_i_diag = np.diag(K_inv)
-
-        # d3 = datetime.now()
         dK_dthetas = self.eval_dK_dthetas(f_err, l_scales, n_err) # ~99.7%
-        # param_time = datetime.now() - d3
-        # print("Time for eval dK_dts {}".format(param_time))
-
         Zs = np.array([K_inv.dot(dK_dtheta) for dK_dtheta in dK_dthetas])
         dvar_dthetas = [np.diag(Z.dot(K_inv))/K_i_diag**2 for Z in Zs] 
         dmu_dthetas = [Z.dot(alpha) / K_i_diag - alpha * dvar_dtheta for Z, dvar_dtheta in zip(Zs, dvar_dthetas)]
-        #####################################################################################################################
 
         pdf_on_cdf = norm.pdf(r) / norm.cdf(self.y * r)
 
@@ -286,18 +269,18 @@ class GaussianProcess:
         
         gradients = dLLOO_dthetas + [dLLOO_da] + [dLLOO_db]
 
-        # tottime = datetime.now() - d1
-        # print("Total time in LLOO_der: {}, % spent in params: {}".format(tottime, param_time/tottime*100))
         return np.array(gradients, dtype=np.float64)
 
     #################### Prediction ####################
 
     # Classification
-    def fit_class(self, X, y):
+    def fit(self, X, y):
 
         self.size = len(y)
         self.X = X
-        self.classifier_params = {}
+        self.classifier_params = OrderedDict()
+        # self.class_count = np.unique(y).shape[0]
+        self.class_count = 4
         params = ['f_err', 'l_scales', 'n_err', 'a', 'b']
 
         # Build OvA classifier for each unique class in y
@@ -323,97 +306,102 @@ class GaussianProcess:
             # res = minimize(self.LLOO, x0, method='bfgs')
             res = minimize(self.LLOO, x0, method='bfgs', jac=self.LLOO_der)
 
-
             # Set params for current binary regressor (classifier)
             for param, val in zip(params, res['x']):
                 self.classifier_params[c][param] = val
-
-            # print ("Iterations: {}".format(self.count))
-            # print("Current params: {}".format(self.classifier_params[c]))
 
             # Reset ys
             self.y = y
         print()
 
-    def parallelism_indexes(self, length, blocks):
-        block_size = int(length/blocks)
-        idxs = []
-        for i in range(blocks):
-            idxs.append((i*block_size, (i+1)*block_size))
-        idxs[-1] = (idxs[-1][0], length)
-        return idxs
-
+    # Parallelise class prediction across available cores
     def predict_class_parallel(self, x, keep_probs):
 
         # Set up the parallel jobs on separate processes, to overcome 
         # Python's GIL for proper parallelisation
         nprocs = mp.cpu_count() - 1
-        jobs = self.parallelism_indexes(x.shape[0], nprocs)
-        args = [(x[start:end], keep_probs) for start, end in jobs]
-        predict_results = Pool(nprocs).starmap(self.predict_class, args)
+        jobs = partition_indexes(x.shape[0], nprocs)
+        args = [(x[start:end], keep_probs, False) for start, end in jobs]
+        pool = Pool(processes=nprocs)
+        predict_results = pool.starmap(self.predict, args)
+        for results in predict_results:
+            print("This round")
+            print(results.shape)
+
+        if keep_probs == True:
+            # Concat along data points axis
+            return np.concatenate(predict_results, axis=2)
+
+        # Concat along class list axis
         return np.concatenate(predict_results, axis=0)
 
-    def predict_class(self, x, keep_probs=False, parallel=False):
+    # The 'extra' y_ parameter is to allow restriction of y for parallelisation
+    def predict(self, x, keep_probs=False, parallel=False, PoE=False):
 
         # Split predict job over number of cores available-1!
         if parallel == True:
             return self.predict_class_parallel(x, keep_probs)
 
         # Copy y for modification and resetting/restoring
-        y = np.copy(self.y)
 
-        # Generate squashed y precidtions
-        y_preds = np.array([
-            self.predict_class_single(x, y, label, params)
-            for label, params in self.classifier_params.items()
-        ])
+        # TODO vectorize 
+        # Vectorize calculation of predictions
+        # vec_pred_class_single = np.vectorize(self.predict_class_single)
+
+        # Generate squashed y precidtions in steps
+        if x.shape[0] > 5000:
+            y_preds = np.zeros((self.class_count, 2, x.shape[0]))
+            step = 2000
+
+            # Step through data and predict in chunks
+            for start in range(0, x.shape[0], step):
+                next_idx = start + 2000
+                end = next_idx if next_idx <= x.shape[0] else x.shape[0]
+                cur_preds = np.array([self.predict_class_single(x[start:end], label, params)
+                             for label, params in self.classifier_params.items()])
+                y_preds[:,:,start:end] = cur_preds
+
+        # Predict smaller datasets all at once
+        else:
+            y_preds = np.array([
+                self.predict_class_single(x, label, params)
+                for label, params in self.classifier_params.items()
+            ])
+
+        # Unpack means, variances
+        y_means, y_vars = y_preds[:,0], y_preds[:,1]
+
+        if PoE == True:
+            return y_means, y_vars
+
+        y_means_squashed = sigmoid(y_means)
 
         # Return raw OvA squashed probabilities per class (primarily for AUROC calcs)
         if keep_probs == True:
-            return y_preds
+            return y_means, y_vars
 
         # Return max squashed value for each data point representing class prediction
         return np.argmax(y_preds, axis=0)
 
-    def predict_class_single(self, x, y, label, params):
+    # Predict regression values in the binary class case
+    def predict_class_single(self, x, label, params):
         # Set parameters
-        self.f_err = params['f_err']
-        self.l_scales = params['l_scales']
-        self.n_err = params['n_err']
+        f_err = params['f_err']
+        l_scales = params['l_scales']
+        n_err = params['n_err']
 
         # Set y to binary one vs. all labels
-        self.y = np.array([1 if y_i == label else -1 for y_i in y])
+        y_ = np.copy(self.y)
+        y_[np.where(y_ != label)[0]] = -1
+        y_[np.where(y_ != -1)[0]] = 1
+        # y = np.array([1 if y_i == label else -1 for y_i in y])
 
         # Set L and alpha matrices
-        self.L = self.L_create(self.X, self.f_err, self.l_scales, self.n_err)
-        self.alpha = linalg.solve(self.L.T, (linalg.solve(self.L, self.y)))
+        L = self.L_create(self.X, f_err=f_err, l_scales=l_scales, n_err=n_err)
+        alpha = linalg.solve(L.T, (linalg.solve(L, y_)))
 
         # Get predictions of resulting mean and variances
-        y_pred, var = self.predict(x)
-        # sigma = np.sqrt(var)
-        # print(y_pred)
-        y_squashed = self.sigmoid(y_pred)
+        y_pred, y_var = self.predict_reg(x, L, alpha, f_err, l_scales)
 
-        # Restore y
-        self.y = y
+        return y_pred, y_var
 
-        return y_squashed
-
-    def score(self, y_, y):
-        # return sum(y_ == y)/len(y_)
-        return f1_score(y, y_, average='weighted')
-
-    def roc_auc_score_multi(self, y_actuals, y_preds):
-        # Calculate AUROC for each each binary class case
-        aurocs = np.zeros(y_preds.shape[0])
-        for cur_class, cur_ova_pred in enumerate(y_preds):
-            # Compare class *i* with the rest
-            cur_y_actual = np.copy(y_actuals)
-            cur_y_actual[np.where(cur_y_actual != cur_class)] = -1
-            cur_y_actual[np.where(cur_y_actual == cur_class)] = 1
-            cur_auroc = roc_auc_score(cur_y_actual, cur_ova_pred)
-            aurocs[cur_class] = cur_auroc
-
-        print("AUROC score for each class: {}".format(aurocs))
-        # TODO weight AUROCS in future?
-        return np.average(aurocs)

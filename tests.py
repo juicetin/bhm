@@ -1,4 +1,4 @@
-from ML.gp import GaussianProcess
+from ML.gp.gp import GaussianProcess
 from datetime import datetime
 import numpy as np
 import unittest
@@ -67,10 +67,10 @@ class TestGPMethods(unittest.TestCase):
         print("\nTesting that indexes are split up properly based on cores/length")
 
         gp = GaussianProcess()
-        idxs = gp.parallelism_indexes(100, 3)
+        idxs = gp.partition_indexes(100, 3)
         self.assertEqual([(0,33), (33,66), (66,100)], idxs)
 
-        idxs = gp.parallelism_indexes(5, 3)
+        idxs = gp.partition_indexes(5, 3)
         self.assertEqual([(0,1), (1,2), (2,5)], idxs)
 
 if __name__ == '__main__':

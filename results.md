@@ -43,13 +43,17 @@ X, y = datasets.make_classification(n_samples=100,
 | None (unbounded)   | As above                    | 04:04:26          | 02:42:00             | 00:23:94            |
 
 # Class sampling - is even or stratified split of the training data better?
-| Total sample size | Split method | Test method | Number of runs | Average AUROC | Notes               |
-|:-----------------:|:------------:|:-----------:|:--------------:|:-------------:|---------------------|
-|        500        |     Even     |    10F-CV   |       10       |    0.74197    | Coords not included |
-|        500        |  Stratified  |    10F-CV   |       10       |    0.70983    | Coords not included |
-|        500        |     Even     |    10F-CV   |        1       |    0.82214    | Coords included     |
-|        500        |  Stratified  |    10F-CV   |        1       |    0.77466    | Coords included     |
-|        500        |     Even     |    10F-CV   |       10       |    0.86534    | Coords included     |
-|        500        |  Stratified  |    10F-CV   |       10       |    0.80136    | Coords included     |
-|        1000       |     Even     |    10F-CV   |       100      |       ?       |
-|        1000       |  Stratified  |    10F-CV   |       100      |       ?       |
+Note that for the 500, 1000 test cases below, they are all using the same 500/1000 respectively.
+
+| Total sample size   | Split method   | Method   | Test method   | Number of runs   | Average AUROC   | Notes                 | F1-Score   |
+| :-----------------: | :------------: | :------: | :-----------: | :--------------: | :-------------: | --------------------- | :--------: |
+| 500                 | Even           | GP       | 10F-CV        | 10               | 0.74197         | Coords not included   |
+| 500                 | Stratified     | GP       | 10F-CV        | 10               | 0.70983         | Coords not included   |
+| 500                 | Even           | GP       | 10F-CV        | 1                | 0.82214         | Coords included       |
+| 500                 | Stratified     | GP       | 10F-CV        | 1                | 0.77466         | Coords included       |
+| 500                 | Even           | GP       | 10F-CV        | 10               | 0.86534         | Coords included       |
+| 500                 | Stratified     | GP       | 10F-CV        | 10               | 0.80136         | Coords included       |
+| 1000                | Even           | GP       | 10F-CV        | 100              | ?               |
+| 1000                | Stratified     | GP       | 10F-CV        | 100              | ?               |
+| 1000                | Even           | GP       | All points    | 1                | 0.86570         |                       | 0.55450    |
+| 1000                | Even           | PoEGP    | All points    | 1                | 0.76736         |                       | 0.64515    |
