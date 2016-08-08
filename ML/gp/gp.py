@@ -323,10 +323,11 @@ class GaussianProcess:
         jobs = partition_indexes(x.shape[0], nprocs)
         args = [(x[start:end], keep_probs, False) for start, end in jobs]
         pool = Pool(processes=nprocs)
+        print("Distributing predictions across {} processes...".format(nprocs))
         predict_results = pool.starmap(self.predict, args)
-        for results in predict_results:
-            print("This round")
-            print(results.shape)
+        # for results in predict_results:
+        #     print("This round")
+        #     print(results.shape)
 
         if keep_probs == True:
             # Concat along data points axis

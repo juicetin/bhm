@@ -1,23 +1,25 @@
 from ML.gp.gp import GaussianProcess
 from ML.helpers import partition_indexes
+from ML.gp.gp_ensemble_estimators import GP_ensembles
 
 import numpy as np
 import math
 
-class GPoGPE(PoGPE):
-    def __init__(self):
-        pass
+class GPoGPE(GP_ensembles):
+    def __init__(self, args):
+        super().__init__(args)
 
     def predict(self, x, keep_probs=False):
         means_gp, vars_gp = self.gp_means_vars(x)
 
         # Expert contributions 
-        expert_count = gp.gp_experts.shape[0]
-        betas = np.full(expert_count, 1/expert_count)
+        expert_count = self.gp_experts.shape[0]
+        betas = np.full(x.shape[0], 1/expert_count)
 
         # These contain a row for each binary class case (OvR)
-        vars_poe = np.sum(betas * vars_gp, axis=0)  # vars
-        means_poe = vars_poe**2 * np.sum(betas * vars_gp**(-2) * means_gp, axis=0)  # means
+        # NOTE betas can only be factored out as it is consistent throughout
+        vars_poe = betas * np.sum(vars_gp, axis=0)  # vars
+        means_poe = vars_poe**2 * betas * np.sum(vars_gp**(-2) * means_gp, axis=0)  # means
 
         if keep_probs == True:
             return means_poe, vars_poe

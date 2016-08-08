@@ -56,4 +56,4 @@ Note that for the 500, 1000 test cases below, they are all using the same 500/10
 | 1000                | Even           | GP       | 10F-CV        | 100              | ?               |
 | 1000                | Stratified     | GP       | 10F-CV        | 100              | ?               |
 | 1000                | Even           | GP       | All points    | 1                | 0.86570         |                       | 0.55450    |
-| 1000                | Even           | PoEGP    | All points    | 1                | 0.76736         |                       | 0.64515    |
+| 1000                | Even           | PoEGP    | All points    | 1                | 0.76736         | Expert size: 200      | 0.64515    |

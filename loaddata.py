@@ -25,6 +25,7 @@ from ML.random_forests import rf
 from ML.logistic_regression import lr
 from ML.gp.gp import GaussianProcess
 from ML.gp.poe import PoGPE
+from ML.gp.gpoe import GPoGPE
 from ML import helpers
 
 import visualisation as vis
@@ -251,14 +252,35 @@ if __name__ == "__main__":
     # feature_perms = [features_s, features_ns, features_sn]
 
     ########################################### Product of Experts ###########################################
-    # gp = PoGPE()
     gp = GaussianProcess()
-    # size = 3800
-    # idx = mini_batch_idxs(labels_simple, size, 'even')
+    gp1 = PoGPE(200)
+    gp2 = GPoGPE(200)
+
+    # size = 13000
+    # idx = mini_batch_idxs(labels_simple, size, 'stratified')
+
     idx = np.load('data/semi-optimal-1000-subsample.npy')
     rem_idx = np.array(list(set(np.arange(16502)) - set(idx)))
-    gp.fit(features_sn[idx], labels_simple[idx])
-    means, var = gp.predict(features_sn[rem_idx], keep_probs=True)
+
+    # gp.fit(features_sn[idx], labels_simple[idx])
+    # means, var = gp.predict(features_sn[rem_idx], keep_probs=True)
+    # auroc = helpers.roc_auc_score_multi(labels_simple[rem_idx], means)
+    # score = helpers.score(labels_simple[rem_idx], np.argmax(means, axis=0))
+
+    gp1.fit(features_sn[idx], labels_simple[idx])
+    means1, var1 = gp1.predict(features_sn[rem_idx], keep_probs=True)
+    auroc1 = helpers.roc_auc_score_multi(labels_simple[rem_idx], means1)
+    score1 = helpers.score(labels_simple[rem_idx], np.argmax(means1, axis=0))
+
+    gp2.fit(features_sn[idx], labels_simple[idx])
+    means2, var2 = gp2.predict(features_sn[rem_idx], keep_probs=True)
+    auroc2 = helpers.roc_auc_score_multi(labels_simple[rem_idx], means2)
+    score2 = helpers.score(labels_simple[rem_idx], np.argmax(means2, axis=0))
+
+    # print(auroc, score)
+    print(auroc1, score1)
+    print(auroc2, score2)
+
     #########################################################################################################
 
     ########################################### Actual prediction ###########################################
