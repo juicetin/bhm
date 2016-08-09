@@ -5,7 +5,7 @@ from ML.gp.gp_ensemble_estimators import GP_ensembles
 import numpy as np
 import math
 
-class PoGPE(GP_ensembles):
+class rBCM(GP_ensembles):
     def __init__(self, args):
         super().__init__(args)
 
@@ -14,10 +14,13 @@ class PoGPE(GP_ensembles):
 
         # These contain a row for each binary class case (OvR)
         #   AFTER summing along axis 0 (each of the local experts)
-        vars_poe = np.sum(vars_gp, axis=0)  # vars
-        means_poe = vars_poe * np.sum(vars_gp**(-2) * means_gp, axis=0)  # means
+        betas = []
+        M = vars_gp.shape[0]
+        vars_bcm_sm2 = np.sum(vars_gp**(-2) + (1-M) * vars_gp**(-2), axis=0) # vars
+        means_bcm = vars_bcm**2 * np.sum(vars_gp**(-2) * means_gp, axis=0)  # means
 
         if keep_probs == True:
-            return means_poe, vars_poe
+            return means_bcm, vars_bcm
 
-        return np.argmax(means_poe, axis=0)
+        return np.argmax(means_bcm, axis=0)
+
