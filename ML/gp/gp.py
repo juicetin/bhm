@@ -57,6 +57,7 @@ class GaussianProcess:
 
         # Pre-calculate derivatives of inverted matrix to substitute values in the Squared Exponential NLL gradient
         # self.f_err_sym, self.l_scale_sym, self.n_err_sym = sp.symbols("f_err, l_scale, n_err")
+        # TODO fix this! do it analytically
         self.f_err_sym, self.n_err_sym = sp.symbols("f_err, n_err")
         self.l_scale_sym = sp.MatrixSymbol('l', 1, self.size)
         m = sp.Matrix(self.f_err_sym**2 * math.e**(-0.5 * self.dist(self.X/self.l_scale_sym, self.X/self.l_scale_sym)) 
@@ -79,74 +80,12 @@ class GaussianProcess:
         self.K_inv = np.linalg.inv(self.L.T).dot(np.linalg.inv(self.L))
         self.alpha = linalg.solve(self.L.T, (linalg.solve(self.L, self.y)))
 
-    def L_create(self, X, f_err, l_scales, n_err):
-
-        m = self.K_se(X, X, f_err, l_scales) + n_err**2 * np.identity(X.shape[0])
-        m = np.array(m, dtype=np.float64)
-        return linalg.cholesky(m)
-
     def predict_regression(self, x, L, alpha, f_err, l_scales):
         ks = self.K_se(self.X, x, f_err, l_scales)
         fs_mean = ks.T.dot(alpha)
         v = linalg.solve(L, ks)
         var = np.diag(self.K_se(x, x, f_err, l_scales) - v.T.dot(v))
         return fs_mean, var
-
-    def dist(self, x1, x2, l_scales):
-        # Dividing by length scale first before passing into cdist to
-        #   accounts for different length scale for each dimension
-        return cdist(x1/l_scales, x2/l_scales, 'sqeuclidean')
-
-    # NOTE cdist can't deal with sympy symbols :(
-    def sqeucl_dist(self, x, xs, x_len=0, xs_len=0):
-        m = np.sum(np.power(
-            np.repeat(x[:,None,:], len(x), axis=1) - 
-            np.resize(xs, (len(x), xs.shape[0], xs.shape[1])), 
-            2), axis=2)
-
-        return m
-
-    def K_se(self, x1, x2, f_err, l_scales):
-        m = self.dist(x1, x2, l_scales)
-        return f_err**2 * np.exp(-0.5 * m)
-
-    def dK_df_eval(self, m, f_err, l_scales):
-        return 2*f_err * m
-
-    def dK_dls_eval(self, k, f_err, l_scales):
-
-        k_ = np.copy(k)
-        k_ = f_err**2 * k_
-
-        # Repeats each row along axis=1
-        M = np.repeat(self.X[:,None,:], len(self.X), axis=1) 
-
-        # Separates Ms into every dimension of original dataset
-        M_ds = np.array([[M[:,:,i], M[:,:,i].T] for i in range(self.X.shape[1])]) 
-
-        # Derivative over length scale for each dimension
-        dK_dls = [l_scale**(-3) * (m-mt)**2 * k_ for l_scale, (m, mt) in zip(l_scales, M_ds)]
-
-        return dK_dls
-
-    def dK_dn_eval(self, n_err):
-        dK_dn = np.diag(np.array([2*n_err]*self.X.shape[0]))
-        return dK_dn
-
-    # Evaluates each dK_dtheta pre-calculated symbolic lambda with current iteration's hyperparameters
-    def eval_dK_dthetas(self, f_err, l_scales, n_err):
-        # Reshape length scales into a 1x matrix
-        l_scales = np.array(l_scales)
-
-        # exp(...) block of squared exponential function
-        m = np.exp(-0.5 * self.dist(self.X, self.X, l_scales))
-
-        # Evaluate all the partial derivatives
-        dK_df = self.dK_df_eval(m, f_err, l_scales)
-        dK_dls = self.dK_dls_eval(m, f_err, l_scales)
-        dK_dn = self.dK_dn_eval(n_err)
-
-        return np.array([dK_df] + dK_dls + [dK_dn], dtype=np.float64)
 
     def SE_der(self, args):
         # TODO fix - get around apparent bug
@@ -218,8 +157,6 @@ class GaussianProcess:
 
         return LLOO
 
-    #################### Derivative ####################
-
     # NOTE likely incorrect - currently doesn't recalculate K per datapoint
     def LLOO_der(self, args):
         d1 = datetime.now()
@@ -270,21 +207,14 @@ class GaussianProcess:
 
         return np.array(gradients, dtype=np.float64)
 
-    #################### Prediction ####################
-    def fit(self, X, y):kj
-        if type(y[0]) == np.int64
-                                                    
     # Classification
     def fit_classification(self, X, y):
-
-        if type(y[0]) == np.int64:
-            return self.fit_regression(X, y)
 
         self.size = len(y)
         self.X = X
         self.classifier_params = OrderedDict()
-        # self.class_count = np.unique(y).shape[0]
-        self.class_count = 4
+        self.class_count = np.unique(y).shape[0]
+        # self.class_count = 4
         params = ['f_err', 'l_scales', 'n_err', 'a', 'b']
 
         # Build OvA classifier for each unique class in y
@@ -318,36 +248,9 @@ class GaussianProcess:
             self.y = y
         print()
 
-    # Parallelise class prediction across available cores
-    def predict_parallel(self, x, keep_probs):
-
-        # Set up the parallel jobs on separate processes, to overcome 
-        # Python's GIL for proper parallelisation
-        nprocs = mp.cpu_count() - 1
-        jobs = partition_indexes(x.shape[0], nprocs)
-        args = [(x[start:end], keep_probs, False) for start, end in jobs]
-        pool = Pool(processes=nprocs)
-        print("Distributing predictions across {} processes...".format(nprocs))
-        predict_results = pool.starmap(self.predict, args)
-        # for results in predict_results:
-        #     print("This round")
-        #     print(results.shape)
-
-        if keep_probs == True:
-            # Concat along data points axis
-            return np.concatenate(predict_results, axis=2)
-
-        # Concat along class list axis
-        return np.concatenate(predict_results, axis=0)
 
     # The 'extra' y_ parameter is to allow restriction of y for parallelisation
-    def predict(self, x, keep_probs=False, parallel=False, PoE=False):
-
-        # Split predict job over number of cores available-1!
-        if parallel == True:
-            return self.predict_parallel(x, keep_probs)
-
-        # Copy y for modification and resetting/restoring
+    def predict_class(self, x, keep_probs=False):
 
         # TODO vectorize 
         # Vectorize calculation of predictions
@@ -376,14 +279,12 @@ class GaussianProcess:
         # Unpack means, variances
         y_means, y_vars = y_preds[:,0], y_preds[:,1]
 
-        if PoE == True:
+        # Return raw OvA squashed probabilities per class 
+        #   (for AUROC scores and GP ensemble methods - PoE, BCM, etc.)
+        if keep_probs == True:
             return y_means, y_vars
 
         y_means_squashed = sigmoid(y_means)
-
-        # Return raw OvA squashed probabilities per class (primarily for AUROC calcs)
-        if keep_probs == True:
-            return y_means, y_vars
 
         # Return max squashed value for each data point representing class prediction
         return np.argmax(y_preds, axis=0)
@@ -410,3 +311,103 @@ class GaussianProcess:
 
         return y_pred, y_var
 
+    ############################### Derivatives ################################
+    def L_create(self, X, f_err, l_scales, n_err):
+
+        m = self.K_se(X, X, f_err, l_scales) + n_err**2 * np.identity(X.shape[0])
+        m = np.array(m, dtype=np.float64)
+        return linalg.cholesky(m)
+
+    def dist(self, x1, x2, l_scales):
+        # Dividing by length scale first before passing into cdist to
+        #   accounts for different length scale for each dimension
+        return cdist(x1/l_scales, x2/l_scales, 'sqeuclidean')
+
+    def K_se(self, x1, x2, f_err, l_scales):
+        m = self.dist(x1, x2, l_scales)
+        return f_err**2 * np.exp(-0.5 * m)
+
+    def dK_df_eval(self, m, f_err, l_scales):
+        return 2*f_err * m
+
+    def dK_dls_eval(self, k, f_err, l_scales):
+
+        k_ = np.copy(k)
+        k_ = f_err**2 * k_
+
+        # Repeats each row along axis=1
+        M = np.repeat(self.X[:,None,:], len(self.X), axis=1) 
+
+        # Separates Ms into every dimension of original dataset
+        M_ds = np.array([[M[:,:,i], M[:,:,i].T] for i in range(self.X.shape[1])]) 
+
+        # Derivative over length scale for each dimension
+        dK_dls = [l_scale**(-3) * (m-mt)**2 * k_ for l_scale, (m, mt) in zip(l_scales, M_ds)]
+
+        return dK_dls
+
+    def dK_dn_eval(self, n_err):
+        dK_dn = np.diag(np.array([2*n_err]*self.X.shape[0]))
+        return dK_dn
+
+    # Evaluates each dK_dtheta pre-calculated symbolic lambda with current iteration's hyperparameters
+    def eval_dK_dthetas(self, f_err, l_scales, n_err):
+        # Reshape length scales into a 1x matrix
+        l_scales = np.array(l_scales)
+
+        # exp(...) block of squared exponential function
+        m = np.exp(-0.5 * self.dist(self.X, self.X, l_scales))
+
+        # Evaluate all the partial derivatives
+        dK_df = self.dK_df_eval(m, f_err, l_scales)
+        dK_dls = self.dK_dls_eval(m, f_err, l_scales)
+        dK_dn = self.dK_dn_eval(n_err)
+
+        return np.array([dK_df] + dK_dls + [dK_dn], dtype=np.float64)
+
+
+    ################################## Generic ##################################
+    def fit(self, X, y):
+        # Class labels TODO account for more integer types properly
+        if type(y[0]) == np.int64:
+            self.gp_type = 'classification'
+            return self.fit_classification(X, y)
+    
+        # Continuous outputs
+        else:
+            self.gp_type = 'regression'
+            return self.fit_regression(X, y)
+
+    def predict(self, x, keep_probs=False, parallel=False):
+
+        # Split predict job over number of cores available-1!
+        if parallel == True:
+            return self.predict_parallel(x, keep_probs)
+
+        if self.gp_type == 'classification':
+            return self.predict_class(x, keep_probs)
+
+        if self.gp_type == 'regression':
+            return self.predict_regression(x)
+
+    # Parallelise class prediction across available cores
+    def predict_parallel(self, x, keep_probs):
+
+        # Set up the parallel jobs on separate processes, to overcome 
+        # Python's GIL for proper parallelisation
+        nprocs = mp.cpu_count() - 1
+        jobs = partition_indexes(x.shape[0], nprocs)
+        args = [(x[start:end], keep_probs, False) for start, end in jobs]
+        pool = Pool(processes=nprocs)
+        print("Distributing predictions across {} processes...".format(nprocs))
+        predict_results = pool.starmap(self.predict, args)
+        # for results in predict_results:
+        #     print("This round")
+        #     print(results.shape)
+
+        if keep_probs == True:
+            # Concat along data points axis
+            return np.concatenate(predict_results, axis=2)
+
+        # Concat along class list axis
+        return np.concatenate(predict_results, axis=0)

@@ -5,6 +5,7 @@ import unittest
 from numpy import testing as np_test
 from scipy.spatial.distance import cdist
 from sympy.utilities.autowrap import autowrap
+from ML.helpers import partition_indexes
 import sympy as sp
 import math
 
@@ -20,7 +21,7 @@ class TestGPMethods(unittest.TestCase):
         SE_term_lib = cdist(vec/l_scales, vec/l_scales, 'sqeuclidean')
 
         # Using custom function (to account for arbitrary objects)
-        SE_term = gp.sqeucl_dist(vec/l_scales, vec/l_scales)
+        SE_term = gp.dist(vec/l_scales, vec/l_scales)
         # SE_term = gp.se_term(vec, vec, l_scales)
 
         np_test.assert_almost_equal(SE_term_lib, SE_term)
@@ -67,7 +68,7 @@ class TestGPMethods(unittest.TestCase):
         print("\nTesting that indexes are split up properly based on cores/length")
 
         gp = GaussianProcess()
-        idxs = gp.partition_indexes(100, 3)
+        idxs = partition_indexes(100, 3)
         self.assertEqual([(0,33), (33,66), (66,100)], idxs)
 
         idxs = gp.partition_indexes(5, 3)
