@@ -6,6 +6,7 @@ from numpy import testing as np_test
 from scipy.spatial.distance import cdist
 from sympy.utilities.autowrap import autowrap
 from ML.helpers import partition_indexes
+from ML.helpers import sqeucl_dist
 import sympy as sp
 import math
 
@@ -21,7 +22,7 @@ class TestGPMethods(unittest.TestCase):
         SE_term_lib = cdist(vec/l_scales, vec/l_scales, 'sqeuclidean')
 
         # Using custom function (to account for arbitrary objects)
-        SE_term = gp.dist(vec/l_scales, vec/l_scales)
+        SE_term = gp.dist(vec, vec, l_scales)
         # SE_term = gp.se_term(vec, vec, l_scales)
 
         np_test.assert_almost_equal(SE_term_lib, SE_term)
@@ -47,7 +48,7 @@ class TestGPMethods(unittest.TestCase):
 
         # Build full K matrix
         scaled_data = vec/l_scales_sym
-        m = (f_err_sym**2 * math.e ** (-0.5 * gp.sqeucl_dist(vec/l_scales_sym, vec/l_scales_sym)) + 
+        m = (f_err_sym**2 * math.e ** (-0.5 * sqeucl_dist(vec/l_scales_sym, vec/l_scales_sym)) + 
             n_err_sym**2 * np.identity(vec.shape[0]))
         m = sp.Matrix(m)
 
@@ -71,7 +72,7 @@ class TestGPMethods(unittest.TestCase):
         idxs = partition_indexes(100, 3)
         self.assertEqual([(0,33), (33,66), (66,100)], idxs)
 
-        idxs = gp.partition_indexes(5, 3)
+        idxs = partition_indexes(5, 3)
         self.assertEqual([(0,1), (1,2), (2,5)], idxs)
 
 if __name__ == '__main__':

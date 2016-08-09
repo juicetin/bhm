@@ -60,3 +60,13 @@ def binarised_labels_copy(labels, pos_class):
     new_labels[np.where(new_labels != pos_class)] = -1
     new_labels[np.where(new_labels == pos_class)] = 1
     return new_labels
+
+# NOTE cdist can't deal with sympy symbols :(
+def sqeucl_dist(x, xs):
+    m = np.sum(np.power(
+        np.repeat(x[:,None,:], len(x), axis=1) - 
+        np.resize(xs, (len(x), xs.shape[0], xs.shape[1])), 
+        2), axis=2)
+
+    return m
+
