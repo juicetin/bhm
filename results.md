@@ -58,6 +58,9 @@ Note that for the 500, 1000 test cases below, they are all using the same 500/10
 | 1000    | E     | GP     | All    | 1         | 0.86570    | Deterministic       | 0.55450 |
 | 1000    | E     | PoEGP  | All    | 5         | 0.78223    |                     | 0.41312 |
 | 1000    | E     | GPoEGP | All    | 5         | 0.77795    |                     | 0.45938 |
+| 1000    | E     | GPy    | All    | 1         | 0.87638    | Defaults            | 0.57013 |
+| 1000    | E     | GPy    | All    | 1         | 0.87638    | RBF (default? lel)  | 0.57013 |
+
 
 Key:
 E = even
