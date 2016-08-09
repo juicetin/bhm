@@ -45,11 +45,9 @@ class PoGPE(GP_ensembles):
         means_gp, vars_gp = self.gp_means_vars(x)
 
         # These contain a row for each binary class case (OvR)
+        #   AFTER summing along axis 0 (each of the local experts)
         vars_poe = np.sum(vars_gp, axis=0)  # vars
         means_poe = vars_poe**2 * np.sum(vars_gp**(-2) * means_gp, axis=0)  # means
-
-        print(vars_poe.shape)
-        print(means_poe.shape)
 
         if keep_probs == True:
             return means_poe, vars_poe

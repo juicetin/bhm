@@ -45,15 +45,16 @@ X, y = datasets.make_classification(n_samples=100,
 # Class sampling - is even or stratified split of the training data better?
 Note that for the 500, 1000 test cases below, they are all using the same 500/1000 respectively.
 
-| Total sample size   | Split method   | Method   | Test method   | Number of runs   | Average AUROC   | Notes                 | F1-Score   |
-| :-----------------: | :------------: | :------: | :-----------: | :--------------: | :-------------: | --------------------- | :--------: |
-| 500                 | Even           | GP       | 10F-CV        | 10               | 0.74197         | Coords not included   |
-| 500                 | Stratified     | GP       | 10F-CV        | 10               | 0.70983         | Coords not included   |
-| 500                 | Even           | GP       | 10F-CV        | 1                | 0.82214         | Coords included       |
-| 500                 | Stratified     | GP       | 10F-CV        | 1                | 0.77466         | Coords included       |
-| 500                 | Even           | GP       | 10F-CV        | 10               | 0.86534         | Coords included       |
-| 500                 | Stratified     | GP       | 10F-CV        | 10               | 0.80136         | Coords included       |
-| 1000                | Even           | GP       | 10F-CV        | 100              | ?               |
-| 1000                | Stratified     | GP       | 10F-CV        | 100              | ?               |
-| 1000                | Even           | GP       | All points    | 1                | 0.86570         |                       | 0.55450    |
-| 1000                | Even           | PoEGP    | All points    | 1                | 0.76736         | Expert size: 200      | 0.64515    |
+| Total sample size   | Split method   | Method   | Test method   | No. runs         | Average AUROC                   | Notes                                          | F1-Score                        |
+| :-----------------: | :------------: | :------: | :-----------: | :--------------: | :-------------:                 | ---------------------                          | :--------:                      |
+| 500                 | Even           | GP       | 10F-CV        | 10               | 0.74197                         | Coords not included                            |
+| 500                 | Stratified     | GP       | 10F-CV        | 10               | 0.70983                         | Coords not included                            |
+| 500                 | Even           | GP       | 10F-CV        | 1                | 0.82214                         | Coords included                                |
+| 500                 | Stratified     | GP       | 10F-CV        | 1                | 0.77466                         | Coords included vvv                            |
+| 500                 | Even           | GP       | 10F-CV        | 10               | 0.86534                         |                                                |
+| 500                 | Stratified     | GP       | 10F-CV        | 10               | 0.80136                         |                                                |
+| 1000                | Even           | GP       | 10F-CV        | 100              | ?                               |
+| 1000                | Stratified     | GP       | 10F-CV        | 100              | ?                               |
+| 1000                | Even           | GP       | All points    | 1                | 0.86570                         |                                                | 0.55450                         |
+| 1000                | Even           | PoEGP    | All points    |                  | 0.76736,0.76945,0.77309,0.78124 | Expert size: 200, points in each expert random | 0.64515,0.62176,0.74395,0.47536 |
+| 1000                | Even           | GPoEGP   | All points    |                  | 0.78657,0.75807,0.77583,0.79221 | Expert size: 200, ditto                        | 0.32996,0.25872,0.29148,0.32702 |

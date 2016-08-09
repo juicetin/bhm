@@ -33,10 +33,11 @@ class GP_ensembles():
         #     gp_expert.predict(x)
     
         # Means, variances for each binary class case for each GP regressor (classifier)
+        # Shape - (experts, 2, classes, data points)
+        #   2 - 0-axis for means, 1-axis for variances
         y_preds = np.array([gp_expert.predict(x, keep_probs=True, parallel=parallel, PoE=True) for gp_expert in self.gp_experts])
-        self.y_preds = y_preds
     
-        vars_gp = y_preds[:,:,1]
-        means_gp = y_preds[:,:,0]
+        vars_gp = y_preds[:,1]
+        means_gp = y_preds[:,0]
     
         return means_gp, vars_gp

@@ -23,10 +23,12 @@ from ML.validation import cross_validate_algo
 from ML.knn import kNN
 from ML.random_forests import rf
 from ML.logistic_regression import lr
+
+from ML import helpers
 from ML.gp.gp import GaussianProcess
 from ML.gp.poe import PoGPE
 from ML.gp.gpoe import GPoGPE
-from ML import helpers
+from ML.gp.bcm import BCM
 
 import visualisation as vis
 
@@ -255,6 +257,7 @@ if __name__ == "__main__":
     gp = GaussianProcess()
     gp1 = PoGPE(200)
     gp2 = GPoGPE(200)
+    gp3 = BCM(200)
 
     # size = 13000
     # idx = mini_batch_idxs(labels_simple, size, 'stratified')
@@ -267,19 +270,26 @@ if __name__ == "__main__":
     # auroc = helpers.roc_auc_score_multi(labels_simple[rem_idx], means)
     # score = helpers.score(labels_simple[rem_idx], np.argmax(means, axis=0))
 
-    gp1.fit(features_sn[idx], labels_simple[idx])
-    means1, var1 = gp1.predict(features_sn[rem_idx], keep_probs=True)
-    auroc1 = helpers.roc_auc_score_multi(labels_simple[rem_idx], means1)
-    score1 = helpers.score(labels_simple[rem_idx], np.argmax(means1, axis=0))
+    # gp1.fit(features_sn[idx], labels_simple[idx])
+    # means1, var1 = gp1.predict(features_sn[rem_idx], keep_probs=True)
+    # auroc1 = helpers.roc_auc_score_multi(labels_simple[rem_idx], means1)
+    # score1 = helpers.score(labels_simple[rem_idx], np.argmax(means1, axis=0))
 
-    gp2.fit(features_sn[idx], labels_simple[idx])
-    means2, var2 = gp2.predict(features_sn[rem_idx], keep_probs=True)
-    auroc2 = helpers.roc_auc_score_multi(labels_simple[rem_idx], means2)
-    score2 = helpers.score(labels_simple[rem_idx], np.argmax(means2, axis=0))
+    # gp2.fit(features_sn[idx], labels_simple[idx])
+    # means2, var2 = gp2.predict(features_sn[rem_idx], keep_probs=True)
+    # auroc2 = helpers.roc_auc_score_multi(labels_simple[rem_idx], means2)
+    # score2 = helpers.score(labels_simple[rem_idx], np.argmax(means2, axis=0))
+
+    gp3.fit(features_sn[idx], labels_simple[idx])
+    means3, var3 = gp3.predict(features_sn[rem_idx], keep_probs=True)
+    auroc3 = helpers.roc_auc_score_multi(labels_simple[rem_idx], means3)
+    score3 = helpers.score(labels_simple[rem_idx], np.argmax(means3, axis=0))
+
 
     # print(auroc, score)
-    print(auroc1, score1)
-    print(auroc2, score2)
+    # print(auroc1, score1)
+    # print(auroc2, score2)
+    print(auroc3, score3)
 
     #########################################################################################################
 

@@ -21,9 +21,6 @@ class GPoGPE(GP_ensembles):
         vars_poe = betas * np.sum(vars_gp, axis=0)  # vars
         means_poe = vars_poe**2 * betas * np.sum(vars_gp**(-2) * means_gp, axis=0)  # means
 
-        print(vars_poe.shape)
-        print(means_poe.shape)
-
         if keep_probs == True:
             return means_poe, vars_poe
 
