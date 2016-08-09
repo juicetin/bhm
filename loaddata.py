@@ -278,14 +278,11 @@ if __name__ == "__main__":
     train_idx = np.load('data/semi-optimal-1000-subsample.npy')
 
     # gp = GaussianProcess()
-    # gp_stats = testGP(gp, features_sn, labels_simple, train_idx, n_iter=5, expert_size=200)
-
+    # gp_stats = testGP(gp, features_sn, labels_simple, idx, n_iter=5, expert_size=200)
     # gp1 = PoGPE(200)
-    # gp1_stats = testGP(gp1, features_sn, labels_simple, train_idx, n_iter=5, expert_size=200)
-
+    # gp1_stats = testGP(gp1, features_sn, labels_simple, idx, n_iter=5, expert_size=200)
     # gp2 = GPoGPE(200)
-    # gp2_stats = testGP(gp2, features_sn, labels_simple, train_idx, n_iter=5, expert_size=200)
-
+    # gp2_stats = testGP(gp2, features_sn, labels_simple, idx, n_iter=5, expert_size=200)
     # gp3 = BCM(200)
     # gp3_stats = testGP(gp3, features_sn, labels_simple, train_idx, n_iter=5, expert_size=200)
 
@@ -294,9 +291,11 @@ if __name__ == "__main__":
     # print("PoGPE: {} {} {}", gp2_stats, np.average(gp2_stats[0]), np.average(gp2_stats[1]))
     # print("BCM: {} {} {}", gp3_stats, np.average(gp3_stats[0]), np.average(gp3_stats[1]))
 
-    test_idx = np.array(list(set(np.arange(16502)) - set(train_idx)))
-    labels_simple = labels_simple.reshape(labels_simple.shape[0], 1)
-    preds = gpy_benchmark.gpy_bench(features_sn, labels_simple, train_idx)
+    # GPy benchmarking
+    # rem_idx = np.array(list(set(np.arange(16502)) - set(idx)))
+    # labels_simple = labels_simple.reshape(labels_simple.shape[0], 1)
+    # m = GPy.models.GPClassification(features[idx], labels_simple[idx])
+    # probs = m.predict(features_sn[rem_idx])[0]
 
     #########################################################################################################
 
