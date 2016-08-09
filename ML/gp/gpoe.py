@@ -19,7 +19,7 @@ class GPoGPE(GP_ensembles):
         # These contain a row for each binary class case (OvR)
         # NOTE betas can only be factored out as it is consistent throughout
         vars_poe = betas * np.sum(vars_gp, axis=0)  # vars
-        means_poe = vars_poe**2 * betas * np.sum(vars_gp**(-2) * means_gp, axis=0)  # means
+        means_poe = vars_poe * betas * np.sum(vars_gp**(-2) * means_gp, axis=0)  # means
 
         if keep_probs == True:
             return means_poe, vars_poe

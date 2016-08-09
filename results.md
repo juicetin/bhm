@@ -45,16 +45,28 @@ X, y = datasets.make_classification(n_samples=100,
 # Class sampling - is even or stratified split of the training data better?
 Note that for the 500, 1000 test cases below, they are all using the same 500/1000 respectively.
 
-| Total sample size   | Split method   | Method   | Test method   | No. runs         | Average AUROC                   | Notes                                          | F1-Score                        |
-| :-----------------: | :------------: | :------: | :-----------: | :--------------: | :-------------:                 | ---------------------                          | :--------:                      |
-| 500                 | Even           | GP       | 10F-CV        | 10               | 0.74197                         | Coords not included                            |
-| 500                 | Stratified     | GP       | 10F-CV        | 10               | 0.70983                         | Coords not included                            |
-| 500                 | Even           | GP       | 10F-CV        | 1                | 0.82214                         | Coords included                                |
-| 500                 | Stratified     | GP       | 10F-CV        | 1                | 0.77466                         | Coords included vvv                            |
-| 500                 | Even           | GP       | 10F-CV        | 10               | 0.86534                         |                                                |
-| 500                 | Stratified     | GP       | 10F-CV        | 10               | 0.80136                         |                                                |
-| 1000                | Even           | GP       | 10F-CV        | 100              | ?                               |
-| 1000                | Stratified     | GP       | 10F-CV        | 100              | ?                               |
-| 1000                | Even           | GP       | All points    | 1                | 0.86570                         |                                                | 0.55450                         |
-| 1000                | Even           | PoEGP    | All points    |                  | 0.76736,0.76945,0.77309,0.78124 | Expert size: 200, points in each expert random | 0.64515,0.62176,0.74395,0.47536 |
-| 1000                | Even           | GPoEGP   | All points    |                  | 0.78657,0.75807,0.77583,0.79221 | Expert size: 200, ditto                        | 0.32996,0.25872,0.29148,0.32702 |
+| Data    | Split | Method | Test   | Runs      | Avg AUROC  | Notes               | Avg F1  |
+| :-----: | :---: | :----  | :----: | :-------: | :--------: |                     |         |
+| 500     | E     | GP     | 10F-CV | 10        | 0.74197    | Coords not included |
+| 500     | S     | GP     | 10F-CV | 10        | 0.70983    | Coords not included |
+| 500     | E     | GP     | 10F-CV | 1         | 0.82214    | Coords included     |
+| 500     | S     | GP     | 10F-CV | 1         | 0.77466    | Coords included vvv |
+| 500     | E     | GP     | 10F-CV | 10        | 0.86534    |                     |
+| 500     | S     | GP     | 10F-CV | 10        | 0.80136    |                     |
+| 1000    | E     | GP     | 10F-CV | 100       | ?          |
+| 1000    | S     | GP     | 10F-CV | 100       | ?          |
+| 1000    | E     | GP     | All    | 1         | 0.86570    | Deterministic       | 0.55450 |
+| 1000    | E     | PoEGP  | All    | 5         | 0.78223    |                     | 0.41312 |
+| 1000    | E     | GPoEGP | All    | 5         | 0.77795    |                     | 0.45938 |
+
+Key:
+E = even
+S = stratified
+
+* BCM* ones will need fixing as 'prior precision' is currently defined incorrectly (?)
+
+| Total sample size   | Split method   | Method   | Test method   | No. runs         | Average AUROC                   | Notes                                          | F1-Score                                |
+| :-----------------: | :------------: | :------: | :-----------: | :--------------: | :-------------:                 | ---------------------                          | :--------:                              |
+| 1000                | Even           | PoEGP    | All points    | 4                | 0.76736,0.76945,0.77309,0.78124 | Expert size: 200, points in each expert random | 0.64515,0.62176,0.74395,0.47536         |
+| 1000                | Even           | GPoEGP   | All points    | 4                | 0.78657,0.75807,0.77583,0.79221 | Expert size: 200, ditto                        | 0.32996,0.25872,0.29148,0.32702         |
+| 1000                | Even           | BCM      | All points    | 4                | 0.79438,0.75482,0.77161,0.77020 | ditto                                          | 0.27845,0.27354,0.70730,0.21850,0.36400 |

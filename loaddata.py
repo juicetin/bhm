@@ -216,6 +216,21 @@ def classification_dummy_testing():
         vis.plot_classes(X_test, y_test, y_pred)
     # print("Average accuracy: {}".format(np.average(accuracies)))
 
+def testGP(gp, features, labels, idx, n_iter=5, expert_size=200):
+    rem_idx = np.array(list(set(np.arange(features.shape[0])) - set(idx)))
+    aurocs = []
+    scores = []
+    for i in range(5):
+        gp.fit(features[idx], labels[idx])
+        means, var = gp.predict(features[rem_idx], keep_probs=True)
+        auroc = helpers.roc_auc_score_multi(labels[rem_idx], means)
+        score = helpers.score(labels[rem_idx], np.argmax(means, axis=0))
+        print("This round: auroc: {}, f1: {}".format(auroc, score))
+        aurocs.append(auroc)
+        scores.append(score)
+    return aurocs, scores
+
+
 # Main function
 if __name__ == "__main__":
     # print("Loading data from npzs...")
@@ -254,42 +269,28 @@ if __name__ == "__main__":
     # feature_perms = [features_s, features_ns, features_sn]
 
     ########################################### Product of Experts ###########################################
-    gp = GaussianProcess()
+
+    size = 13000
+    idx = mini_batch_idxs(labels_simple, size, 'stratified')
+
+    # idx = np.load('data/semi-optimal-1000-subsample.npy')
+
+    # gp = GaussianProcess()
+    # gp_stats = testGP(gp, features_sn, labels_simple, idx, n_iter=5, expert_size=200)
+
     gp1 = PoGPE(200)
-    gp2 = GPoGPE(200)
-    gp3 = BCM(200)
+    gp1_stats = testGP(gp1, features_sn, labels_simple, idx, n_iter=5, expert_size=200)
 
-    # size = 13000
-    # idx = mini_batch_idxs(labels_simple, size, 'stratified')
+    # gp2 = GPoGPE(200)
+    # gp2_stats = testGP(gp2, features_sn, labels_simple, idx, n_iter=5, expert_size=200)
 
-    idx = np.load('data/semi-optimal-1000-subsample.npy')
-    rem_idx = np.array(list(set(np.arange(16502)) - set(idx)))
+    # gp3 = BCM(200)
+    # gp3_stats = testGP(gp3, features_sn, labels_simple, idx, n_iter=5, expert_size=200)
 
-    # gp.fit(features_sn[idx], labels_simple[idx])
-    # means, var = gp.predict(features_sn[rem_idx], keep_probs=True)
-    # auroc = helpers.roc_auc_score_multi(labels_simple[rem_idx], means)
-    # score = helpers.score(labels_simple[rem_idx], np.argmax(means, axis=0))
-
-    # gp1.fit(features_sn[idx], labels_simple[idx])
-    # means1, var1 = gp1.predict(features_sn[rem_idx], keep_probs=True)
-    # auroc1 = helpers.roc_auc_score_multi(labels_simple[rem_idx], means1)
-    # score1 = helpers.score(labels_simple[rem_idx], np.argmax(means1, axis=0))
-
-    # gp2.fit(features_sn[idx], labels_simple[idx])
-    # means2, var2 = gp2.predict(features_sn[rem_idx], keep_probs=True)
-    # auroc2 = helpers.roc_auc_score_multi(labels_simple[rem_idx], means2)
-    # score2 = helpers.score(labels_simple[rem_idx], np.argmax(means2, axis=0))
-
-    gp3.fit(features_sn[idx], labels_simple[idx])
-    means3, var3 = gp3.predict(features_sn[rem_idx], keep_probs=True)
-    auroc3 = helpers.roc_auc_score_multi(labels_simple[rem_idx], means3)
-    score3 = helpers.score(labels_simple[rem_idx], np.argmax(means3, axis=0))
-
-
-    # print(auroc, score)
-    # print(auroc1, score1)
-    # print(auroc2, score2)
-    print(auroc3, score3)
+    # print("normal GP: {} {} {}", gp_stats, np.average(gp_stats[0]), np.average(gp_stats[1]))
+    print("PoE: {} {} {}", gp1_stats, np.average(gp1_stats[0]), np.average(gp1_stats[1]))
+    # print("PoGPE: {} {} {}", gp2_stats, np.average(gp2_stats[0]), np.average(gp2_stats[1]))
+    # print("BCM: {} {} {}", gp3_stats, np.average(gp3_stats[0]), np.average(gp3_stats[1]))
 
     #########################################################################################################
 
