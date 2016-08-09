@@ -54,3 +54,9 @@ def stratified_data_idxs(labels, blocks):
     strat_idx = np.concatenate((strat_idx, big_idxs))
 
     return strat_idx
+
+def binarised_labels_copy(labels, pos_class):
+    new_labels = np.copy(labels)
+    new_labels[np.where(new_labels != pos_class)] = -1
+    new_labels[np.where(new_labels == pos_class)] = 1
+    return new_labels
