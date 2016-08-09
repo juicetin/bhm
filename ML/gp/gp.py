@@ -48,37 +48,36 @@ class GaussianProcess:
         pass
 
     # Regression fit
-    # NOTE unneeded, broken
-    # def fit(self, X, y):
+    def fit_regression(self, X, y):
 
-    #     # Set basic data
-    #     self.X = X  # Inputs
-    #     self.y = y
-    #     self.size = len(X)
+        # Set basic data
+        self.X = X  # Inputs
+        self.y = y
+        self.size = len(X)
 
-    #     # Pre-calculate derivatives of inverted matrix to substitute values in the Squared Exponential NLL gradient
-    #     # self.f_err_sym, self.l_scale_sym, self.n_err_sym = sp.symbols("f_err, l_scale, n_err")
-    #     self.f_err_sym, self.n_err_sym = sp.symbols("f_err, n_err")
-    #     self.l_scale_sym = sp.MatrixSymbol('l', 1, self.size)
-    #     m = sp.Matrix(self.f_err_sym**2 * math.e**(-0.5 * self.dist(self.X/self.l_scale_sym, self.X/self.l_scale_sym)) 
-    #                      + self.n_err_sym**2 * np.identity(self.size))
-    #     self.dK_dthetas = [
-    #                  m.diff(self.f_err_sym),
-    #                  m.diff(self.l_scale_sym),
-    #                  m.diff(self.n_err_sym)
-    #                  ]
+        # Pre-calculate derivatives of inverted matrix to substitute values in the Squared Exponential NLL gradient
+        # self.f_err_sym, self.l_scale_sym, self.n_err_sym = sp.symbols("f_err, l_scale, n_err")
+        self.f_err_sym, self.n_err_sym = sp.symbols("f_err, n_err")
+        self.l_scale_sym = sp.MatrixSymbol('l', 1, self.size)
+        m = sp.Matrix(self.f_err_sym**2 * math.e**(-0.5 * self.dist(self.X/self.l_scale_sym, self.X/self.l_scale_sym)) 
+                         + self.n_err_sym**2 * np.identity(self.size))
+        self.dK_dthetas = [
+                     m.diff(self.f_err_sym),
+                     m.diff(self.l_scale_sym),
+                     m.diff(self.n_err_sym)
+                     ]
 
-    #     # Determine optimal GP hyperparameters
-    #     gp_hp_guess = [1.27, 1, 0.3] # initial guess
-    #     # gp_hp_guess = [1.0] * 3 # initial guess
-    #     res = minimize(self.SE_NLL, gp_hp_guess, method='bfgs')
-    #     # res = minimize(self.SE_NLL, gp_hp_guess, method='bfgs', jac=self.SE_der, tol=1e-4)
-    #     [self.f_err, self.l_scale, self.n_err] = res['x']
+        # Determine optimal GP hyperparameters
+        gp_hp_guess = [1.27, 1, 0.3] # initial guess
+        # gp_hp_guess = [1.0] * 3 # initial guess
+        res = minimize(self.SE_NLL, gp_hp_guess, method='bfgs')
+        # res = minimize(self.SE_NLL, gp_hp_guess, method='bfgs', jac=self.SE_der, tol=1e-4)
+        [self.f_err, self.l_scale, self.n_err] = res['x']
 
-    #     # Set a few 'fixed' variables once GP HPs are determined for later use (with classifier)
-    #     self.L = self.L_create(self.X, self.f_err, self.l_scale, self.n_err)
-    #     self.K_inv = np.linalg.inv(self.L.T).dot(np.linalg.inv(self.L))
-    #     self.alpha = linalg.solve(self.L.T, (linalg.solve(self.L, self.y)))
+        # Set a few 'fixed' variables once GP HPs are determined for later use (with classifier)
+        self.L = self.L_create(self.X, self.f_err, self.l_scale, self.n_err)
+        self.K_inv = np.linalg.inv(self.L.T).dot(np.linalg.inv(self.L))
+        self.alpha = linalg.solve(self.L.T, (linalg.solve(self.L, self.y)))
 
     def L_create(self, X, f_err, l_scales, n_err):
 
@@ -86,7 +85,7 @@ class GaussianProcess:
         m = np.array(m, dtype=np.float64)
         return linalg.cholesky(m)
 
-    def predict_reg(self, x, L, alpha, f_err, l_scales):
+    def predict_regression(self, x, L, alpha, f_err, l_scales):
         ks = self.K_se(self.X, x, f_err, l_scales)
         fs_mean = ks.T.dot(alpha)
         v = linalg.solve(L, ks)
@@ -272,9 +271,14 @@ class GaussianProcess:
         return np.array(gradients, dtype=np.float64)
 
     #################### Prediction ####################
-
+    def fit(self, X, y):kj
+        if type(y[0]) == np.int64
+                                                    
     # Classification
-    def fit(self, X, y):
+    def fit_classification(self, X, y):
+
+        if type(y[0]) == np.int64:
+            return self.fit_regression(X, y)
 
         self.size = len(y)
         self.X = X
@@ -315,7 +319,7 @@ class GaussianProcess:
         print()
 
     # Parallelise class prediction across available cores
-    def predict_class_parallel(self, x, keep_probs):
+    def predict_parallel(self, x, keep_probs):
 
         # Set up the parallel jobs on separate processes, to overcome 
         # Python's GIL for proper parallelisation
@@ -341,7 +345,7 @@ class GaussianProcess:
 
         # Split predict job over number of cores available-1!
         if parallel == True:
-            return self.predict_class_parallel(x, keep_probs)
+            return self.predict_parallel(x, keep_probs)
 
         # Copy y for modification and resetting/restoring
 
