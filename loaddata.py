@@ -218,11 +218,11 @@ def classification_dummy_testing():
         vis.plot_classes(X_test, y_test, y_pred)
     # print("Average accuracy: {}".format(np.average(accuracies)))
 
-def testGP(gp, features, labels, idx, n_iter=5, expert_size=200):
+def testGP(gp, features, labels, idx, n_iter=5):
     rem_idx = np.array(list(set(np.arange(features.shape[0])) - set(idx)))
     aurocs = []
     scores = []
-    for i in range(5):
+    for i in range(n_iter):
         gp.fit(features[idx], labels[idx])
         means, var = gp.predict(features[rem_idx], keep_probs=True)
         auroc = helpers.roc_auc_score_multi(labels[rem_idx], means)
@@ -278,16 +278,22 @@ if __name__ == "__main__":
     train_idx = np.load('data/semi-optimal-1000-subsample.npy')
 
     # gp = GaussianProcess()
-    # gp_stats = testGP(gp, features_sn, labels_simple, train_idx, n_iter=5, expert_size=200)
-    gp1 = PoGPE(200)
-    gp1_stats = testGP(gp1, features_sn, labels_simple, train_idx, n_iter=5, expert_size=200)
+    # gp_stats = testGP(gp, features_sn, labels_simple, train_idx, n_iter=5)
+    gp1 = PoGPE(50)
+    gp1_stats = testGP(gp1, features_sn, labels_simple, train_idx, n_iter=1)
+    # gp11 = PoGPE(500)
+    # gp11_stats = testGP(gp11, features_sn, labels_simple, train_idx, n_iter=1)
+    # gp12 = PoGPE(1000)
+    # gp12_stats = testGP(gp12, features_sn, labels_simple, train_idx, n_iter=1)
     # gp2 = GPoGPE(200)
-    # gp2_stats = testGP(gp2, features_sn, labels_simple, train_idx, n_iter=5, expert_size=200)
+    # gp2_stats = testGP(gp2, features_sn, labels_simple, train_idx, n_iter=5)
     # gp3 = BCM(200)
-    # gp3_stats = testGP(gp3, features_sn, labels_simple, train_idx, n_iter=5, expert_size=200)
+    # gp3_stats = testGP(gp3, features_sn, labels_simple, train_idx, n_iter=5)
 
     # print("normal GP: {} {} {}", gp_stats, np.average(gp_stats[0]), np.average(gp_stats[1]))
     print("PoE: {} {} {}", gp1_stats, np.average(gp1_stats[0]), np.average(gp1_stats[1]))
+    # print("PoE: {} {} {}", gp11_stats, np.average(gp11_stats[0]), np.average(gp11_stats[1]))
+    # print("PoE: {} {} {}", gp12_stats, np.average(gp12_stats[0]), np.average(gp12_stats[1]))
     # print("PoGPE: {} {} {}", gp2_stats, np.average(gp2_stats[0]), np.average(gp2_stats[1]))
     # print("BCM: {} {} {}", gp3_stats, np.average(gp3_stats[0]), np.average(gp3_stats[1]))
 
