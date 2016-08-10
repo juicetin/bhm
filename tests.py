@@ -60,7 +60,7 @@ class TestGPMethods(unittest.TestCase):
         m = sp.Matrix(m)
 
         # Using sympy differentiations
-        print("Sympy differentiations and evaluation...")
+        print("\nSympy differentiations and evaluation...")
         # dK_dls_using_lib = [m.diff(l_scale_sym) for l_scale_sym in l_scales_sym]
         dK_dl_0_sp = m.diff(l_scales_sym[0])
         eval_lib = np.array(sp.lambdify([f_err_sym, l_scales_sym], dK_dl_0_sp)(f_err, sp.Matrix([l_scales])), dtype='float64')
@@ -81,6 +81,28 @@ class TestGPMethods(unittest.TestCase):
 
         idxs = partition_indexes(5, 3)
         self.assertEqual([(0,1), (1,2), (2,5)], idxs)
+
+    def test_lloo_arg_unpacking(self):
+        print("\nTesting that LLOO args are unpacked properly...")
+        gp = GaussianProcess()
+        gp.X = np.random.rand(30, 11)
+        f_err, l_scales, n_err, a, b = gp.unpack_LLOO_args(np.arange(15))
+        
+        self.assertEqual(f_err, 0)
+        self.assertEqual(11, np.sum(l_scales == np.arange(1,12)))
+        self.assertEqual(n_err, 12)
+        self.assertEqual(a, 13)
+        self.assertEqual(b, 14)
+
+    def test_classes_arg_unpacking(self):
+        print("\nTesting that OvR binary class params are unpacked properly...")
+        gp = GaussianProcess()
+        gp.X = np.random.rand(30, 11)
+        f_err, l_scales, n_err, = gp.unpack_classGP_args(np.arange(13))
+        
+        self.assertEqual(f_err, 0)
+        self.assertEqual(11, np.sum(l_scales == np.arange(1,12)))
+        self.assertEqual(n_err, 12)
 
 if __name__ == '__main__':
     unittest.main()

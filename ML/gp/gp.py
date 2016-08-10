@@ -135,6 +135,12 @@ class GaussianProcess:
         b = float(args[self.X.shape[1]+3])
         return f_err, l_scales, n_err, a, b
 
+    def unpack_classGP_args(self, args):
+        f_err = float(args[0])
+        l_scales = args[1:self.X.shape[1]+1]
+        n_err = args[self.X.shape[1]+1]
+        return f_err, l_scales, n_err
+
     def LLOO(self, args):
         f_err, l_scales, n_err, a, b = self.unpack_LLOO_args(args)
 
@@ -213,16 +219,16 @@ class GaussianProcess:
 
         # Build OvA classifier for each unique class in y
         print("Starting to build OvR classifier per class...")
-        print("Class list: {}. Current class progress: ".format(set(y)), end=" ", flush=True)
+        # print("Class list: {}. Current class progress: ".format(set(y)), end=" ", flush=True)
 
         # OvR here - also TODO an OvO!
         for c in set(y):
-            print(c, end=" ", flush=True)
+            # print(c, end=" ", flush=True)
 
             # Count iterations needed per optimize.minimize
             self.count = 0
 
-            self.classifier_params[c] = {}
+            # self.classifier_params[c] = {}
 
             # f_err, l_scales (for each dimension), n_err, alpha, beta
             x0 = [1] + [1] * X.shape[1] + [1, 1, 1]
@@ -233,11 +239,11 @@ class GaussianProcess:
             # Optimise and save hyper/parameters for current binary class pair
             # res = minimize(self.LLOO, x0, method='bfgs')
             res = minimize(self.LLOO, x0, method='bfgs', jac=self.LLOO_der)
-            print(res['x'])
 
             # Set params for current binary regressor (classifier)
-            for param, val in zip(params, res['x']):
-                self.classifier_params[c][param] = val
+            # for param, val in zip(params, res['x']):
+            #     self.classifier_params[c][param] = val
+            self.classifier_params[c] = res['x']
 
             # Reset ys
             self.y = y
@@ -287,18 +293,15 @@ class GaussianProcess:
     # Predict regression values in the binary class case
     def predict_class_single(self, x, label, params):
         # Set parameters
-        f_err = params['f_err']
-        l_scales = params['l_scales']
-        n_err = params['n_err']
+        f_err, l_scales, n_err = self.unpack_classGP_args(params)
 
         # Set y to binary one vs. all labels
         y_ = np.copy(self.y)
         y_[np.where(y_ != label)[0]] = -1
         y_[np.where(y_ != -1)[0]] = 1
-        # y = np.array([1 if y_i == label else -1 for y_i in y])
 
         # Set L and alpha matrices
-        L = self.L_create(self.X, f_err=f_err, l_scales=l_scales, n_err=n_err)
+        L = self.L_create(self.X, f_err, l_scales, n_err)
         alpha = linalg.solve(L.T, (linalg.solve(L, y_)))
 
         # Get predictions of resulting mean and variances
