@@ -36,13 +36,6 @@ from scipy.stats import norm
 # b = np.array([6,7,8])
 # b = np.reshape(1,3) # 1 row, 3 columns
 
-def timing(f):
-    def wrap(*args):
-        t1 = datetime.now()
-        ret = f(*args)
-        t2 = datetime.now()
-        print("{} function took {}".format(f.func_name, t2-t1))
-
 class GaussianProcess:
     def __init__(self):
         pass
@@ -69,11 +62,12 @@ class GaussianProcess:
                      ]
 
         # Determine optimal GP hyperparameters
-        gp_hp_guess = [1.27, 1, 0.3] # initial guess
+        # f_err, l_scales, n_err
+        x0 = [1] + [1] * X.shape[1] + [1]
         # gp_hp_guess = [1.0] * 3 # initial guess
-        res = minimize(self.SE_NLL, gp_hp_guess, method='bfgs')
-        # res = minimize(self.SE_NLL, gp_hp_guess, method='bfgs', jac=self.SE_der, tol=1e-4)
-        [self.f_err, self.l_scale, self.n_err] = res['x']
+        # res = minimize(self.SE_NLL, x0, method='bfgs')
+        res = minimize(self.SE_NLL, x0, method='bfgs', jac=self.SE_der)
+        [self.f_err, self.l_scales, self.n_err] = res['x']
 
         # Set a few 'fixed' variables once GP HPs are determined for later use (with classifier)
         self.L = self.L_create(self.X, self.f_err, self.l_scale, self.n_err)
@@ -239,6 +233,7 @@ class GaussianProcess:
             # Optimise and save hyper/parameters for current binary class pair
             # res = minimize(self.LLOO, x0, method='bfgs')
             res = minimize(self.LLOO, x0, method='bfgs', jac=self.LLOO_der)
+            print(res['x'])
 
             # Set params for current binary regressor (classifier)
             for param, val in zip(params, res['x']):
