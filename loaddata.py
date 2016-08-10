@@ -285,17 +285,17 @@ if __name__ == "__main__":
     # gp11_stats = testGP(gp11, features_sn, labels_simple, train_idx, n_iter=1)
     # gp12 = PoGPE(1000)
     # gp12_stats = testGP(gp12, features_sn, labels_simple, train_idx, n_iter=1)
-    gp2 = GPoGPE(200)
-    gp2_stats = testGP(gp2, features_sn, labels_simple, train_idx, n_iter=5)
-    # gp3 = BCM(200)
-    # gp3_stats = testGP(gp3, features_sn, labels_simple, train_idx, n_iter=5)
+    # gp2 = GPoGPE(200)
+    # gp2_stats = testGP(gp2, features_sn, labels_simple, train_idx, n_iter=5)
+    gp3 = BCM(200)
+    gp3_stats = testGP(gp3, features_sn, labels_simple, train_idx, n_iter=5)
 
     # print("normal GP: {} {} {}", gp_stats, np.average(gp_stats[0]), np.average(gp_stats[1]))
     # print("PoE: {} {} {}", gp1_stats, np.average(gp1_stats[0]), np.average(gp1_stats[1]))
     # print("PoE: {} {} {}", gp11_stats, np.average(gp11_stats[0]), np.average(gp11_stats[1]))
     # print("PoE: {} {} {}", gp12_stats, np.average(gp12_stats[0]), np.average(gp12_stats[1]))
-    print("PoGPE: {} {} {}", gp2_stats, np.average(gp2_stats[0]), np.average(gp2_stats[1]))
-    # print("BCM: {} {} {}", gp3_stats, np.average(gp3_stats[0]), np.average(gp3_stats[1]))
+    # print("PoGPE: {} {} {}", gp2_stats, np.average(gp2_stats[0]), np.average(gp2_stats[1]))
+    print("BCM: {} {} {}", gp3_stats, np.average(gp3_stats[0]), np.average(gp3_stats[1]))
 
     # GPy benchmarking
     # test_idx = np.array(list(set(np.arange(16502)) - set(train_idx)))

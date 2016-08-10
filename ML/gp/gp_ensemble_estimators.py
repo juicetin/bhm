@@ -10,6 +10,8 @@ class GP_ensembles():
         pass
     
     def fit(self, X, y):
+        self.X = X
+
         self.num_classes = np.unique(y).shape[0]
     
         # Shuffle the data in a separate copy
