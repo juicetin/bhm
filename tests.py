@@ -15,7 +15,6 @@ from sympy.utilities.autowrap import autowrap
 
 from ML.helpers import partition_indexes
 from ML.helpers import sqeucl_dist
-
 import math
 
 class TestGPMethods(unittest.TestCase):
