@@ -1,13 +1,21 @@
 from ML.gp.gp import GaussianProcess
 from datetime import datetime
+
 import numpy as np
-import unittest
 from numpy import testing as np_test
+
+import unittest
+
+from sklearn import datasets
+
 from scipy.spatial.distance import cdist
+
+import sympy as sp
 from sympy.utilities.autowrap import autowrap
+
 from ML.helpers import partition_indexes
 from ML.helpers import sqeucl_dist
-import sympy as sp
+
 import math
 
 class TestGPMethods(unittest.TestCase):
