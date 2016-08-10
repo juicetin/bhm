@@ -175,7 +175,7 @@ class GaussianProcess:
         r = a * mu + b
 
         K_i_diag = np.diag(K_inv)
-        dK_dthetas = self.eval_dK_dthetas(f_err, l_scales, n_err) # ~99.7%
+        dK_dthetas = self.eval_dK_dthetas(f_err, l_scales, n_err) 
         Zs = np.array([K_inv.dot(dK_dtheta) for dK_dtheta in dK_dthetas])
         dvar_dthetas = [np.diag(Z.dot(K_inv))/K_i_diag**2 for Z in Zs] 
         dmu_dthetas = [Z.dot(alpha) / K_i_diag - alpha * dvar_dtheta for Z, dvar_dtheta in zip(Zs, dvar_dthetas)]
@@ -307,11 +307,12 @@ class GaussianProcess:
         alpha = linalg.solve(L.T, (linalg.solve(L, y_)))
 
         # Get predictions of resulting mean and variances
-        y_pred, y_var = self.predict_reg(x, L, alpha, f_err, l_scales)
+        y_pred, y_var = self.predict_regression(x, L, alpha, f_err, l_scales)
 
         return y_pred, y_var
 
     ############################### Derivatives ################################
+
     def L_create(self, X, f_err, l_scales, n_err):
 
         m = self.K_se(X, X, f_err, l_scales) + n_err**2 * np.identity(X.shape[0])

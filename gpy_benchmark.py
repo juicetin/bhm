@@ -9,7 +9,8 @@ def gpy_bin_predict(features, labels):
 
 def gpy_bench(features, labels, train_idx):
     test_idx = np.array(list(set(np.arange(16502)) - set(train_idx)))
-    # labels_simple = labels_simple.reshape(labels_simple.shape[0], 1)
+    if (len(labels.shape) == 1):
+        labels = labels.reshape(labels.shape[0], 1)
 
     pred_probs = []
     uniq_labels = np.unique(labels)
