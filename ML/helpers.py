@@ -4,6 +4,7 @@ import numpy as np
 from sklearn.metrics import f1_score
 from sklearn.metrics import roc_auc_score
 from sklearn.cross_validation import StratifiedShuffleSplit
+from sklearn.metrics import mean_squared_error
 
 def partition_indexes(length, blocks):
     block_size = int(length/blocks)
@@ -18,6 +19,9 @@ def sigmoid(x):
 
 def score(y_, y):
     return f1_score(y, y_, average='weighted')
+
+def regression_score(y_true, y_pred):
+    return mean_squared_error(y_true, y_pred)
 
 def roc_auc_score_multi(y_actuals, y_preds):
 

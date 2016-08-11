@@ -16,10 +16,7 @@ import numpy as np
 from numpy import linalg
 
 # Sympy 
-import sympy as sp
 from sympy import KroneckerDelta
-from sympy.utilities.autowrap import autowrap
-from sympy.utilities.lambdify import lambdify, implemented_function
 
 # Scipy
 from scipy.optimize import minimize
@@ -48,33 +45,26 @@ class GaussianProcess:
         self.y = y
         self.size = len(X)
 
-        # Pre-calculate derivatives of inverted matrix to substitute values in the Squared Exponential NLL gradient
-        # self.f_err_sym, self.l_scale_sym, self.n_err_sym = sp.symbols("f_err, l_scale, n_err")
-        # TODO fix this! do it analytically
-        self.f_err_sym, self.n_err_sym = sp.symbols("f_err, n_err")
-        self.l_scale_sym = sp.MatrixSymbol('l', 1, self.size)
-        # m = sp.Matrix(self.f_err_sym**2 * math.e**(-0.5 * self.dist(self.X/self.l_scale_sym, self.X/self.l_scale_sym)) 
-        #                  + self.n_err_sym**2 * np.identity(self.size))
-        # self.dK_dthetas = [
-        #              m.diff(self.f_err_sym),
-        #              m.diff(self.l_scale_sym),
-        #              m.diff(self.n_err_sym)
-        #              ]
-
         # Determine optimal GP hyperparameters
         # f_err, l_scales, n_err
         x0 = [1] + [1] * X.shape[1] + [1]
         # gp_hp_guess = [1.0] * 3 # initial guess
         # res = minimize(self.SE_NLL, x0, method='bfgs')
         res = minimize(self.SE_NLL, x0, method='bfgs', jac=self.SE_der)
-        [self.f_err, self.l_scales, self.n_err] = res['x']
+        self.f_err, self.l_scales, self.n_err = self.unpack_GP_args(res['x'])
 
         # Set a few 'fixed' variables once GP HPs are determined for later use (with classifier)
-        self.L = self.L_create(self.X, self.f_err, self.l_scale, self.n_err)
+        self.L = self.L_create(self.X, self.f_err, self.l_scales, self.n_err)
         self.K_inv = np.linalg.inv(self.L.T).dot(np.linalg.inv(self.L))
         self.alpha = linalg.solve(self.L.T, (linalg.solve(self.L, self.y)))
 
-    def predict_regression(self, x, L, alpha, f_err, l_scales):
+    def predict_regression(self, x, L=None, alpha=None, f_err=None, l_scales=None):
+        if L==None and alpha==None and f_err==None and l_scales==None:
+            L = self.L
+            alpha = self.alpha
+            f_err = self.f_err
+            l_scales = self.l_scales
+
         ks = self.K_se(self.X, x, f_err, l_scales)
         fs_mean = ks.T.dot(alpha)
         v = linalg.solve(L, ks)
@@ -87,16 +77,16 @@ class GaussianProcess:
         #     # print(args)
         #     args = args[0]
 
-        [f_err, l_scale, n_err] = args
+        f_err, l_scales, n_err = self.unpack_GP_args(args)
         # TODO use alpha calculated from SE_NLL
 
-        L = self.L_create(self.X, f_err, l_scale, n_err)
+        L = self.L_create(self.X, f_err, l_scales, n_err)
         alpha = linalg.solve(L.T, (linalg.solve(L, self.y))) # save for use with derivative func
         aaT = alpha.dot(alpha.T)
         K_inv = np.linalg.inv(L.T).dot(np.linalg.inv(L))
 
         # Calculate dK/dtheta over each hyperparameter
-        eval_dK_dthetas = self.eval_dK_dthetas(f_err, l_scale, n_err)
+        eval_dK_dthetas = self.eval_dK_dthetas(f_err, l_scales, n_err)
 
         # Incorporate each dK/dt into gradient
         derivatives = [float(-0.5 * np.matrix.trace((aaT - K_inv).dot(dK_dtheta))) for dK_dtheta in eval_dK_dthetas]
@@ -108,15 +98,15 @@ class GaussianProcess:
         if len(args.shape) != 1:
             args = args[0]
 
-        [f_err, l_scale, n_err] = args
-        L = self.L_create(self.X, f_err, l_scale, n_err)
+        f_err, l_scales, n_err = self.unpack_GP_args(args)
+        L = self.L_create(self.X, f_err, l_scales, n_err)
         
         alpha = linalg.solve(L.T, (linalg.solve(L, self.y))) # save for use with derivative func
         nll = (
             0.5 * self.y.T.dot(alpha) + 
             0.5 * np.matrix.trace(L) + # sum of diagonal
             0.5 * self.size * math.log(2*math.pi)
-                )
+        )
 
         return nll
 
@@ -132,7 +122,7 @@ class GaussianProcess:
 
         # for foo in self.classifier_params.values():
         #     print(foo)
-        # all_params = np.array(.unpack_classGP_args(class_params) for class_params in self.classifier_params.values()])
+        # all_params = np.array(.unpack_GP_args(class_params) for class_params in self.classifier_params.values()])
         # all_params.reshape(self.class_count, len(self.classifier_params[0]))
         params = np.array(list(self.classifier_params.values()))
         averaged_params = np.average(params, axis=0)
@@ -153,7 +143,7 @@ class GaussianProcess:
         b = float(args[self.X.shape[1]+3])
         return f_err, l_scales, n_err, a, b
 
-    def unpack_classGP_args(self, args):
+    def unpack_GP_args(self, args):
         f_err = float(args[0])
         l_scales = args[1:self.X.shape[1]+1]
         n_err = args[self.X.shape[1]+1]
@@ -311,7 +301,7 @@ class GaussianProcess:
     # Predict regression values in the binary class case
     def predict_class_single(self, x, label, params):
         # Set parameters
-        f_err, l_scales, n_err = self.unpack_classGP_args(params)
+        f_err, l_scales, n_err = self.unpack_GP_args(params)
 
         # Set y to binary one vs. all labels
         y_ = np.copy(self.y)

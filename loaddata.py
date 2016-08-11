@@ -2,6 +2,7 @@
 
 import numpy as np
 import copy
+import sys
 import math
 from datetime import datetime
 import GPy
@@ -127,30 +128,21 @@ def classification_bathy_testing(features, labels):
 
 def regression_dummy_testing():
     ####################################################################################
-    # Dummy testing
+    # Dummy testing - regression
     ####################################################################################
 
-    a = np.array([i for i in range(1,10)]).reshape(3,3)
-    b = np.array([2,2,2])
-
-    # from sklearn.gaussian_process import GaussianProcess
+    X, y = datasets.make_regression(n_samples=500, n_features=3)
+    print(type(y[0]))
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1)
     gp = GaussianProcess()
-    X = np.array([-1.50,-1.00,-0.75,-0.40,-0.25,0.00])
-    X = X.reshape(len(X), 1)
-    y = np.array([-1.70,-1.20,-0.25,0.30,0.5,0.7])
-    # y = y.reshape(len(y), 1)
+    gp.fit(X_train, y_train)
+    y_pred, variances = gp.predict(X_test)
+    mse = helpers.regression_score(y_test, y_pred)
+    print(y_test)
+    print(y_pred)
+    print(mse)
 
-    # x = np.array([-1.45, -1.32, -0.5, -0.32, -0.10, 0.2, 0.3, 0.4])
-    x = np.array([0.2])
-    x = x.reshape(len(x), 1)
-    gp.fit(X, y)
-
-    y_pred, MSE = gp.predict(x)
-    sigma = np.sqrt(MSE)
-
-    # Plot function, prediction, and 95% confidence interval based on MSE
-    from visualisation import plot
-    # plot(X, y, x, y_pred, sigma)
+    return y_test, y_pred
 
 def classification_dummy_testing():
     ####################################################################################
@@ -236,30 +228,33 @@ def testGP(gp, features, labels, idx, n_iter=5):
 
 # Main function
 if __name__ == "__main__":
+    test,pred=regression_dummy_testing()
+    sys.exit(0)
+
+    # # print("Loading data from npzs...")
     # print("Loading data from npzs...")
-    print("Loading data from npzs...")
-    labels, labelcounts, bath_locations, features = load_training_data()
-    qp_locations, validQueryID, x_bins, query, y_bins = load_test_data()
+    # labels, labelcounts, bath_locations, features = load_training_data()
+    # qp_locations, validQueryID, x_bins, query, y_bins = load_test_data()
 
-    print("Filter down to non-nan queries and locations...")
-    valid_query_idxs = np.where( (~np.isnan(query).any(axis=1) & np.isfinite(query).all(axis=1)) )[0]
-    query = query[valid_query_idxs]
-    qp_locations = qp_locations[valid_query_idxs]
-    infinite_idx = np.where(~np.isfinite(query).all(axis=1))[0]
+    # print("Filter down to non-nan queries and locations...")
+    # valid_query_idxs = np.where( (~np.isnan(query).any(axis=1) & np.isfinite(query).all(axis=1)) )[0]
+    # query = query[valid_query_idxs]
+    # qp_locations = qp_locations[valid_query_idxs]
+    # infinite_idx = np.where(~np.isfinite(query).all(axis=1))[0]
 
-    print("Loading features...")
-    features = np.array(features)
-    # Remove long/lat coordinates
-    # features = features[:,2:]
+    # print("Loading features...")
+    # features = np.array(features)
+    # # Remove long/lat coordinates
+    # # features = features[:,2:]
 
-    # NOTE _s suffix kept here for clarity
-    print("Scaling features...")
-    # features_s = scale(features)
-    features_sn = scale(normalize(features))
-    query_sn = scale(normalize(query))
+    # # NOTE _s suffix kept here for clarity
+    # print("Scaling features...")
+    # # features_s = scale(features)
+    # features_sn = scale(normalize(features))
+    # query_sn = scale(normalize(query))
 
-    # labels = np.array(labels)
-    labels_simple = summarised_labels(labels)
+    # # labels = np.array(labels)
+    # labels_simple = summarised_labels(labels)
 
     # NOTE best for simple classes - scaling, then normalising features
     # order: original, normalised, scaled, normalised-scaled, scaled-normalised
@@ -293,9 +288,9 @@ if __name__ == "__main__":
     # gp3_stats = testGP(gp3, features_sn, labels_simple, train_idx, n_iter=50)
     # print("BCM: {} {} {}", gp3_stats, np.average(gp3_stats[0]), np.average(gp3_stats[1]))
 
-    gp4 = rBCM(200)
-    gp4_stats = testGP(gp4, features_sn, labels_simple, train_idx, n_iter=5)
-    print("BCM: {} {} {}", gp4_stats, np.average(gp4_stats[0]), np.average(gp4_stats[1]))
+    # gp4 = rBCM(200)
+    # gp4_stats = testGP(gp4, features_sn, labels_simple, train_idx, n_iter=5)
+    # print("BCM: {} {} {}", gp4_stats, np.average(gp4_stats[0]), np.average(gp4_stats[1]))
 
     # print("normal GP: {} {} {}", gp_stats, np.average(gp_stats[0]), np.average(gp_stats[1]))
     # print("PoE: {} {} {}", gp1_stats, np.average(gp1_stats[0]), np.average(gp1_stats[1]))
