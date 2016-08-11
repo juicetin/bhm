@@ -30,6 +30,7 @@ from ML.gp.gp import GaussianProcess
 from ML.gp.poe import PoGPE
 from ML.gp.gpoe import GPoGPE
 from ML.gp.bcm import BCM
+from ML.gp.rbcm import rBCM
 
 import visualisation as vis
 import gpy_benchmark
@@ -272,10 +273,10 @@ if __name__ == "__main__":
 
     ########################################### Product of Experts ###########################################
 
-    size = 100
-    train_idx = mini_batch_idxs(labels_simple, size, 'even')
+    # size = 100
+    # train_idx = mini_batch_idxs(labels_simple, size, 'even')
 
-    # train_idx = np.load('data/semi-optimal-1000-subsample.npy')
+    train_idx = np.load('data/semi-optimal-1000-subsample.npy')
 
     # gp = GaussianProcess()
     # gp_stats = testGP(gp, features_sn, labels_simple, train_idx, n_iter=2)
@@ -287,15 +288,20 @@ if __name__ == "__main__":
     # gp12_stats = testGP(gp12, features_sn, labels_simple, train_idx, n_iter=1)
     # gp2 = GPoGPE(200)
     # gp2_stats = testGP(gp2, features_sn, labels_simple, train_idx, n_iter=5)
-    gp3 = BCM(200)
-    gp3_stats = testGP(gp3, features_sn, labels_simple, train_idx, n_iter=5)
+
+    # gp3 = BCM(200)
+    # gp3_stats = testGP(gp3, features_sn, labels_simple, train_idx, n_iter=50)
+    # print("BCM: {} {} {}", gp3_stats, np.average(gp3_stats[0]), np.average(gp3_stats[1]))
+
+    gp4 = rBCM(200)
+    gp4_stats = testGP(gp4, features_sn, labels_simple, train_idx, n_iter=5)
+    print("BCM: {} {} {}", gp4_stats, np.average(gp4_stats[0]), np.average(gp4_stats[1]))
 
     # print("normal GP: {} {} {}", gp_stats, np.average(gp_stats[0]), np.average(gp_stats[1]))
     # print("PoE: {} {} {}", gp1_stats, np.average(gp1_stats[0]), np.average(gp1_stats[1]))
     # print("PoE: {} {} {}", gp11_stats, np.average(gp11_stats[0]), np.average(gp11_stats[1]))
     # print("PoE: {} {} {}", gp12_stats, np.average(gp12_stats[0]), np.average(gp12_stats[1]))
     # print("PoGPE: {} {} {}", gp2_stats, np.average(gp2_stats[0]), np.average(gp2_stats[1]))
-    print("BCM: {} {} {}", gp3_stats, np.average(gp3_stats[0]), np.average(gp3_stats[1]))
 
     # GPy benchmarking
     # test_idx = np.array(list(set(np.arange(16502)) - set(train_idx)))

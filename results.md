@@ -58,6 +58,8 @@ Note that for the 500, 1000 test cases below, they are all using the same 500/10
 | 1000    | E     | GP     | All    | 1         | 0.86570    | Deterministic       | 0.55450 |
 | 1000    | E     | PoEGP  | All    | 5         | 0.78223    |                     | 0.41312 |
 | 1000    | E     | GPoEGP | All    | 5         | 0.77795    |                     | 0.45938 |
+| 1000    | E     | BCM    | All    | 5         | 0.78944    |                     | 0.51378 |
+| 1000    | E     | BCM    | All    | 50         | 0.78093    |                     | 0.42073 |
 | 1000    | E     | GPy    | All    | 1         | 0.87638    | RBF, EP (default)   | 0.57013 |
 
 
@@ -67,8 +69,9 @@ S = stratified
 
 * BCM* ones will need fixing as 'prior precision' is currently defined incorrectly (?)
 
-| Total sample size   | Split method   | Method   | Test method   | No. runs         | Average AUROC                   | Notes                                          | F1-Score                                |
-| :-----------------: | :------------: | :------: | :-----------: | :--------------: | :-------------:                 | ---------------------                          | :--------:                              |
-| 1000                | Even           | PoEGP    | All points    | 4                | 0.76736,0.76945,0.77309,0.78124 | Expert size: 200, points in each expert random | 0.64515,0.62176,0.74395,0.47536         |
-| 1000                | Even           | GPoEGP   | All points    | 4                | 0.78657,0.75807,0.77583,0.79221 | Expert size: 200, ditto                        | 0.32996,0.25872,0.29148,0.32702         |
-| 1000                | Even           | BCM      | All points    | 4                | 0.79438,0.75482,0.77161,0.77020 | ditto                                          | 0.27845,0.27354,0.70730,0.21850,0.36400 |
+| Total sample size   | Split method   | Method   | Test method   | No. runs    | Average AUROC                           | Notes                                          | F1-Score                                |
+| :-----------------: | :------------: | :------: | :-----------: | :---------: | :-------------:                         | ---------------------                          | :--------:                              |
+| 1000                | Even           | PoEGP    | All points    | 4           | 0.76736,0.76945,0.77309,0.78124         | Expert size: 200, points in each expert random | 0.64515,0.62176,0.74395,0.47536         |
+| 1000                | Even           | GPoEGP   | All points    | 4           | 0.78657,0.75807,0.77583,0.79221         | Expert size: 200, ditto                        | 0.32996,0.25872,0.29148,0.32702         |
+| 1000                | Even           | BCM      | All points    | 5           | 0.79755,0.79548,0.78110,0.79423,0.77881 | Ditto                                          | 0.55378,0.77672,0.56987,0.43165,0.23686 |
+
