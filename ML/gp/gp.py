@@ -53,13 +53,13 @@ class GaussianProcess:
         # TODO fix this! do it analytically
         self.f_err_sym, self.n_err_sym = sp.symbols("f_err, n_err")
         self.l_scale_sym = sp.MatrixSymbol('l', 1, self.size)
-        m = sp.Matrix(self.f_err_sym**2 * math.e**(-0.5 * self.dist(self.X/self.l_scale_sym, self.X/self.l_scale_sym)) 
-                         + self.n_err_sym**2 * np.identity(self.size))
-        self.dK_dthetas = [
-                     m.diff(self.f_err_sym),
-                     m.diff(self.l_scale_sym),
-                     m.diff(self.n_err_sym)
-                     ]
+        # m = sp.Matrix(self.f_err_sym**2 * math.e**(-0.5 * self.dist(self.X/self.l_scale_sym, self.X/self.l_scale_sym)) 
+        #                  + self.n_err_sym**2 * np.identity(self.size))
+        # self.dK_dthetas = [
+        #              m.diff(self.f_err_sym),
+        #              m.diff(self.l_scale_sym),
+        #              m.diff(self.n_err_sym)
+        #              ]
 
         # Determine optimal GP hyperparameters
         # f_err, l_scales, n_err
