@@ -19,9 +19,10 @@ class BCM(GP_ensembles):
 
         # TODO prior precision - squared element-wise inverse of diagonal along covariance matrix
         # prior_precision = vars_gp**(-2) # NOTE WRONG - prior precision is diag of elementwise inverse of cov matrix
-        prior_precision = np.ones_like(vars_gp)
+        # prior_precision = np.ones_like(vars_gp)
+        prior_precisions = np.array([gp_expert.prior_variance(x) for gp_expert in self.gp_experts]).reshape(gaus_prec)
 
-        vars_bcm_inv = np.sum(gaus_prec + (1-M) * prior_precision, axis=0) # variances
+        vars_bcm_inv = np.sum(gaus_prec + (1-M) * prior_precisions, axis=0) # variances
         vars_bcm = vars_bcm_inv**(-1)
         means_bcm = vars_bcm * np.sum(gaus_prec * means_gp, axis=0)  # means
 

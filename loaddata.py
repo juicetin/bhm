@@ -272,10 +272,10 @@ if __name__ == "__main__":
 
     ########################################### Product of Experts ###########################################
 
-    # size = 13000
-    # idx = mini_batch_idxs(labels_simple, size, 'stratified')
+    size = 100
+    train_idx = mini_batch_idxs(labels_simple, size, 'even')
 
-    train_idx = np.load('data/semi-optimal-1000-subsample.npy')
+    # train_idx = np.load('data/semi-optimal-1000-subsample.npy')
 
     # gp = GaussianProcess()
     # gp_stats = testGP(gp, features_sn, labels_simple, train_idx, n_iter=2)
