@@ -80,34 +80,37 @@ if __name__ == "__main__":
     # train_idx = data.mini_batch_idxs(labels_simple, size, 'even')
 
     train_idx = np.load('data/semi-optimal-1000-subsample.npy')
+    test_idx = np.array(list(set(np.arange(features.shape[0])) - set(train_idx)))
 
-    gp = GaussianProcess()
-    gp_stats = benchmarks.testGP(gp, features_sn, labels_simple, train_idx, n_iter=2)
-    print("normal GP: {} {} {}", gp_stats, np.average(gp_stats[0]), np.average(gp_stats[1]))
+    gp = GaussianProcess(classification_type='OvO')
+    gp.fit(features_sn[train_idx], labels_simple[train_idx])
+    y_preds, y_vars = gp.predict(features_sn[test_idx], keep_probs=True)
+    # gp_stats = benchmarks.testGP(gp, features_sn, labels_simple, train_idx, n_iter=2)
+    # print("normal GP: {} \n\taverages: {} {}".format( gp_stats, np.average(gp_stats[0]), np.average(gp_stats[1])))
 
     # gp1 = PoGPE(50)
-    # gp1_stats = testGP(gp1, features_sn, labels_simple, train_idx, n_iter=1)
-    # print("PoE: {} {} {}", gp1_stats, np.average(gp1_stats[0]), np.average(gp1_stats[1]))
+    # gp1_stats = benchmarks.testGP(gp1, features_sn, labels_simple, train_idx, n_iter=1)
+    # print("PoE: {} \n\taverages:{} {}".format(gp1_stats, np.average(gp1_stats[0]), np.average(gp1_stats[1])))
 
     # gp11 = PoGPE(500)
-    # gp11_stats = testGP(gp11, features_sn, labels_simple, train_idx, n_iter=1)
-    # print("PoE: {} {} {}", gp11_stats, np.average(gp11_stats[0]), np.average(gp11_stats[1]))
+    # gp11_stats = benchmarks.testGP(gp11, features_sn, labels_simple, train_idx, n_iter=1)
+    # print("PoE: {} \n\taverages: {} {}".format( gp11_stats, np.average(gp11_stats[0]), np.average(gp11_stats[1])))
 
     # gp12 = PoGPE(1000)
-    # gp12_stats = testGP(gp12, features_sn, labels_simple, train_idx, n_iter=1)
-    # print("PoE: {} {} {}", gp12_stats, np.average(gp12_stats[0]), np.average(gp12_stats[1]))
+    # gp12_stats = benchmarks.testGP(gp12, features_sn, labels_simple, train_idx, n_iter=1)
+    # print("PoE: {} \n\taverages: {} {}".format( gp12_stats, np.average(gp12_stats[0]), np.average(gp12_stats[1])))
 
     # gp2 = GPoGPE(200)
-    # gp2_stats = testGP(gp2, features_sn, labels_simple, train_idx, n_iter=5)
-    # print("PoGPE: {} {} {}", gp2_stats, np.average(gp2_stats[0]), np.average(gp2_stats[1]))
+    # gp2_stats = benchmarks.testGP(gp2, features_sn, labels_simple, train_idx, n_iter=5)
+    # print("PoGPE: {} \n\taverages: {} {}".format( gp2_stats, np.average(gp2_stats[0]), np.average(gp2_stats[1])))
 
     # gp3 = BCM(200)
-    # gp3_stats = testGP(gp3, features_sn, labels_simple, train_idx, n_iter=50)
-    # print("BCM: {} {} {}", gp3_stats, np.average(gp3_stats[0]), np.average(gp3_stats[1]))
+    # gp3_stats = benchmarks.testGP(gp3, features_sn, labels_simple, train_idx, n_iter=50)
+    # print("BCM: {} \n\taverages: {} {}".format( gp3_stats, np.average(gp3_stats[0]), np.average(gp3_stats[1])))
 
     # gp4 = rBCM(200)
-    # gp4_stats = testGP(gp4, features_sn, labels_simple, train_idx, n_iter=5)
-    # print("BCM: {} {} {}", gp4_stats, np.average(gp4_stats[0]), np.average(gp4_stats[1]))
+    # gp4_stats = benchmarks.testGP(gp4, features_sn, labels_simple, train_idx, n_iter=5)
+    # print("BCM: {} \n\taverages: {} {}".format( gp4_stats, np.average(gp4_stats[0]), np.average(gp4_stats[1])))
 
 
     # GPy benchmarking
@@ -224,4 +227,4 @@ if __name__ == "__main__":
     # vis.show_map(bath_locations, labels, x_bins_training, y_bins_training, display=False)
     #########################################################################################################
 
-    benchmarks.classification_dummy_testing()
+    # benchmarks.classification_dummy_testing()

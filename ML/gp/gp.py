@@ -3,9 +3,12 @@ import math
 from datetime import datetime
 
 from collections import OrderedDict
+from progress.bar import Bar
 
 import multiprocessing as mp
 from multiprocessing import Pool
+
+from itertools import combinations
 
 # Project-internals
 from ML.helpers import partition_indexes
@@ -34,8 +37,13 @@ from scipy.stats import norm
 # b = np.reshape(1,3) # 1 row, 3 columns
 
 class GaussianProcess:
-    def __init__(self):
-        pass
+    def __init__(self, classification_type='OvR'):
+        if classification_type == 'OvO':
+            self.fit_all_classes = self.fit_classes_OvO
+            self.predict_probs = self.predict_probs_OvO
+        elif classification_type == 'OvR':
+            self.fit_all_classes = self.fit_classes_OvR
+            self.predict_probs = self.predict_probs_OvR
 
     # Regression fit
     def fit_regression(self, X, y):
@@ -53,7 +61,7 @@ class GaussianProcess:
         res = minimize(self.SE_NLL, x0, method='bfgs', jac=self.SE_der)
         self.f_err, self.l_scales, self.n_err = self.unpack_GP_args(res['x'])
 
-        # Set a few 'fixed' variables once GP HPs are determined for later use (with classifier)
+        # S et a few 'fixed' variables once GP HPs are determined for later use (with classifier)
         self.L = self.L_create(self.X, self.f_err, self.l_scales, self.n_err)
         self.K_inv = np.linalg.inv(self.L.T).dot(np.linalg.inv(self.L))
         self.alpha = linalg.solve(self.L.T, (linalg.solve(self.L, self.y)))
@@ -169,8 +177,6 @@ class GaussianProcess:
     def LLOO_der(self, args):
         d1 = datetime.now()
         
-        self.count += 1
-
         f_err, l_scales, n_err, a, b = self.unpack_LLOO_args(args)
 
         # This block is common to both LLOO and LLOO_der
@@ -215,28 +221,38 @@ class GaussianProcess:
 
         return np.array(gradients, dtype=np.float64)
 
-    # Classification
-    def fit_classification(self, X, y):
+    def fit_classes_OvO(self, X, y):
+        uniq_y = np.unique(y)
+        ovos = combinations(uniq_y, 2)
+        self.ovo_pairs = ovos
+        for class_pair in ovos:
+            # Get the two classes involved in this OvO
+            pos_class, neg_class = class_pair
 
-        self.size = len(y)
-        self.X = X
-        self.classifier_params = OrderedDict()
-        self.class_count = np.unique(y).shape[0]
-        # self.class_count = 4
-        params = ['f_err', 'l_scales', 'n_err', 'a', 'b']
+            # f_err, l_scales (for each dimension), n_err, alpha, beta
+            x0 = [1] + [1] * X.shape[1] + [1,1,1]
 
-        # Build OvA classifier for each unique class in y
-        print("Starting to build OvR classifier per class...")
-        # print("Class list: {}. Current class progress: ".format(set(y)), end=" ", flush=True)
+            # Set binary labels for each OvO classifier
+            cur_idxs = np.where((y != pos_class) & (y != neg_class))
+            self.y = y[cur_idxs]
+            self.y[np.where(self.y == neg_class)] = -1
+            self.y[np.where(self.y == pos_class)] = 1
+            self.X = X[cur_idxs]
 
-        # OvR here - also TODO an OvO!
-        for c in set(y):
-            # print(c, end=" ", flush=True)
+            # Optimise
+            res = minimize(self.LLOO, x0, method='bfgs', jac=self.LLOO_der)
 
-            # Count iterations needed per optimize.minimize
-            self.count = 0
+            # Set params for the ibnary OvO
+            self.classifier_params[class_pair] = res['x']
 
-            # self.classifier_params[c] = {}
+            # Reset ys
+            self.y = y
+            self.X = X
+
+    def fit_classes_OvR(self, X, y):
+        uniq_y = np.unique(y)
+        prog_bar = Bar('Classes fitted', max=uniq_y.shape[0])
+        for c in uniq_y:
 
             # f_err, l_scales (for each dimension), n_err, alpha, beta
             x0 = [1] + [1] * X.shape[1] + [1, 1, 1]
@@ -255,7 +271,22 @@ class GaussianProcess:
 
             # Reset ys
             self.y = y
-        print()
+            prog_bar.next()
+        prog_bar.finish()
+
+    # Classification
+    def fit_classification(self, X, y):
+
+        self.size = len(y)
+        self.X = X
+        self.classifier_params = OrderedDict()
+        self.class_count = np.unique(y).shape[0]
+        # self.class_count = 4
+        params = ['f_err', 'l_scales', 'n_err', 'a', 'b']
+
+        # Build OvA classifier for each unique class in y
+        # OvR here - also TODO an OvO!
+        self.fit_all_classes(X, y)
 
 
     # The 'extra' y_ parameter is to allow restriction of y for parallelisation
@@ -267,7 +298,7 @@ class GaussianProcess:
 
         # Generate squashed y precidtions in steps
         if x.shape[0] > 5000:
-            y_preds = np.zeros((self.class_count, 2, x.shape[0]))
+            y_preds = np.zeros((len(self.classifier_params), 2, x.shape[0]))
             step = 2000
 
             # Step through data and predict in chunks
@@ -296,7 +327,28 @@ class GaussianProcess:
         y_means_squashed = sigmoid(y_means)
 
         # Return max squashed value for each data point representing class prediction
+        return self.predict_probs(y_preds)
+
+    def predict_probs_OvR(self, y_preds):
         return np.argmax(y_preds, axis=0)
+
+    def predict_probs_OvO(self, y_preds):
+        class_pairs = np.array(list(self.ovo_pairs))
+
+        # Round each row off to 1s and 0s
+        y_rnd = np.rint(y_preds).astype(np.int)
+
+        # Convert each row into actual predicted class labels based on OvO pairs
+        for row_idx in range(y_rnd.shape[0]):
+            # idxs have to be cached first as inlining them will overlap - 
+            #    e.g. set to 0, then detected as 0 again
+            yes_idxs = np.where(y_rnd[row_idx] == 1)
+            no_idxs = np.where(y_rnd[row_idx] == 0)
+            y_rnd[yes_idxs] == class_pairs[row_idx][0]
+            y_rnd[no_idxs] == class_pairs[row_idx][1]
+
+        # TODO take the max count for each column as class predictions
+        return 
 
     # Predict regression values in the binary class case
     def predict_class_single(self, x, label, params):
