@@ -1,5 +1,6 @@
 import sys
 import math
+import pdb
 from datetime import datetime
 
 from collections import OrderedDict
@@ -224,8 +225,8 @@ class GaussianProcess:
     def fit_classes_OvO(self, X, y):
         uniq_y = np.unique(y)
         ovos = combinations(uniq_y, 2)
-        self.ovo_pairs = ovos
-        for class_pair in ovos:
+        self.ovo_pairs = [pair for pair in ovos]
+        for class_pair in self.ovo_pairs:
             # Get the two classes involved in this OvO
             pos_class, neg_class = class_pair
 
@@ -333,7 +334,7 @@ class GaussianProcess:
         return np.argmax(y_preds, axis=0)
 
     def predict_probs_OvO(self, y_preds):
-        class_pairs = np.array(list(self.ovo_pairs))
+        pdb.set_trace()
 
         # Round each row off to 1s and 0s
         y_rnd = np.rint(y_preds).astype(np.int)
@@ -344,8 +345,8 @@ class GaussianProcess:
             #    e.g. set to 0, then detected as 0 again
             yes_idxs = np.where(y_rnd[row_idx] == 1)
             no_idxs = np.where(y_rnd[row_idx] == 0)
-            y_rnd[yes_idxs] == class_pairs[row_idx][0]
-            y_rnd[no_idxs] == class_pairs[row_idx][1]
+            y_rnd[yes_idxs] = self.ovo_pairs[row_idx][0]
+            y_rnd[no_idxs] = self.ovo_pairs[row_idx][1]
 
         # TODO take the max count for each column as class predictions
         return y_rnd
