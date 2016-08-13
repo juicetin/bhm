@@ -328,16 +328,15 @@ class GaussianProcess:
         y_means_squashed = sigmoid(y_means)
 
         # Return max squashed value for each data point representing class prediction
-        return self.predict_probs(y_preds)
+        return self.predict_probs(y_means)
 
     def predict_probs_OvR(self, y_preds):
         return np.argmax(y_preds, axis=0)
 
     def predict_probs_OvO(self, y_preds):
-        pdb.set_trace()
 
         # Round each row off to 1s and 0s
-        y_rnd = np.rint(y_preds).astype(np.int)
+        y_rnd = np.abs(np.rint(y_preds).astype(np.int))
 
         # Convert each row into actual predicted class labels based on OvO pairs
         for row_idx in range(y_rnd.shape[0]):
@@ -345,11 +344,12 @@ class GaussianProcess:
             #    e.g. set to 0, then detected as 0 again
             yes_idxs = np.where(y_rnd[row_idx] == 1)
             no_idxs = np.where(y_rnd[row_idx] == 0)
-            y_rnd[yes_idxs] = self.ovo_pairs[row_idx][0]
-            y_rnd[no_idxs] = self.ovo_pairs[row_idx][1]
+
+            y_rnd[row_idx][yes_idxs] = self.ovo_pairs[row_idx][0]
+            y_rnd[row_idx][no_idxs] = self.ovo_pairs[row_idx][1]
 
         # TODO take the max count for each column as class predictions
-        return y_rnd
+        return np.apply_along_axis(lambda x: np.argmax(np.bincount(x)), axis=0, arr=y_rnd)
 
     # Predict regression values in the binary class case
     def predict_class_single(self, x, label, params):
