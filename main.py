@@ -37,7 +37,8 @@ import misc.benchmarks as benchmarks
 # Main function
 if __name__ == "__main__":
     # Regression testing
-    # test,pred=benchmarks.regression_dummy_testing()
+    test,pred=benchmarks.regression_dummy_testing()
+    sys.exit(0)
 
     print("Loading data from npzs...")
     labels, labelcounts, bath_locations, features = data.load_training_data()
@@ -82,12 +83,12 @@ if __name__ == "__main__":
 
     test_idx = np.array(list(set(np.arange(features.shape[0])) - set(train_idx)))
 
-    gp = GaussianProcess(classification_type='OvR')
-    # gp.fit(features_sn[train_idx], labels_simple[train_idx])
-    # y_preds, y_vars = gp.predict(features_sn[test_idx], keep_probs=True)
-    # y_preds = gp.predict(features_sn[test_idx])
-    gp_stats = benchmarks.testGP(gp, features_sn, labels_simple, train_idx, n_iter=2)
-    print("normal GP: {} \n\taverages: {} {}".format( gp_stats, np.average(gp_stats[0]), np.average(gp_stats[1])))
+    # gp = GaussianProcess(classification_type='OvR')
+    # # gp.fit(features_sn[train_idx], labels_simple[train_idx])
+    # # y_preds, y_vars = gp.predict(features_sn[test_idx], keep_probs=True)
+    # # y_preds = gp.predict(features_sn[test_idx])
+    # gp_stats = benchmarks.testGP(gp, features_sn, labels_simple, train_idx, n_iter=2)
+    # print("normal GP: {} \n\taverages: {} {}".format( gp_stats, np.average(gp_stats[0]), np.average(gp_stats[1])))
 
     # gp1 = PoGPE(50)
     # gp1_stats = benchmarks.testGP(gp1, features_sn, labels_simple, train_idx, n_iter=1)

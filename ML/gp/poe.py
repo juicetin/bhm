@@ -20,4 +20,7 @@ class PoGPE(GP_ensembles):
         if keep_probs == True:
             return means_poe, vars_poe
 
-        return np.argmax(means_poe, axis=0)
+        if self.gp_type == 'classification':
+            return np.argmax(means_poe, axis=0)
+        elif self.gp_type == 'regression':
+            return means_poe, vars_poe

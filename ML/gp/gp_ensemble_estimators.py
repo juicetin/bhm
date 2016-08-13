@@ -10,6 +10,11 @@ class GP_ensembles():
         pass
     
     def fit(self, X, y):
+        if type(y[0]) != np.int64:
+            self.gp_type = 'regression'
+        else:
+            self.gp_type = 'classification'
+
         self.X = X
 
         self.num_classes = np.unique(y).shape[0]

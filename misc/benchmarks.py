@@ -2,6 +2,7 @@ import numpy as np
 import copy
 import sys
 import math
+import pdb
 from datetime import datetime
 import GPy
 
@@ -68,16 +69,26 @@ def regression_dummy_testing():
     # Dummy testing - regression
     ####################################################################################
 
-    X, y = datasets.make_regression(n_samples=500, n_features=3)
+    X, y = datasets.make_regression(n_samples=1000, n_features=2)
     print(type(y[0]))
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1)
+
+    gp = PoGPE(200)
+    gp.fit(X_train, y_train)
+    y_pred, variances = gp.predict(X_test)
+    mse = helpers.regression_score(y_test, y_pred)
+    print(mse)
+
     gp = GaussianProcess()
     gp.fit(X_train, y_train)
     y_pred, variances = gp.predict(X_test)
     mse = helpers.regression_score(y_test, y_pred)
-    print(y_test)
-    print(y_pred)
     print(mse)
+
+    y_train = y_train.reshape(y_train.shape[0], 1)
+    m = GPy.models.GPRegression(X_train, y_train)
+    y_pred, variances = m.predict(X_test)
+    mse = helpers.regression_score(y_test, y_pred)
 
     return y_test, y_pred
 
