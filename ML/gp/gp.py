@@ -348,7 +348,7 @@ class GaussianProcess:
             y_rnd[no_idxs] == class_pairs[row_idx][1]
 
         # TODO take the max count for each column as class predictions
-        return 
+        return y_rnd
 
     # Predict regression values in the binary class case
     def predict_class_single(self, x, label, params):
