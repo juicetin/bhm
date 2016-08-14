@@ -69,7 +69,7 @@ def regression_dummy_testing():
     # Dummy testing - regression
     ####################################################################################
 
-    X, y = datasets.make_regression(n_samples=1000, n_features=2)
+    X, y = datasets.make_regression(n_samples=100, n_features=2)
     print(type(y[0]))
 
     iterations = 1
@@ -100,7 +100,7 @@ def regression_dummy_testing():
         worse_factors[i] = worse_factor
         print("ensemble was {} times higher than GPy".format(worse_factor))
 
-        vis.plot(X_train, y_train, X_test, y_pred1, variances1)
+        vis.plot(X_train, y_train, X_test, y_pred3, variances3)
     print("worse factor average: {}".format(np.average(worse_factors)))
 
 def classification_dummy_testing():
