@@ -124,21 +124,22 @@ class GaussianProcess:
     ####################################################
 
     def prior_variance(self, x):
-        try:
-            self.classifier_params
-        except NameError:
-            print("Parameters haven't been determined yet!")
+
+        if self.gp_type == 'classification':
+            params = np.array(list(self.classifier_params.values()))
+            averaged_params = np.average(params, axis=0)
+            f_errs = averaged_params[0]
+            n_errs = averaged_params[-1]
+        elif self.gp_type == 'regression':
+            f_errs = self.f_err
+            n_errs = self.n_err
 
         # for foo in self.classifier_params.values():
         #     print(foo)
         # all_params = np.array(.unpack_GP_args(class_params) for class_params in self.classifier_params.values()])
         # all_params.reshape(self.class_count, len(self.classifier_params[0]))
-        params = np.array(list(self.classifier_params.values()))
-        averaged_params = np.average(params, axis=0)
-        ferr_avg = averaged_params[0]
-        nerr_avg = averaged_params[-1]
 
-        prior_var = ferr_avg**2 * np.exp([0] * x.shape[0]) + np.full(x.shape[0], nerr_avg**2)
+        prior_var = f_errs**2 * np.exp([0] * x.shape[0]) + np.full(x.shape[0], n_errs**2)
         return prior_var
 
     #################### Negative LOO log predictive probability ####################

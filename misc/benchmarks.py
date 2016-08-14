@@ -69,15 +69,16 @@ def regression_dummy_testing():
     # Dummy testing - regression
     ####################################################################################
 
-    X, y = datasets.make_regression(n_samples=100, n_features=2)
+    X, y = datasets.make_regression(n_samples=1000, n_features=2)
     print(type(y[0]))
 
     iterations = 1
     worse_factors = np.empty(iterations)
     for i in range(iterations):
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1)
-        gp = PoGPE(200)
-        # gp = GPoGPE(200)
+        # gp = PoGPE(200)
+        gp = GPoGPE(200)
+        # gp = BCM(200)
         gp.fit(X_train, y_train)
         y_pred1, variances1 = gp.predict(X_test)
         mse1 = helpers.regression_score(y_test, y_pred1)
