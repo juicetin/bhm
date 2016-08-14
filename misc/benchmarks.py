@@ -71,26 +71,37 @@ def regression_dummy_testing():
 
     X, y = datasets.make_regression(n_samples=1000, n_features=2)
     print(type(y[0]))
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1)
 
-    gp = PoGPE(200)
-    gp.fit(X_train, y_train)
-    y_pred, variances = gp.predict(X_test)
-    mse = helpers.regression_score(y_test, y_pred)
-    print(mse)
+    iterations = 1
+    worse_factors = np.empty(iterations)
+    for i in range(iterations):
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1)
+        gp = PoGPE(200)
+        # gp = GPoGPE(200)
+        gp.fit(X_train, y_train)
+        y_pred1, variances1 = gp.predict(X_test)
+        mse1 = helpers.regression_score(y_test, y_pred1)
 
-    gp = GaussianProcess()
-    gp.fit(X_train, y_train)
-    y_pred, variances = gp.predict(X_test)
-    mse = helpers.regression_score(y_test, y_pred)
-    print(mse)
+        # gp = GaussianProcess()
+        # gp.fit(X_train, y_train)
+        # y_pred2, variances2 = gp.predict(X_test)
+        # mse2 = helpers.regression_score(y_test, y_pred2)
+        # print(mse2)
 
-    y_train = y_train.reshape(y_train.shape[0], 1)
-    m = GPy.models.GPRegression(X_train, y_train)
-    y_pred, variances = m.predict(X_test)
-    mse = helpers.regression_score(y_test, y_pred)
+        y_train = y_train.reshape(y_train.shape[0], 1)
+        m = GPy.models.GPRegression(X_train, y_train)
+        y_pred3, variances3 = m.predict(X_test)
+        mse3 = helpers.regression_score(y_test, y_pred3)
 
-    return y_test, y_pred
+
+        print("ensemble: {}, gpy: {}".format(mse1, mse3))
+        
+        worse_factor = mse1/mse3
+        worse_factors[i] = worse_factor
+        print("ensemble was {} times higher than GPy".format(worse_factor))
+
+        vis.plot(X_train, y_train, X_test, y_pred1, variances1)
+    print("worse factor average: {}".format(np.average(worse_factors)))
 
 def classification_dummy_testing():
     ####################################################################################

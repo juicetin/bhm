@@ -4,24 +4,32 @@ from ML.gp.gp_ensemble_estimators import GP_ensembles
 
 import numpy as np
 import math
+import pdb
 
 class GPoGPE(GP_ensembles):
     def __init__(self, args):
         super().__init__(args)
 
     def predict(self, x, keep_probs=False):
-        means_gp, vars_gp = self.gp_means_vars(x)
+        gaussian_means, gaussian_variances = self.gp_means_vars(x)
 
         # Expert contributions 
         expert_count = self.gp_experts.shape[0]
         betas = np.full(x.shape[0], 1/expert_count)
 
+        gaussian_precisions = gaussian_variances ** (-1)
+
         # These contain a row for each binary class case (OvR)
         # NOTE betas can only be factored out as it is consistent throughout
-        vars_poe = betas * np.sum(vars_gp, axis=0)  # vars
-        means_poe = vars_poe * betas * np.sum(vars_gp**(-2) * means_gp, axis=0)  # means
+
+        gpoe_precisions = np.sum(betas * gaussian_precisions, axis=0)
+        gpoe_variances = gpoe_precisions ** (-1)
+        gpoe_means = gpoe_variances * np.sum(betas * gaussian_precisions * gaussian_means, axis=0)
 
         if keep_probs == True:
-            return means_poe, vars_poe
+            return gpoe_means, gpoe_variances
 
-        return np.argmax(means_poe, axis=0)
+        if self.gp_type == 'classification':
+            return np.argmax(means_poe, axis=0)
+        elif self.gp_type == 'regression':
+            return gpoe_means, gpoe_variances

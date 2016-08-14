@@ -35,15 +35,15 @@ class GP_ensembles():
             gp_expert.fit(X_s[start:end], y_s[start:end])
         self.gp_experts = gp_experts
     
+    # Returns the means and variances for each GP expert
     def gp_means_vars(self, x, parallel=False):
-        # for gp_expert in self.gp_experts:
-        #     gp_expert.predict(x)
     
         # Means, variances for each binary class case for each GP regressor (classifier)
         # Shape - (experts, 2, classes, data points)
         #   2 - 0-axis for means, 1-axis for variances
         y_preds = np.array([gp_expert.predict(x, keep_probs=True, parallel=parallel) for gp_expert in self.gp_experts])
     
+        # Extract means and variances
         vars_gp = y_preds[:,1]
         means_gp = y_preds[:,0]
     

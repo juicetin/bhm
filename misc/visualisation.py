@@ -23,7 +23,8 @@ def plot(X, y, x, y_pred, sigma):
     plt.ylabel('$y$')
     plt.ylim(-10, 20)
     plt.legend(loc='upper left')
-    plt.show()
+    # plt.show()
+    plt.save_fig('img.pdf')
 
 def plot_classes(X, Y, Y_pred):
     if X.shape[1] == 3:
