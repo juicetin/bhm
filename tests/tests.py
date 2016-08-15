@@ -98,7 +98,7 @@ class TestGPMethods(unittest.TestCase):
         print("\nTesting that OvR binary class params are unpacked properly...")
         gp = GaussianProcess()
         gp.X = np.random.rand(30, 11)
-        f_err, l_scales, n_err, = gp.unpack_classGP_args(np.arange(13))
+        f_err, l_scales, n_err, = gp.unpack_GP_args(np.arange(13))
         
         self.assertEqual(f_err, 0)
         self.assertEqual(11, np.sum(l_scales == np.arange(1,12)))
