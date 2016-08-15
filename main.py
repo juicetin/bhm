@@ -5,6 +5,7 @@ import copy
 import sys
 import math
 from datetime import datetime
+import pdb
 import GPy
 
 from sklearn.preprocessing import normalize
@@ -97,13 +98,13 @@ if __name__ == "__main__":
     # gp2_stats = benchmarks.testGP(gp2, features_sn, labels_simple, train_idx, n_iter=5)
     # print("PoGPE: {} \n\taverages: {} {}".format( gp2_stats, np.average(gp2_stats[0]), np.average(gp2_stats[1])))
 
-    gp3 = BCM(200)
-    gp3_stats = benchmarks.testGP(gp3, features_sn, labels_simple, train_idx, n_iter=1)
-    print("BCM: {} \n\taverages: {} {}".format( gp3_stats, np.average(gp3_stats[0]), np.average(gp3_stats[1])))
+    # gp3 = BCM(200)
+    # gp3_stats = benchmarks.testGP(gp3, features_sn, labels_simple, train_idx, n_iter=1)
+    # print("BCM: {} \n\taverages: {} {}".format( gp3_stats, np.average(gp3_stats[0]), np.average(gp3_stats[1])))
 
-    gp4 = rBCM(200)
-    gp4_stats = benchmarks.testGP(gp4, features_sn, labels_simple, train_idx, n_iter=5)
-    print("BCM: {} \n\taverages: {} {}".format( gp4_stats, np.average(gp4_stats[0]), np.average(gp4_stats[1])))
+    # gp4 = rBCM(200)
+    # gp4_stats = benchmarks.testGP(gp4, features_sn, labels_simple, train_idx, n_iter=5)
+    # print("BCM: {} \n\taverages: {} {}".format( gp4_stats, np.average(gp4_stats[0]), np.average(gp4_stats[1])))
 
 
     # GPy benchmarking

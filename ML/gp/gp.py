@@ -156,15 +156,6 @@ class GaussianProcess:
         b = float(args[self.X.shape[1]+3])
         return f_err, l_scales, n_err, a, b
 
-    def unpack_GP_args(self, args):
-        if len(args.shape) == 2:
-            args = args[0]
-
-        f_err = float(args[0])
-        l_scales = args[1:self.X.shape[1]+1]
-        n_err = args[self.X.shape[1]+1]
-        return f_err, l_scales, n_err
-
     def LLOO(self, args):
         f_err, l_scales, n_err, a, b = self.unpack_LLOO_args(args)
 
@@ -434,6 +425,16 @@ class GaussianProcess:
 
 
     ################################## Generic ##################################
+
+    def unpack_GP_args(self, args):
+        if len(args.shape) == 2:
+            args = args[0]
+
+        f_err = float(args[0])
+        l_scales = args[1:self.X.shape[1]+1]
+        n_err = args[self.X.shape[1]+1]
+        return f_err, l_scales, n_err
+
     def fit(self, X, y):
         # Class labels TODO account for more integer types properly
         if type(y[0]) == np.int64:
@@ -478,3 +479,9 @@ class GaussianProcess:
 
         # Concat along class list axis
         return np.concatenate(predict_results, axis=0)
+
+    ################################################################################
+    ############################ Multi-Task Stuff ##################################
+    ################################################################################
+
+

@@ -1,4 +1,5 @@
 import numpy as np
+from pandas import read_csv
 
 # Load all the data
 def load_training_data():
@@ -68,3 +69,6 @@ def summarised_labels(labels):
     return new_labels
 
 
+def csv_to_npz(filename):
+    data = read_csv(filename, sep=',')
+    return data
