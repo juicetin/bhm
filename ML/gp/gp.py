@@ -484,4 +484,8 @@ class GaussianProcess:
     ############################ Multi-Task Stuff ##################################
     ################################################################################
 
+    def fit_multi_task(self, X, y):
+        pass
 
+    def predict_multi_task(self, x):
+        pass
