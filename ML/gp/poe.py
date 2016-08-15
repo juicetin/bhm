@@ -24,7 +24,7 @@ class PoGPE(GP_ensembles):
         poe_means = poe_variances * np.sum(gaussian_precisions * gaussian_means, axis=0)  # means
 
         if keep_probs == True:
-            return means_poe, vars_poe
+            return poe_means, poe_variances
 
         if self.gp_type == 'classification':
             return np.argmax(poe_means, axis=0)

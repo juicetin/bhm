@@ -91,9 +91,9 @@ if __name__ == "__main__":
     # gp_stats = benchmarks.testGP(gp, features_sn, labels_simple, train_idx, n_iter=2)
     # print("normal GP: {} \n\taverages: {} {}".format( gp_stats, np.average(gp_stats[0]), np.average(gp_stats[1])))
 
-    gp1 = PoGPE(200)
-    gp1_stats = benchmarks.testGP(gp1, features_sn, labels_simple, train_idx, n_iter=1)
-    print("PoE: {} \n\taverages:{} {}".format(gp1_stats, np.average(gp1_stats[0]), np.average(gp1_stats[1])))
+    # gp1 = PoGPE(200)
+    # gp1_stats = benchmarks.testGP(gp1, features_sn, labels_simple, train_idx, n_iter=1)
+    # print("PoE: {} \n\taverages:{} {}".format(gp1_stats, np.average(gp1_stats[0]), np.average(gp1_stats[1])))
 
     # gp11 = PoGPE(500)
     # gp11_stats = benchmarks.testGP(gp11, features_sn, labels_simple, train_idx, n_iter=1)
@@ -111,9 +111,9 @@ if __name__ == "__main__":
     gp3_stats = benchmarks.testGP(gp3, features_sn, labels_simple, train_idx, n_iter=1)
     print("BCM: {} \n\taverages: {} {}".format( gp3_stats, np.average(gp3_stats[0]), np.average(gp3_stats[1])))
 
-    # gp4 = rBCM(200)
-    # gp4_stats = benchmarks.testGP(gp4, features_sn, labels_simple, train_idx, n_iter=5)
-    # print("BCM: {} \n\taverages: {} {}".format( gp4_stats, np.average(gp4_stats[0]), np.average(gp4_stats[1])))
+    gp4 = rBCM(200)
+    gp4_stats = benchmarks.testGP(gp4, features_sn, labels_simple, train_idx, n_iter=5)
+    print("BCM: {} \n\taverages: {} {}".format( gp4_stats, np.average(gp4_stats[0]), np.average(gp4_stats[1])))
 
 
     # GPy benchmarking
