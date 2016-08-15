@@ -4,6 +4,7 @@ from ML.gp.gp_ensemble_estimators import GP_ensembles
 
 import numpy as np
 import math
+import pdb
 
 class rBCM(GP_ensembles):
     def __init__(self, args):
@@ -33,8 +34,6 @@ class rBCM(GP_ensembles):
         rbcm_means = rbcm_variances * np.sum(betas * gaussian_precisions * gaussian_means, axis=0) # means
 
         if self.gp_type == 'classification':
-            rbcm_precisions = np.sum(rbcm_precisions, axis=0)
-            rbcm_means = np.sum(rbcm_means, axis=0)
             if keep_probs == True:
                 return rbcm_means, rbcm_variances
             return np.argmax(rbcm_means, axis=0)

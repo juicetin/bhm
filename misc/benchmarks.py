@@ -69,11 +69,11 @@ def test_basic_2D_data():
     # vis.plot_continuous(X_test, y_test)
 
     expert_size = train_idx.shape[0]/3
-    test_2D_data_for_model(rBCM(expert_size), axs[4], X_train, y_train, X_test)
     test_2D_data_for_model(GaussianProcess(), axs[0], X_train, y_train, X_test)
     test_2D_data_for_model(PoGPE(expert_size), axs[1], X_train, y_train, X_test)
     test_2D_data_for_model(GPoGPE(expert_size), axs[2], X_train, y_train, X_test)
     test_2D_data_for_model(BCM(expert_size), axs[3], X_train, y_train, X_test)
+    test_2D_data_for_model(rBCM(expert_size), axs[4], X_train, y_train, X_test)
 
     vis.show_all()
 

@@ -16,27 +16,21 @@ class BCM(GP_ensembles):
         # These contain a row for each binary class case (OvR)
         #   AFTER summing along axis 0 (each of the local experts)
         M = gaussian_variances.shape[0]
-        gaussian_precision = gaussian_variances**(-1)
+        gaussian_precisions = gaussian_variances**(-1)
 
         # TODO prior precision - squared element-wise inverse of diagonal along covariance matrix
         # prior_precision = gaussian_variances**(-2) # NOTE WRONG - prior precision is diag of elementwise inverse of cov matrix
-        prior_variances = np.empty_like(gaussian_precision)
+        prior_variances = np.empty_like(gaussian_precisions)
         for idx, gp_expert in enumerate(self.gp_experts):
             prior_variance = gp_expert.prior_variance(x)
             prior_variances[idx] = prior_variance
         prior_precisions = prior_variances**(-1)
 
-        # bcm_precisions = np.sum(gaussian_precision + (1-M) * prior_precisions, axis=0) # variances
-        # bcm_variances = bcm_precisions**(-1)
-        # bcm_means = bcm_variances * np.sum(gaussian_precision * gaussian_means, axis=0)  # means
-
-        bcm_precisions = gaussian_precision + (1-M) * prior_precisions # variances
+        bcm_precisions = np.sum(gaussian_precisions + (1-M) * prior_precisions, axis=0) # variances
         bcm_variances = bcm_precisions**(-1)
-        bcm_means = bcm_variances * gaussian_precision * gaussian_means # means
+        bcm_means = bcm_variances * np.sum(gaussian_precisions * gaussian_means, axis=0) # means
 
         if self.gp_type == 'classification':
-            bcm_precisions = np.sum(bcm_precisions, axis=0)
-            bcm_means = np.sum(bcm_means, axis=0)
             if keep_probs == True:
                 return bcm_means, bcm_variances
             return np.argmax(bcm_means, axis=0)
