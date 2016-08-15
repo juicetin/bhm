@@ -38,6 +38,7 @@ import misc.benchmarks as benchmarks
 if __name__ == "__main__":
     # Regression testing
     # benchmarks.regression_dummy_testing()
+    # benchmarks.test_basic_2D_data()
     # sys.exit(0)
 
     print("Loading data from npzs...")
