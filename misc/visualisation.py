@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib as mpl
-mpl.use('Agg')
+# mpl.use('Agg')
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.cm as cm
@@ -21,16 +21,95 @@ def plot(X, y, x, y_pred, sigma):
             alpha=.5, fc='b', ec='None', label='95% confidence interval')
     plt.xlabel('$x$')
     plt.ylabel('$y$')
-    plt.ylim(-10, 20)
+    # plt.ylim(-10, 20)
     plt.legend(loc='upper left')
-    # plt.show()
-    plt.savefig('img.pdf')
+    plt.show()
+    # plt.savefig('img.pdf')
+
+def show_all():
+    plt.show()
+
+def add_confidence_plot(ax, x, y, sigma):
+    confidence = 1.9600
+    ax.plot(x, y, 'b-', label=u'Prediction')
+    ax.fill(np.concatenate([x, x[::-1]]),
+            np.concatenate([y - confidence * sigma,
+                           (y + confidence * sigma)[::-1]]),
+            alpha=.5, fc='b', ec='None', label='95% confidence interval')
+    ax.set_xlabel('$x$')
+    ax.set_ylabel('$y$')
+
+def add_scatter_plot(ax, x, y):
+    colors = np.ones_like(x)
+    ax.scatter(x, y, c=colors, marker='o')
+
+def generate_subplots(rows=1, columns=1, actual_count=1, title_list=None):
+    fig = plt.figure()
+    axs = [fig.add_subplot(rows, columns, i) for i in range(1, actual_count+1)]
+    if title_list != None:
+        for title, ax in zip(title_list, axs):
+            ax.set_title(title)
+            ax.set_xlim(-2, 3)
+            ax.set_ylim(-2, 2)
+
+    return axs
+
+def plot_confidence(x, y_pred, sigma, title=None):
+    # Plot function, prediction, and 95% confidence interval based on MSE
+    confidence = 1.9600
+    fig = plt.figure()
+    # plt.plot(x, y, 'r:', label=u'$f(x) = x\, \sin(x)$')
+    plt.plot(x, y_pred, 'b-', label=u'Prediction')
+    plt.fill(np.concatenate([x, x[::-1]]),
+            np.concatenate([y_pred - confidence * sigma,
+                          (y_pred + confidence * sigma)[::-1]]),
+            alpha=.5, fc='b', ec='None', label='95% confidence interval')
+    plt.xlabel('$x$')
+    plt.ylabel('$y$')
+    # plt.ylim(-10, 20)
+    plt.legend(loc='upper left')
+    if title != None:
+        plt.title(title)
+    plt.show()
+
+def test_2D_data():
+    t = np.arange(0.0, 5.0, 0.01)
+    colors = np.zeros_like(t)
+    noise = np.random.normal(0, 0.1, t.shape[0])
+    y = np.sin(2*np.pi*t) + noise
+    fig = plt.figure(1)
+    ax1 = fig.add_subplot(211)
+    ax1.scatter(t, y, c=colors)
+    ax1.set_xlim(2, 3)
+    plt.show()
+
+def plot_continuous(X, Y):
+    if X.shape[1] == 2:
+        x, y, z = X[:,0], X[:,1], Y
+
+        fig = plt.figure()
+        ax1 = fig.add_subplot(111, projection='3d')
+
+        collection = ax1.scatter(x, y, z)
+        plt.show()
+
+    elif X.shape[1] == 1:
+        x, y = X, Y
+
+        fig = plt.figure()
+        ax1 = fig.add_subplot(111)
+
+        collection = ax1.scatter(x, y)
+        plt.show()
 
 def plot_classes(X, Y, Y_pred):
     if X.shape[1] == 3:
         x, y, z = X[:,0], X[:,1], X[:,2]
 
-        fig, (ax1, ax2) = plt.subplots(nrows=1, ncols=2, projection='3d')
+        # fig, (ax1, ax2) = plt.subplots(nrows=1, ncols=2, projection='3d')
+        fig = plt.figure()
+        ax1 = fig.add_subplot(111, projection='3d')
+        ax2 = fig.add_subplot(121, projection='3d')
 
         # ax3D_pred = fig.add_subplot(111, projection='3d')
         collection_p = ax1.scatter(x, y, z, c=Y_pred, cmap = cm.Spectral)

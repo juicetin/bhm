@@ -76,6 +76,9 @@ class GaussianProcess:
 
         ks = self.K_se(self.X, x, f_err, l_scales)
         fs_mean = ks.T.dot(alpha)
+        if len(fs_mean.shape) == 2 and fs_mean.shape[1] == 1:
+            fs_mean = fs_mean.reshape(fs_mean.shape[0])
+
         v = linalg.solve(L, ks)
         var = np.diag(self.K_se(x, x, f_err, l_scales) - v.T.dot(v))
         return fs_mean, var
@@ -154,6 +157,9 @@ class GaussianProcess:
         return f_err, l_scales, n_err, a, b
 
     def unpack_GP_args(self, args):
+        if len(args.shape) == 2:
+            args = args[0]
+
         f_err = float(args[0])
         l_scales = args[1:self.X.shape[1]+1]
         n_err = args[self.X.shape[1]+1]

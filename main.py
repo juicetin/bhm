@@ -37,7 +37,7 @@ import misc.benchmarks as benchmarks
 # Main function
 if __name__ == "__main__":
     # Regression testing
-    benchmarks.regression_dummy_testing()
+    # benchmarks.regression_dummy_testing()
     sys.exit(0)
 
     print("Loading data from npzs...")

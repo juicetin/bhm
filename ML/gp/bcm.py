@@ -34,7 +34,6 @@ class BCM(GP_ensembles):
         bcm_variances = bcm_precisions**(-1)
         bcm_means = bcm_variances * gaussian_precision * gaussian_means # means
 
-
         if self.gp_type == 'classification':
             bcm_precisions = np.sum(bcm_precisions, axis=0)
             bcm_means = np.sum(bcm_means, axis=0)
@@ -42,4 +41,4 @@ class BCM(GP_ensembles):
                 return bcm_means, bcm_variances
             return np.argmax(bcm_means, axis=0)
         elif self.gp_type == 'regression':
-            return bcm_means[0], bcm_variances[0]
+            return bcm_means, bcm_variances

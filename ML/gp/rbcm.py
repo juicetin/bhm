@@ -10,17 +10,17 @@ class rBCM(GP_ensembles):
         super().__init__(args)
 
     def predict(self, x, keep_probs=False):
-        means_gp, vars_gp = self.gp_means_vars(x)
+        gaussian_means, vars_gp = self.gp_means_vars(x)
 
         # These contain a row for each binary class case (OvR)
         #   AFTER summing along axis 0 (each of the local experts)
         M = vars_gp.shape[0]
         gaussian_variance = vars_gp
-        gaussian_precision = gaussian_variance**(-1)
+        gaussian_precisions = gaussian_variance**(-1)
 
         # TODO prior precision - squared element-wise inverse of diagonal along covariance matrix
         # prior_precision = vars_gp**(-2) # NOTE WRONG - prior precision is diag of elementwise inverse of cov matrix
-        prior_variances = np.empty_like(gaussian_precision)
+        prior_variances = np.empty_like(gaussian_precisions)
         for idx, gp_expert in enumerate(self.gp_experts):
             prior_variance = gp_expert.prior_variance(x)
             prior_variances[idx] = prior_variance
@@ -28,11 +28,15 @@ class rBCM(GP_ensembles):
 
         betas = 0.5 * (np.log(prior_variances) - np.log(gaussian_variance))
 
-        vars_rbcm_inv = np.sum(betas * gaussian_precision + (1-np.sum(betas)) * prior_precisions, axis=0)
-        vars_rbcm = vars_rbcm_inv**(-1)
-        means_rbcm = vars_rbcm * np.sum(betas * gaussian_precision * means_gp, axis=0)  # means
+        rbcm_precisions = np.sum(betas * gaussian_precisions + (1-np.sum(betas)) * prior_precisions, axis=0)
+        rbcm_variances = rbcm_precisions**(-1)
+        rbcm_means = rbcm_variances * np.sum(betas * gaussian_precisions * gaussian_means, axis=0) # means
 
-        if keep_probs == True:
-            return means_rbcm, vars_rbcm
-
-        return np.argmax(means_rbcm, axis=0)
+        if self.gp_type == 'classification':
+            rbcm_precisions = np.sum(rbcm_precisions, axis=0)
+            rbcm_means = np.sum(rbcm_means, axis=0)
+            if keep_probs == True:
+                return rbcm_means, rbcm_variances
+            return np.argmax(rbcm_means, axis=0)
+        elif self.gp_type == 'regression':
+            return rbcm_means, rbcm_variances

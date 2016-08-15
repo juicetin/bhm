@@ -35,6 +35,47 @@ from ML.gp.rbcm import rBCM
 import misc.visualisation as vis
 import misc.load_data as data
 import misc.gpy_benchmark
+import pdb
+
+def test_2D_data_for_model(gp_model, ax, X_train, y_train, X_test):
+    gp_model.fit(X_train, y_train)
+    preds, variances = gp_model.predict(X_test)
+
+    vis.add_confidence_plot(ax, X_test, preds, variances)
+    vis.add_scatter_plot(ax, X_train, y_train)
+
+def test_basic_2D_data():
+    t = np.arange(0.00, 2.75, 0.005)
+    noise = np.random.normal(0, 0.01, t.shape[0])
+    y = np.sin(0.2*np.pi*t) + noise
+    t = t.reshape(len(t), 1)
+    y = y.reshape(len(y), 1)
+
+    title_list=['gp', 'poe', 'gpoe', 'bcm', 'rbcm']
+    axs = vis.generate_subplots(rows=2, columns=3, actual_count=5, title_list=title_list)
+
+    empty_points = np.arange(-2, 0, 0.002).reshape(int(2/0.002), 1)
+    # X_train, X_test = t[0::5], np.concatenate((empty_points, t[0::5]))
+
+    train_idx = np.arange(0, t.shape[0], 10)
+    test_idx = np.array(list(set(np.arange(t.shape[0])) - set(train_idx)))
+    print(train_idx.shape)
+
+    # X_train, X_test = t[train_idx], t[test_idx]
+
+    X_train, X_test = t[train_idx], np.concatenate((empty_points, t[test_idx]))
+    y_train, y_test = y[train_idx], y[test_idx]
+
+    # vis.plot_continuous(X_test, y_test)
+
+    expert_size = train_idx.shape[0]/3
+    test_2D_data_for_model(rBCM(expert_size), axs[4], X_train, y_train, X_test)
+    test_2D_data_for_model(GaussianProcess(), axs[0], X_train, y_train, X_test)
+    test_2D_data_for_model(PoGPE(expert_size), axs[1], X_train, y_train, X_test)
+    test_2D_data_for_model(GPoGPE(expert_size), axs[2], X_train, y_train, X_test)
+    test_2D_data_for_model(BCM(expert_size), axs[3], X_train, y_train, X_test)
+
+    vis.show_all()
 
 def classification_bathy_testing(features, labels):
     ####################################################################################
@@ -77,8 +118,8 @@ def regression_dummy_testing():
     for i in range(iterations):
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1)
         # gp = PoGPE(200)
-        gp = GPoGPE(200)
-        # gp = BCM(200)
+        # gp = GPoGPE(200)
+        gp = BCM(200)
         gp.fit(X_train, y_train)
         y_pred1, variances1 = gp.predict(X_test)
         mse1 = helpers.regression_score(y_test, y_pred1)
