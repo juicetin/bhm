@@ -66,16 +66,6 @@ if __name__ == "__main__":
     # labels = np.array(labels)
     labels_simple = data.summarised_labels(labels)
 
-    # NOTE best for simple classes - scaling, then normalising features
-    # order: original, normalised, scaled, normalised-scaled, scaled-normalised
-    # # [0.13911784653850162,   0.62549115824070989,  0.80419877283841434,  0.80067072027980024, 0.77420703810759661, 
-    # #  0.0014678899082568807, 0.017750714162373553, 0.012602890116646892, 0.02482014086796169, 0.029004894912527762]
-    # feature_perms = [features, features_n, features_s, features_ns, features_sn]
-
-    # [0.74880756856008601, 0.67981634815766179, 0.70133102810814296]
-    # [0.72739502569246961, 0.71183799527284519, 0.65632134135368103]
-    # feature_perms = [features_s, features_ns, features_sn]
-
     ########################################### Product of Experts ###########################################
 
     # size = 100
