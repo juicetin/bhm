@@ -10,6 +10,13 @@ def load_training_data():
     
     return (label, labelcounts, bath_locations, features)
 
+def load_multi_label_data():
+    multi_label_data = np.load('data/multiple_labels_training_data.npz')
+    locations = multi_label_data['locations']
+    labels = multi_label_data['labels']
+    features = multi_label_data['features']    
+    return locations, features, labels
+
 def load_test_data():
     querypoints_lowres = np.load('data/queryPoints_lowres_v2_.npz')
     qp_locations = querypoints_lowres['locations']

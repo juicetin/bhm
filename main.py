@@ -42,6 +42,7 @@ if __name__ == "__main__":
 
     print("Loading data from npzs...")
     labels, labelcounts, bath_locations, features = data.load_training_data()
+    multi_locations, multi_features, multi_labels = data.load_multi_label_data()
     qp_locations, validQueryID, x_bins, query, y_bins = data.load_test_data()
 
     print("Filter down to non-nan queries and locations...")
