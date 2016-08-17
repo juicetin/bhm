@@ -1,8 +1,8 @@
 # print(__doc__)
 # 
 # import numpy as np
-# # from sklearn.gaussian_process import GaussianProcess
-# from ML.gp import GaussianProcess
+# # from sklearn.gaussian_process import GP
+# from ML.gp import GP
 # from matplotlib import pyplot as pl
 # 
 # np.random.seed(1)
@@ -25,8 +25,8 @@
 # 
 # # Instantiate GP model
 # try:
-#     # gp = GaussianProcess(corr='cubic', theta0=1e-2, thetaL=1e-4, thetaU=1e-1, random_start=100)
-#     gp = GaussianProcess(corr='squared_exponential', theta0=1e-1,
+#     # gp = GP(corr='cubic', theta0=1e-2, thetaL=1e-4, thetaU=1e-1, random_start=100)
+#     gp = GP(corr='squared_exponential', theta0=1e-1,
 #                          thetaL=1e-3, thetaU=1,
 #                          nugget=(dy / y) ** 2,
 #                          random_start=100)
@@ -73,7 +73,7 @@
 # 
 # # Instantiate GP model
 # try:
-#     gp = GaussianProcess(corr='squared_exponential', theta0=1e-1,
+#     gp = GP(corr='squared_exponential', theta0=1e-1,
 #                          thetaL=1e-3, thetaU=1,
 #                          nugget=(dy / y) ** 2,
 #                          random_start=100)

@@ -34,13 +34,14 @@ from ML.gp.rbcm import rBCM
 import misc.visualisation as vis
 import misc.load_data as data
 import misc.benchmarks as benchmarks
+import misc.gpy_benchmark as gpy_benchmarks
 
 # Main function
 if __name__ == "__main__":
     # Regression testing
     # benchmarks.regression_dummy_testing()
     # benchmarks.test_basic_2D_data()
-    # sys.exit(0)
+    sys.exit(0)
 
     print("Loading data from npzs...")
     labels, labelcounts, bath_locations, features = data.load_training_data()
@@ -76,7 +77,7 @@ if __name__ == "__main__":
 
     test_idx = np.array(list(set(np.arange(features.shape[0])) - set(train_idx)))
 
-    # gp = GaussianProcess(classification_type='OvR')
+    # gp = GP(classification_type='OvR')
     # # gp.fit(features_sn[train_idx], labels_simple[train_idx])
     # # y_preds, y_vars = gp.predict(features_sn[test_idx], keep_probs=True)
     # # y_preds = gp.predict(features_sn[test_idx])

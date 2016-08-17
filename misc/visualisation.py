@@ -8,21 +8,35 @@ import matplotlib.cm as cm
 def draw_map(X_train, X_test, y_train, y_test):
     pass
 
-def plot(X, y, x, y_pred, sigma):
+def plot(X, Y, x, y, y_pred, sigma):
     # Plot function, prediction, and 95% confidence interval based on MSE
     confidence = 1.9600
-    fig = plt.figure()
+    fig = plt.figure(figsize=(12,8))
+
     # plt.plot(x, y, 'r:', label=u'$f(x) = x\, \sin(x)$')
-    plt.plot(X, y, 'r.', markersize=10, label=u'Observations')
-    plt.plot(x, y_pred, 'b-', label=u'Prediction')
+
+    # Training
+    plt.plot(X, Y, 'bo', markersize=5, label=u'Observations')
+
+    # Test actuals
+    plt.plot(x, y, 'rx', markersize=5, label=u'Test', mew=2.0)
+
+    # Predictions and variance
+    plt.plot(x, y_pred, 'g+', label=u'Prediction', mew=2.0)
     plt.fill(np.concatenate([x, x[::-1]]),
             np.concatenate([y_pred - confidence * sigma,
                           (y_pred + confidence * sigma)[::-1]]),
             alpha=.5, fc='b', ec='None', label='95% confidence interval')
+
+    # Axes labels
     plt.xlabel('$x$')
     plt.ylabel('$y$')
-    # plt.ylim(-10, 20)
-    plt.legend(loc='upper left')
+
+    # Limit graph display
+    plt.ylim(-80, 20)
+    plt.xlim(-20, 120)
+
+    # plt.legend(loc='upper left')
     plt.show()
     # plt.savefig('img.pdf')
 
@@ -49,8 +63,8 @@ def generate_subplots(rows=1, columns=1, actual_count=1, title_list=None):
     if title_list != None:
         for title, ax in zip(title_list, axs):
             ax.set_title(title)
-            ax.set_xlim(-2, 3)
-            ax.set_ylim(-2, 2)
+            # ax.set_xlim(-2, 3)
+            # ax.set_ylim(-2, 2)
 
     return axs
 
@@ -66,21 +80,23 @@ def plot_confidence(x, y_pred, sigma, title=None):
             alpha=.5, fc='b', ec='None', label='95% confidence interval')
     plt.xlabel('$x$')
     plt.ylabel('$y$')
-    # plt.ylim(-10, 20)
+
+    plt.ylim(-200, 200)
+
     plt.legend(loc='upper left')
     if title != None:
         plt.title(title)
     plt.show()
 
-def test_2D_data():
-    t = np.arange(0.0, 5.0, 0.01)
-    colors = np.zeros_like(t)
-    noise = np.random.normal(0, 0.1, t.shape[0])
-    y = np.sin(2*np.pi*t) + noise
+def plot_test_graph():
+    f_output1 = lambda x: 4. * np.cos(x/5.) - .4*x - 35. + np.random.rand(x.size)[:,None] * 2
+    X1 = np.random.rand(100)[:,None]; X1=X1*75
+    Y1 = f_output1(X1)
     fig = plt.figure(1)
     ax1 = fig.add_subplot(211)
-    ax1.scatter(t, y, c=colors)
-    ax1.set_xlim(2, 3)
+    ax1.scatter(X1, Y1)
+    # ax1.set_xlim(2, 3)
+    # ax1.set_ylim(-5, 5)
     plt.show()
 
 def plot_continuous(X, Y):

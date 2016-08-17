@@ -37,6 +37,41 @@ import misc.load_data as data
 import misc.gpy_benchmark
 import pdb
 
+def test():
+    f_output1 = lambda x: 4. * np.cos(x/5.) - .4*x - 35. + np.random.rand(x.size)[:,None] * 2.
+    f_output2 = lambda x: 6. * np.cos(x/5.) + .2*x + 35. + np.random.rand(x.size)[:,None] * 8.
+
+    #{X,Y} training set for each output
+    X1 = np.random.rand(100)[:,None]; X1=X1*75
+    X2 = np.random.rand(100)[:,None]; X2=X2*70 + 30
+    Y1 = f_output1(X1)
+    Y2 = f_output2(X2)
+    #{X,Y} test set for each output
+    Xt1 = np.random.rand(100)[:,None]*100
+    Xt2 = np.random.rand(100)[:,None]*100
+    Yt1 = f_output1(Xt1)
+    Yt2 = f_output2(Xt2)
+
+    gp = GaussianProcess()
+    gp.fit(X1, Y1)
+    y, v = gp.predict(Xt1, Yt1)
+    # vis.plot_confidence(Xt1, y, v)
+    vis.plot(X1, Y1, Xt1, Yt1, y, v)
+
+    score = helpers.regression_score(Yt1, y)
+    print(score)
+
+    return gp
+
+    # import matplotlib.pyplot as plt
+    # fig = plt.figure(figsize=(12,8))
+    # ax1 = fig.add_subplot(111)
+    # ax1.scatter(X1, Y1)
+    # ax1.plot(Xt1[:,:1],Yt1,'rx',mew=1.5)
+    # ax1.set_title('Output 1')
+    # plt.show()
+
+
 def test_2D_data_for_model(gp_model, ax, X_train, y_train, X_test):
     gp_model.fit(X_train, y_train)
     preds, variances = gp_model.predict(X_test)
@@ -45,35 +80,57 @@ def test_2D_data_for_model(gp_model, ax, X_train, y_train, X_test):
     vis.add_scatter_plot(ax, X_train, y_train)
 
 def test_basic_2D_data():
-    t = np.arange(0.00, 2.75, 0.005)
-    noise = np.random.normal(0, 0.01, t.shape[0])
-    y = np.sin(0.2*np.pi*t) + noise
+    # t = np.arange(0.00, 1.5, 0.01)
+    # noise = np.random.normal(0, 0.01, t.shape[0])
+    # y = np.sin(0.2*np.pi*t) + noise
+    # y = np.sin(6.5*np.pi*t) + np.cos(8.5*np.pi*t) + t - t**2
+    # y = np.sin(np.pi*t) + np.cos(np.pi*t)
+
+    f_output1 = lambda x: 4. * np.cos(x/5.) - .4*x - 35. + np.random.rand(x.size)[:,None] * 2
+    t = np.random.rand(100)[:,None]; t=t*75
+    y = f_output1(t)
+    import matplotlib.pyplot as plt
+    fig = plt.figure(1)
+    ax1 = fig.add_subplot(211)
+    ax1.scatter(t, y)
+    plt.show()
+
     t = t.reshape(len(t), 1)
     y = y.reshape(len(y), 1)
 
-    title_list=['gp', 'poe', 'gpoe', 'bcm', 'rbcm']
-    axs = vis.generate_subplots(rows=2, columns=3, actual_count=5, title_list=title_list)
+    title_list=['gp', 'poe', 'gpoe', 'bcm', 'rbcm', 'GPy']
+    axs = vis.generate_subplots(rows=2, columns=3, actual_count=6, title_list=title_list)
 
-    empty_points = np.arange(-2, 0, 0.002).reshape(int(2/0.002), 1)
     # X_train, X_test = t[0::5], np.concatenate((empty_points, t[0::5]))
 
-    train_idx = np.arange(0, t.shape[0], 10)
+    train_idx = np.arange(0, t.shape[0], 15)
     test_idx = np.array(list(set(np.arange(t.shape[0])) - set(train_idx)))
     print(train_idx.shape)
 
-    # X_train, X_test = t[train_idx], t[test_idx]
 
-    X_train, X_test = t[train_idx], np.concatenate((empty_points, t[test_idx]))
+    # empty_points = np.arange(-1.5, 0, 0.01).reshape(int(1.5/0.01), 1)
+    # X_train, X_test = t[train_idx], np.concatenate((empty_points, t[test_idx]))
+    X_train, X_test = t[train_idx], t[test_idx]
     y_train, y_test = y[train_idx], y[test_idx]
 
     # vis.plot_continuous(X_test, y_test)
 
     expert_size = train_idx.shape[0]/3
+
+    # Own implementations
     test_2D_data_for_model(GaussianProcess(), axs[0], X_train, y_train, X_test)
     test_2D_data_for_model(PoGPE(expert_size), axs[1], X_train, y_train, X_test)
     test_2D_data_for_model(GPoGPE(expert_size), axs[2], X_train, y_train, X_test)
     test_2D_data_for_model(BCM(expert_size), axs[3], X_train, y_train, X_test)
     test_2D_data_for_model(rBCM(expert_size), axs[4], X_train, y_train, X_test)
+
+    # GPy
+    K = GPy.kern.Matern32(1)
+    m = GPy.models.GPRegression(X_train, y_train, kernel=K.copy())
+    preds, var = m.predict(X_test)
+    vis.add_confidence_plot(axs[5], X_test, preds, var)
+    vis.add_scatter_plot(axs[5], X_train, y_train)
+
 
     vis.show_all()
 

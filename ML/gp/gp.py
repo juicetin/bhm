@@ -46,6 +46,18 @@ class GaussianProcess:
             self.fit_all_classes = self.fit_classes_OvR
             self.predict_probs = self.predict_probs_OvR
 
+    # Overrite to print class details
+    def __str__(self):
+        try:
+            class_print = "f_err: {}\nl_scales: {}\nn_err: {}".format(self.f_err, self.l_scales, self.n_err)
+            return class_print
+        except:
+            return "GP hasn't been trained yet."
+
+    ####################################################
+    #################### Regression ####################
+    ####################################################
+
     # Regression fit
     def fit_regression(self, X, y):
 
@@ -55,11 +67,16 @@ class GaussianProcess:
         self.size = len(X)
 
         # Determine optimal GP hyperparameters
+        # x0 = np.random.rand(2 + X.shape[1])
         # f_err, l_scales, n_err
-        x0 = [1] + [1] * X.shape[1] + [1]
+        x0 = [100] + [50] * X.shape[1] + [0.1]
         # gp_hp_guess = [1.0] * 3 # initial guess
+
         # res = minimize(self.SE_NLL, x0, method='bfgs')
         res = minimize(self.SE_NLL, x0, method='bfgs', jac=self.SE_der)
+
+        # res['x'] = np.array([3076.7471, 100.58150154, 0.304933902061]) # NOTE hardcoded sample values 
+        # res['x'] = np.array([3000, 100, 0.3])
         self.f_err, self.l_scales, self.n_err = self.unpack_GP_args(res['x'])
 
         # S et a few 'fixed' variables once GP HPs are determined for later use (with classifier)
@@ -67,21 +84,49 @@ class GaussianProcess:
         self.K_inv = np.linalg.inv(self.L.T).dot(np.linalg.inv(self.L))
         self.alpha = linalg.solve(self.L.T, (linalg.solve(self.L, self.y)))
 
-    def predict_regression(self, x, L=None, alpha=None, f_err=None, l_scales=None):
+    def predict_regression(self, x, L=None, alpha=None, f_err=None, l_scales=None, n_err=None):
+
+        # Assign hyperparameters and other calculated variables
         if L==None and alpha==None and f_err==None and l_scales==None:
             L = self.L
             alpha = self.alpha
             f_err = self.f_err
             l_scales = self.l_scales
+            n_err = self.n_err
 
-        ks = self.K_se(self.X, x, f_err, l_scales)
-        fs_mean = ks.T.dot(alpha)
-        if len(fs_mean.shape) == 2 and fs_mean.shape[1] == 1:
-            fs_mean = fs_mean.reshape(fs_mean.shape[0])
+        # # Initialise data structure for means, variances
+        # means = np.zeros(x.shape[0])
+        # variances = np.zeros(x.shape[0])
+        
+        # # Predict for all points
+        # for i, row in enumerate(x):
+        #     ks = self.K_se(self.X, [row], f_err, l_scales)              # 2.25 
+        #     mean = ks.T.dot(alpha)                                      # 2.25 line 4
+        #     v = linalg.solve(L, ks)                                     # 2.26 line 5
+        #     variance = self.dist([row], [row], l_scales) - v.T.dot(v)   # 2.26 line 6
 
-        v = linalg.solve(L, ks)
-        var = np.diag(self.K_se(x, x, f_err, l_scales) - v.T.dot(v))
-        return fs_mean, var
+        #     # Assign mean, variance for current point
+        #     means[i] = mean
+        #     variances[i] = variance
+
+        # # if len(means.shape) == 2 and means.shape[1] == 1:
+        # #     means = means.reshape(means.shape[0])
+        # return means, variances
+
+        # TODO fix - mean and var need to be calculated per point
+        k_star = self.K_se(self.X, x, f_err, l_scales)
+        f_star = k_star.T.dot(alpha)
+        v = np.linalg.solve(L, k_star)
+        var = self.K_se(x, x, f_err, l_scales) - v.T.dot(v)
+
+        # Corner case with only one dimension 
+        if len(f_star.shape) == 2 and f_star.shape[1] == 1:
+            f_star = f_star.reshape(f_star.shape[0])
+
+        pdb.set_trace()
+
+        return f_star, var
+
 
     def SE_der(self, args):
         # TODO fix - get around apparent bug
@@ -116,7 +161,7 @@ class GaussianProcess:
         alpha = linalg.solve(L.T, (linalg.solve(L, self.y))) # save for use with derivative func
         nll = (
             0.5 * self.y.T.dot(alpha) + 
-            0.5 * np.matrix.trace(L) + # sum of diagonal
+            np.matrix.trace(np.log(L)) + # sum of diagonal
             0.5 * self.size * math.log(2*math.pi)
         )
 
@@ -372,8 +417,7 @@ class GaussianProcess:
 
     def L_create(self, X, f_err, l_scales, n_err):
 
-        m = self.K_se(X, X, f_err, l_scales) + n_err**2 * np.identity(X.shape[0])
-        m = np.array(m, dtype=np.float64)
+        m = self.K_se(X, X, f_err, l_scales) + n_err**2 * np.identity(X.shape[0]).astype(np.float64)
         return linalg.cholesky(m)
 
     def dist(self, x1, x2, l_scales):
@@ -384,6 +428,7 @@ class GaussianProcess:
     def K_se(self, x1, x2, f_err, l_scales):
         m = self.dist(x1, x2, l_scales)
         return f_err**2 * np.exp(-0.5 * m)
+        # return np.exp(-0.5 * m)
 
     def dK_df_eval(self, m, f_err, l_scales):
         return 2*f_err * m
@@ -424,7 +469,9 @@ class GaussianProcess:
         return np.array([dK_df] + dK_dls + [dK_dn], dtype=np.float64)
 
 
+    #############################################################################
     ################################## Generic ##################################
+    #############################################################################
 
     def unpack_GP_args(self, args):
         if len(args.shape) == 2:
@@ -484,8 +531,80 @@ class GaussianProcess:
     ############################ Multi-Task Stuff ##################################
     ################################################################################
 
-    def fit_multi_task(self, X, y):
-        pass
+    # def fit_multi_task(self, X, y):
+    #     self.N = self.X.shape[0]
+    #     self.M = np.unique(y).shape[0]
 
-    def predict_multi_task(self, x):
-        pass
+    # def predict_multi_task(self, x):
+    #     Kf
+    #     Kx
+    #     task_variances
+    #     D = np.diag(task_variances)
+    #     I = np.identity(Kf.shape[0]) # Not sure about shape of identity matrix here
+    #     sigma = np.kron(Kf, Kx) + np.kron(D, I)
+
+    #     means = np.kron(Kf, Kx).T.dot(np.inv(sigma)).dot(y)
+    #     return means
+
+    # # Returns lower triangular Cholesky decomposition for complete-data log-likelihood
+    # def multi_task_L_ll(self):
+    #     N = self.N
+    #     M = self.M
+    #     Kf = self.Kf_update()
+    #     Kx = self.Kx()
+    #     F = self.F()
+    #     Y = self.Y()
+    #     task_variances
+    #     D = np.diag(task_variances)
+    #     task_variances
+    #     L_comp_ll = -N/2 * np.log(Kf) - M/2 * log(Kx) - 0.5 * np.trace(np.inv(Kf).dot(F.T).dot(np.inv(Kx).dot(F))) \
+    #                         - N/2 np.sum(np.log(task_variances) - 0.5 * np.trace((Y-F).dot(np.inv(D)).dot((Y-F).T)) - M*N/2 * np.log(2*np.pi)) 
+    #     return L_comp_ll
+
+    # # Returns updated hyperparameters by finding argmin of the log likelihood
+    # def multi_task_update_theta(self, thetas):
+    #     res = minimize(self.multi_task_theta_ll, thetas, method='bfgs')
+    #     return res['x']
+
+    # # Returns updated hyperparams
+    # def thetas(self):
+    #     hyperparams
+    #     Kx
+    #     N = self.N
+    #     F
+    #     M = self.M
+    #     theta_xs = N * np.abs(np.log(F.T.dot(np.inv(Kx)).dot(F))) + M * np.log(Kx)
+    #     return theta_xs
+
+    # # Returns updated K^f matrix
+    # def Kf(self):
+    #     hyperparams
+    #     Kx
+    #     N = self.N
+    #     F
+    #     Kf = 1/N * F.T.dot(np.inv(Kx)).dot(F)
+    #     return Kf
+
+    # # Returns updated noise over tasks
+    # def task_noise(self):
+    #     N = self.N
+    #     Y
+    #     F
+    #     task_variances = 1/N * (Y-F).T.dot(Y-F)
+    #     return task_variances
+
+    # # Covariance functions over inputs
+    # # NOTE stationary covariance functions as K^f explains variance
+    # #   unit variance, (zero mean?)
+    # def Kx(self, f_err, l_scales, n_err):
+    #     # TODO follow NOTE from comment above function
+    #     return self.K_se(f_err, l_scales, n_err)
+    # 
+    # # NxM matrix Y such that y = vecY
+    # # y_il is response for l-th task on i-th input x_i
+    # def Y(self):
+    #     pass
+
+    # # Vector of function values corresponding to Y
+    # def F(self):
+    #     pass
