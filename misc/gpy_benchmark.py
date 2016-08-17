@@ -72,8 +72,6 @@ def test():
     ax2.plot(Xt2[:,:1],Yt2,'rx',mew=1.5)
     ax2.set_title('Output 2')
 
-
-    pdb.set_trace()
     plt.show()
 
     return m1

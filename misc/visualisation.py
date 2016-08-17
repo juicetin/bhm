@@ -26,7 +26,7 @@ def plot(X, Y, x, y, y_pred, sigma):
     plt.fill(np.concatenate([x, x[::-1]]),
             np.concatenate([y_pred - confidence * sigma,
                           (y_pred + confidence * sigma)[::-1]]),
-            alpha=.5, fc='b', ec='None', label='95% confidence interval')
+            alpha=.05, fc='b', ec='None', label='95% confidence interval')
 
     # Axes labels
     plt.xlabel('$x$')

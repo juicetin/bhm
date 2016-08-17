@@ -41,7 +41,7 @@ if __name__ == "__main__":
     # Regression testing
     # benchmarks.regression_dummy_testing()
     # benchmarks.test_basic_2D_data()
-    sys.exit(0)
+    # sys.exit(0)
 
     print("Loading data from npzs...")
     labels, labelcounts, bath_locations, features = data.load_training_data()

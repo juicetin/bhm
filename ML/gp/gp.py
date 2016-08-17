@@ -54,6 +54,86 @@ class GaussianProcess:
         except:
             return "GP hasn't been trained yet."
 
+    #############################################################################
+    ################################## Generic ##################################
+    #############################################################################
+
+    def L_create(self, X, f_err, l_scales, n_err):
+
+        K = self.K_se(X, X, f_err, l_scales)
+        m = K + n_err**2 * np.identity(X.shape[0]) + np.diag(np.full(X.shape[0], 0.01))
+        try:
+            return linalg.cholesky(m)
+        except:
+            print("Non positive definite matrix lel")
+            pdb.set_trace()
+
+    def dist(self, x1, x2, l_scales):
+        # Dividing by length scale first before passing into cdist to
+        #   accounts for different length scale for each dimension
+        return cdist(x1/l_scales, x2/l_scales, 'sqeuclidean')
+
+    def K_se(self, x1, x2, f_err, l_scales):
+        m = self.dist(x1, x2, l_scales)
+        return f_err**2 * np.exp(-0.5 * m)
+        # return np.exp(-0.5 * m)
+
+
+    def unpack_GP_args(self, args):
+        if len(args.shape) == 2:
+            args = args[0]
+
+        f_err = float(args[0])
+        l_scales = args[1:self.X.shape[1]+1]
+        n_err = args[self.X.shape[1]+1]
+        return f_err, l_scales, n_err
+
+    def fit(self, X, y):
+        # Class labels TODO account for more integer types properly
+        if type(y[0]) == np.int64:
+            self.gp_type = 'classification'
+            return self.fit_classification(X, y)
+    
+        # Continuous outputs
+        else:
+            self.gp_type = 'regression'
+            return self.fit_regression(X, y)
+
+    def predict(self, x, keep_probs=False, parallel=False):
+
+        # Split predict job over number of cores available-1!
+        if parallel == True:
+            return self.predict_parallel(x, keep_probs)
+
+        if self.gp_type == 'classification':
+            return self.predict_class(x, keep_probs)
+
+        if self.gp_type == 'regression':
+            return self.predict_regression(x)
+
+    # Parallelise class prediction across available cores
+    def predict_parallel(self, x, keep_probs):
+
+        # Set up the parallel jobs on separate processes, to overcome 
+        # Python's GIL for proper parallelisation
+        nprocs = mp.cpu_count() - 1
+        jobs = partition_indexes(x.shape[0], nprocs)
+        args = [(x[start:end], keep_probs, False) for start, end in jobs]
+        pool = Pool(processes=nprocs)
+        print("Distributing predictions across {} processes...".format(nprocs))
+        predict_results = pool.starmap(self.predict, args)
+        # for results in predict_results:
+        #     print("This round")
+        #     print(results.shape)
+
+        if keep_probs == True:
+            # Concat along data points axis
+            return np.concatenate(predict_results, axis=2)
+
+        # Concat along class list axis
+        return np.concatenate(predict_results, axis=0)
+
+
     ####################################################
     #################### Regression ####################
     ####################################################
@@ -67,13 +147,14 @@ class GaussianProcess:
         self.size = len(X)
 
         # Determine optimal GP hyperparameters
-        # x0 = np.random.rand(2 + X.shape[1])
         # f_err, l_scales, n_err
-        x0 = [100] + [50] * X.shape[1] + [0.1]
-        # gp_hp_guess = [1.0] * 3 # initial guess
+        bounds = [[0,None]] * (X.shape[1] + 2)
+        # x0 = [1000] + [50] * X.shape[1] + [0.1]
+        x0 = np.random.rand(2 + X.shape[1])
 
         # res = minimize(self.SE_NLL, x0, method='bfgs')
-        res = minimize(self.SE_NLL, x0, method='bfgs', jac=self.SE_der)
+        # res = minimize(self.SE_NLL, x0, method='bfgs', jac=self.SE_der)
+        res = minimize(self.SE_NLL, x0, method='l-bfgs-b', jac=self.SE_der, bounds=bounds)
 
         # res['x'] = np.array([3076.7471, 100.58150154, 0.304933902061]) # NOTE hardcoded sample values 
         # res['x'] = np.array([3000, 100, 0.3])
@@ -94,25 +175,6 @@ class GaussianProcess:
             l_scales = self.l_scales
             n_err = self.n_err
 
-        # # Initialise data structure for means, variances
-        # means = np.zeros(x.shape[0])
-        # variances = np.zeros(x.shape[0])
-        
-        # # Predict for all points
-        # for i, row in enumerate(x):
-        #     ks = self.K_se(self.X, [row], f_err, l_scales)              # 2.25 
-        #     mean = ks.T.dot(alpha)                                      # 2.25 line 4
-        #     v = linalg.solve(L, ks)                                     # 2.26 line 5
-        #     variance = self.dist([row], [row], l_scales) - v.T.dot(v)   # 2.26 line 6
-
-        #     # Assign mean, variance for current point
-        #     means[i] = mean
-        #     variances[i] = variance
-
-        # # if len(means.shape) == 2 and means.shape[1] == 1:
-        # #     means = means.reshape(means.shape[0])
-        # return means, variances
-
         # TODO fix - mean and var need to be calculated per point
         k_star = self.K_se(self.X, x, f_err, l_scales)
         f_star = k_star.T.dot(alpha)
@@ -122,8 +184,6 @@ class GaussianProcess:
         # Corner case with only one dimension 
         if len(f_star.shape) == 2 and f_star.shape[1] == 1:
             f_star = f_star.reshape(f_star.shape[0])
-
-        pdb.set_trace()
 
         return f_star, var
 
@@ -415,21 +475,6 @@ class GaussianProcess:
 
     ############################### Derivatives ################################
 
-    def L_create(self, X, f_err, l_scales, n_err):
-
-        m = self.K_se(X, X, f_err, l_scales) + n_err**2 * np.identity(X.shape[0]).astype(np.float64)
-        return linalg.cholesky(m)
-
-    def dist(self, x1, x2, l_scales):
-        # Dividing by length scale first before passing into cdist to
-        #   accounts for different length scale for each dimension
-        return cdist(x1/l_scales, x2/l_scales, 'sqeuclidean')
-
-    def K_se(self, x1, x2, f_err, l_scales):
-        m = self.dist(x1, x2, l_scales)
-        return f_err**2 * np.exp(-0.5 * m)
-        # return np.exp(-0.5 * m)
-
     def dK_df_eval(self, m, f_err, l_scales):
         return 2*f_err * m
 
@@ -468,64 +513,6 @@ class GaussianProcess:
 
         return np.array([dK_df] + dK_dls + [dK_dn], dtype=np.float64)
 
-
-    #############################################################################
-    ################################## Generic ##################################
-    #############################################################################
-
-    def unpack_GP_args(self, args):
-        if len(args.shape) == 2:
-            args = args[0]
-
-        f_err = float(args[0])
-        l_scales = args[1:self.X.shape[1]+1]
-        n_err = args[self.X.shape[1]+1]
-        return f_err, l_scales, n_err
-
-    def fit(self, X, y):
-        # Class labels TODO account for more integer types properly
-        if type(y[0]) == np.int64:
-            self.gp_type = 'classification'
-            return self.fit_classification(X, y)
-    
-        # Continuous outputs
-        else:
-            self.gp_type = 'regression'
-            return self.fit_regression(X, y)
-
-    def predict(self, x, keep_probs=False, parallel=False):
-
-        # Split predict job over number of cores available-1!
-        if parallel == True:
-            return self.predict_parallel(x, keep_probs)
-
-        if self.gp_type == 'classification':
-            return self.predict_class(x, keep_probs)
-
-        if self.gp_type == 'regression':
-            return self.predict_regression(x)
-
-    # Parallelise class prediction across available cores
-    def predict_parallel(self, x, keep_probs):
-
-        # Set up the parallel jobs on separate processes, to overcome 
-        # Python's GIL for proper parallelisation
-        nprocs = mp.cpu_count() - 1
-        jobs = partition_indexes(x.shape[0], nprocs)
-        args = [(x[start:end], keep_probs, False) for start, end in jobs]
-        pool = Pool(processes=nprocs)
-        print("Distributing predictions across {} processes...".format(nprocs))
-        predict_results = pool.starmap(self.predict, args)
-        # for results in predict_results:
-        #     print("This round")
-        #     print(results.shape)
-
-        if keep_probs == True:
-            # Concat along data points axis
-            return np.concatenate(predict_results, axis=2)
-
-        # Concat along class list axis
-        return np.concatenate(predict_results, axis=0)
 
     ################################################################################
     ############################ Multi-Task Stuff ##################################
