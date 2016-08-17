@@ -179,7 +179,7 @@ class GaussianProcess:
         k_star = self.K_se(self.X, x, f_err, l_scales)
         f_star = k_star.T.dot(alpha)
         v = np.linalg.solve(L, k_star)
-        var = self.K_se(x, x, f_err, l_scales) - v.T.dot(v)
+        var = np.diag(self.K_se(x, x, f_err, l_scales) - v.T.dot(v))
 
         # Corner case with only one dimension 
         if len(f_star.shape) == 2 and f_star.shape[1] == 1:

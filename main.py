@@ -41,7 +41,7 @@ if __name__ == "__main__":
     # Regression testing
     # benchmarks.regression_dummy_testing()
     # benchmarks.test_basic_2D_data()
-    # sys.exit(0)
+    sys.exit(0)
 
     print("Loading data from npzs...")
     labels, labelcounts, bath_locations, features = data.load_training_data()
@@ -73,16 +73,16 @@ if __name__ == "__main__":
 
     # size = 100
     # train_idx = data.mini_batch_idxs(labels_simple, size, 'even')
-    train_idx = np.load('data/semi-optimal-1000-subsample.npy')
+    # train_idx = np.load('data/semi-optimal-1000-subsample.npy')
 
-    test_idx = np.array(list(set(np.arange(features.shape[0])) - set(train_idx)))
+    # test_idx = np.array(list(set(np.arange(features.shape[0])) - set(train_idx)))
 
-    gp = GaussianProcess(classification_type='OvR')
+    # gp = GaussianProcess(classification_type='OvR')
     # gp.fit(features_sn[train_idx], labels_simple[train_idx])
     # y_preds, y_vars = gp.predict(features_sn[test_idx], keep_probs=True)
     # y_preds = gp.predict(features_sn[test_idx])
-    gp_stats = benchmarks.testGP(gp, features_sn, labels_simple, train_idx, n_iter=1)
-    print("normal GP: {} \n\taverages: {} {}".format( gp_stats, np.average(gp_stats[0]), np.average(gp_stats[1])))
+    # gp_stats = benchmarks.testGP(gp, features_sn, labels_simple, train_idx, n_iter=1)
+    # print("normal GP: {} \n\taverages: {} {}".format( gp_stats, np.average(gp_stats[0]), np.average(gp_stats[1])))
 
     # gp1 = PoGPE(200)
     # gp1_stats = benchmarks.testGP(gp1, features_sn, labels_simple, train_idx, n_iter=1)
