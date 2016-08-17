@@ -409,6 +409,7 @@ class GaussianProcess:
             for start in range(0, x.shape[0], step):
                 next_idx = start + 2000
                 end = next_idx if next_idx <= x.shape[0] else x.shape[0]
+                pdb.set_trace()
                 cur_preds = np.array([self.predict_class_single(x[start:end], label, params)
                              for label, params in self.classifier_params.items()])
                 y_preds[:,:,start:end] = cur_preds
