@@ -284,12 +284,6 @@ class GaussianProcess:
     def LLOO(self, args):
         f_err, l_scales, n_err, a, b = self.unpack_LLOO_args(args)
 
-        # # This block is common to both LLOO and LLOO_der
-        # L = self.L_create(self.X, f_err, l_scales, n_err)
-        # alpha = linalg.solve(L.T, (linalg.solve(L, self.y))) # save for use with derivative func
-        # K_inv = np.linalg.inv(L.T).dot(np.linalg.inv(L))
-        # mu = self.y - alpha/np.diag(K_inv)
-        # sigma_sq = 1/np.diag(K_inv)
         self.update_LLOO_shared_vars(args)
 
         LLOO = -sum(norm.cdf(
@@ -305,12 +299,6 @@ class GaussianProcess:
         
         f_err, l_scales, n_err, a, b = self.unpack_LLOO_args(args)
 
-        # # This block is common to both LLOO and LLOO_der
-        # L = self.L_create(self.X, f_err, l_scales, n_err)
-        # alpha = linalg.solve(L.T, (linalg.solve(L, self.y))) # save for use with derivative func
-        # K_inv = np.linalg.inv(L.T).dot(np.linalg.inv(L))
-        # mu = self.y - alpha/np.diag(K_inv)
-        # sigma_sq = 1/np.diag(K_inv)
         self.update_LLOO_shared_vars(args)
 
         r = a * self.mu + b
@@ -322,6 +310,7 @@ class GaussianProcess:
         dmu_dthetas = [Z.dot(self.alpha) / K_i_diag - self.alpha * dvar_dtheta for Z, dvar_dtheta in zip(Zs, dvar_dthetas)]
 
         pdf_on_cdf = norm.pdf(r) / norm.cdf(self.y * r)
+        # TODO repeats of the sigma term and its root here - cache result
 
         # Dervative over LLOO for each of the hyperparameters
         dLLOO_dthetas = [
@@ -368,9 +357,9 @@ class GaussianProcess:
             self.X = X[cur_idxs]
 
             # Optimise
-            # res = minimize(self.LLOO, x0, method='bfgs', jac=self.LLOO_der)
             self.args = np.zeros(X.shape[1] + 4)
             bounds = [[0,None]] * (X.shape[1] + 4)
+            # res = minimize(self.LLOO, x0, method='bfgs', jac=self.LLOO_der) # old - can't take bounds
             res = minimize(self.LLOO, x0, method='l-bfgs-b', jac=self.LLOO_der, bounds=bounds)
 
             # Set params for the ibnary OvO
