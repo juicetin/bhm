@@ -38,9 +38,10 @@ import misc.gpy_benchmark as gpy_benchmarks
 
 # Main function
 if __name__ == "__main__":
-    # Regression testing
+    # Regression testingj
     # benchmarks.regression_dummy_testing()
     # benchmarks.test_basic_2D_data()
+    # gp = benchmarks.test(show_plots=False)
     # sys.exit(0)
 
     print("Loading data from npzs...")
@@ -77,9 +78,9 @@ if __name__ == "__main__":
 
     test_idx = np.array(list(set(np.arange(features.shape[0])) - set(train_idx)))
 
-    # gp = GaussianProcess(classification_type='OvR')
-    # gp_stats = benchmarks.testGP(gp, features_sn, labels, train_idx, n_iter=1)
-    # print("normal GP: {} \n\taverages: {} {}".format( gp_stats, np.average(gp_stats[0]), np.average(gp_stats[1])))
+    gp = GaussianProcess(classification_type='OvR')
+    gp_stats = benchmarks.testGP(gp, features_sn, labels, train_idx, n_iter=1)
+    print("normal GP: {} \n\taverages: {} {}".format( gp_stats, np.average(gp_stats[0]), np.average(gp_stats[1])))
 
     # gp1 = PoGPE(200)
     # gp1_stats = benchmarks.testGP(gp1, features_sn, labels_simple, train_idx, n_iter=5)

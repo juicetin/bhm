@@ -35,7 +35,8 @@ def plot(X, Y, x, y, y_pred, sigma):
     plt.ylabel('$y$')
 
     # Limit graph display
-    plt.ylim(-120, 120)
+    # plt.ylim(-120, 120)
+    plt.ylim(-100, 0)
     plt.xlim(0, 100)
 
     # plt.legend(loc='upper left')

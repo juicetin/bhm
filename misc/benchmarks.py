@@ -37,7 +37,7 @@ import misc.load_data as data
 import misc.gpy_benchmark
 import pdb
 
-def test():
+def test(show_plots=True):
     f_output1 = lambda x: 4. * np.cos(x/5.) - .4*x - 35. + np.random.rand(x.size)[:,None] * 2.
     f_output2 = lambda x: 6. * np.cos(x/5.) + .2*x + 35. + np.random.rand(x.size)[:,None] * 8.
 
@@ -59,7 +59,9 @@ def test():
     score = helpers.regression_score(Yt1, y)
     print(score)
     vis.plot(X1, Y1, Xt1, Yt1, y, v)
-    vis.show_all()
+
+    if show_plots == True:
+        vis.show_all()
 
     gp2 = GaussianProcess()
     gp2.fit(X2, Y2)
@@ -67,7 +69,9 @@ def test():
     score = helpers.regression_score(Yt2, y2)
     print(score)
     vis.plot(X2, Y2, Xt2, Yt2, y2, v2)
-    vis.show_all()
+
+    if show_plots == True:
+        vis.show_all()
 
 
     return gp
