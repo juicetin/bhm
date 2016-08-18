@@ -4,11 +4,13 @@ import matplotlib as mpl
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.cm as cm
+import pdb
 
 def draw_map(X_train, X_test, y_train, y_test):
     pass
 
 def plot(X, Y, x, y, y_pred, sigma):
+
     # Plot function, prediction, and 95% confidence interval based on MSE
     confidence = 1.9600
     fig = plt.figure(figsize=(12,8))
@@ -22,22 +24,22 @@ def plot(X, Y, x, y, y_pred, sigma):
     plt.plot(x, y, 'rx', markersize=5, label=u'Test', mew=2.0)
 
     # Predictions and variance
-    plt.plot(x, y_pred, 'g+', label=u'Prediction', mew=2.0)
+    plt.plot(x, y_pred, 'g-', label=u'Prediction', mew=2.0)
     plt.fill(np.concatenate([x, x[::-1]]),
             np.concatenate([y_pred - confidence * sigma,
                           (y_pred + confidence * sigma)[::-1]]),
-            alpha=.2, fc='b', ec='None', label='95% confidence interval')
+            alpha=0.2, fc='b', ec='None', label='95% confidence interval')
 
     # Axes labels
     plt.xlabel('$x$')
     plt.ylabel('$y$')
 
     # Limit graph display
-    plt.ylim(-80, 20)
-    plt.xlim(-20, 120)
+    plt.ylim(-120, 120)
+    plt.xlim(0, 100)
 
     # plt.legend(loc='upper left')
-    plt.show()
+    # plt.show()
     # plt.savefig('img.pdf')
 
 def show_all():

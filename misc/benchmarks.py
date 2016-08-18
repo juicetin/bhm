@@ -42,13 +42,13 @@ def test():
     f_output2 = lambda x: 6. * np.cos(x/5.) + .2*x + 35. + np.random.rand(x.size)[:,None] * 8.
 
     #{X,Y} training set for each output
-    X1 = np.random.rand(100)[:,None]; X1=X1*75
-    X2 = np.random.rand(100)[:,None]; X2=X2*70 + 30
+    X1 = np.random.rand(100)[:,None]; X1=X1*75; X1.sort(axis=0)
+    X2 = np.random.rand(100)[:,None]; X2=X2*70 + 30; X2.sort(axis=0)
     Y1 = f_output1(X1)
     Y2 = f_output2(X2)
     #{X,Y} test set for each output
-    Xt1 = np.random.rand(100)[:,None]*100
-    Xt2 = np.random.rand(100)[:,None]*100
+    Xt1 = np.random.rand(100)[:,None]*100; Xt1.sort(axis=0)
+    Xt2 = np.random.rand(100)[:,None]*100; Xt2.sort(axis=0)
     Yt1 = f_output1(Xt1)
     Yt2 = f_output2(Xt2)
 
@@ -56,10 +56,19 @@ def test():
     gp.fit(X1, Y1)
     y, v = gp.predict(Xt1, Yt1)
     # vis.plot_confidence(Xt1, y, v)
-    vis.plot(X1, Y1, Xt1, Yt1, y, v)
-
     score = helpers.regression_score(Yt1, y)
     print(score)
+    vis.plot(X1, Y1, Xt1, Yt1, y, v)
+    vis.show_all()
+
+    gp2 = GaussianProcess()
+    gp2.fit(X2, Y2)
+    y2, v2 = gp2.predict(Xt2, Yt2)
+    score = helpers.regression_score(Yt2, y2)
+    print(score)
+    vis.plot(X2, Y2, Xt2, Yt2, y2, v2)
+    vis.show_all()
+
 
     return gp
 
