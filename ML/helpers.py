@@ -6,6 +6,8 @@ from sklearn.metrics import roc_auc_score
 from sklearn.cross_validation import StratifiedShuffleSplit
 from sklearn.metrics import mean_squared_error
 
+import pdb
+
 def partition_indexes(length, blocks):
     block_size = int(length/blocks)
     idxs = []
@@ -32,7 +34,10 @@ def roc_auc_score_multi(y_actuals, y_preds):
         cur_y_actual = np.copy(y_actuals)
         cur_y_actual[np.where(cur_y_actual != cur_class)] = -1
         cur_y_actual[np.where(cur_y_actual != -1)] = 1
-        cur_auroc = roc_auc_score(cur_y_actual, cur_ova_pred)
+        try:
+            cur_auroc = roc_auc_score(cur_y_actual, cur_ova_pred)
+        except:
+            pdb.set_trace()
         aurocs[cur_class] = cur_auroc
 
     print("AUROC score for each class: {}".format(aurocs))

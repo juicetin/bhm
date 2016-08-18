@@ -345,7 +345,9 @@ class GaussianProcess:
             self.X = X[cur_idxs]
 
             # Optimise
-            res = minimize(self.LLOO, x0, method='bfgs', jac=self.LLOO_der)
+            # res = minimize(self.LLOO, x0, method='bfgs', jac=self.LLOO_der)
+            bounds = [[0,None]] * (X.shape[1] + 4)
+            res = minimize(self.LLOO, x0, method='l-bfgs-b', jac=self.LLOO_der, bounds=bounds)
 
             # Set params for the ibnary OvO
             self.classifier_params[class_pair] = res['x']
@@ -367,7 +369,9 @@ class GaussianProcess:
 
             # Optimise and save hyper/parameters for current binary class pair
             # res = minimize(self.LLOO, x0, method='bfgs')
-            res = minimize(self.LLOO, x0, method='bfgs', jac=self.LLOO_der)
+            # res = minimize(self.LLOO, x0, method='bfgs', jac=self.LLOO_der)
+            bounds = [[0,None]] * (X.shape[1] + 4)
+            res = minimize(self.LLOO, x0, method='l-bfgs-b', jac=self.LLOO_der, bounds=bounds)
 
             # Set params for current binary regressor (classifier)
             # for param, val in zip(params, res['x']):
@@ -410,7 +414,6 @@ class GaussianProcess:
             for start in range(0, x.shape[0], step):
                 next_idx = start + 2000
                 end = next_idx if next_idx <= x.shape[0] else x.shape[0]
-                pdb.set_trace()
                 cur_preds = np.array([self.predict_class_single(x[start:end], label, params)
                              for label, params in self.classifier_params.items()])
                 y_preds[:,:,start:end] = cur_preds
@@ -471,7 +474,7 @@ class GaussianProcess:
         alpha = linalg.solve(L.T, (linalg.solve(L, y_)))
 
         # Get predictions of resulting mean and variances
-        y_pred, y_var = self.predict_regression(x, L, alpha, f_err, l_scales)
+        y_pred, y_var = self.predict_regression(x, L, alpha, f_err, l_scales, n_err)
 
         return y_pred, y_var
 

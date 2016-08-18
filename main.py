@@ -41,7 +41,7 @@ if __name__ == "__main__":
     # Regression testing
     # benchmarks.regression_dummy_testing()
     # benchmarks.test_basic_2D_data()
-    sys.exit(0)
+    # sys.exit(0)
 
     print("Loading data from npzs...")
     labels, labelcounts, bath_locations, features = data.load_training_data()
@@ -73,19 +73,16 @@ if __name__ == "__main__":
 
     # size = 100
     # train_idx = data.mini_batch_idxs(labels_simple, size, 'even')
-    # train_idx = np.load('data/semi-optimal-1000-subsample.npy')
+    train_idx = np.load('data/semi-optimal-1000-subsample.npy')
 
-    # test_idx = np.array(list(set(np.arange(features.shape[0])) - set(train_idx)))
+    test_idx = np.array(list(set(np.arange(features.shape[0])) - set(train_idx)))
 
     # gp = GaussianProcess(classification_type='OvR')
-    # gp.fit(features_sn[train_idx], labels_simple[train_idx])
-    # y_preds, y_vars = gp.predict(features_sn[test_idx], keep_probs=True)
-    # y_preds = gp.predict(features_sn[test_idx])
-    # gp_stats = benchmarks.testGP(gp, features_sn, labels_simple, train_idx, n_iter=1)
+    # gp_stats = benchmarks.testGP(gp, features_sn, labels, train_idx, n_iter=1)
     # print("normal GP: {} \n\taverages: {} {}".format( gp_stats, np.average(gp_stats[0]), np.average(gp_stats[1])))
 
     # gp1 = PoGPE(200)
-    # gp1_stats = benchmarks.testGP(gp1, features_sn, labels_simple, train_idx, n_iter=1)
+    # gp1_stats = benchmarks.testGP(gp1, features_sn, labels_simple, train_idx, n_iter=5)
     # print("PoE: {} \n\taverages:{} {}".format(gp1_stats, np.average(gp1_stats[0]), np.average(gp1_stats[1])))
 
     # gp11 = PoGPE(500)
@@ -101,7 +98,7 @@ if __name__ == "__main__":
     # print("PoGPE: {} \n\taverages: {} {}".format( gp2_stats, np.average(gp2_stats[0]), np.average(gp2_stats[1])))
 
     # gp3 = BCM(200)
-    # gp3_stats = benchmarks.testGP(gp3, features_sn, labels_simple, train_idx, n_iter=1)
+    # gp3_stats = benchmarks.testGP(gp3, features_sn, labels_simple, train_idx, n_iter=5)
     # print("BCM: {} \n\taverages: {} {}".format( gp3_stats, np.average(gp3_stats[0]), np.average(gp3_stats[1])))
 
     # gp4 = rBCM(200)
@@ -195,17 +192,21 @@ if __name__ == "__main__":
 
 
     ########################################## Compare other Algos ###########################################
-    # classifiers = [
-    #         # neighbors.KNeighborsClassifier(n_neighbors=5),                  
-    #         # LogisticRegression(),                                           
-    #         # LogisticRegression(multi_class='multinomial', solver='lbfgs'), 
-    #         RandomForestClassifier(),                                       
-    #         # SVC()
-    #         ]
+    classifiers = [
+            # neighbors.KNeighborsClassifier(n_neighbors=5),                  
+            # LogisticRegression(),                                           
+            # LogisticRegression(multi_class='multinomial', solver='lbfgs'), 
+            RandomForestClassifier(),                                       
+            # SVC()
+            ]
 
-    # X_train, X_test, y_train, y_test = train_test_split(features, labels, test_size = 0.2)
-    # rf = RandomForestClassifier()
-    # y_ = rf.fit(X_train, y_train).predict(X_test)
+    # X_train, X_test, y_train, y_test = train_test_split(features_sn, labels_simple, test_size = 0.1)
+    X_train, X_test = features_sn[train_idx], features_sn[test_idx]
+    y_train, y_test = labels_simple[train_idx], labels_simple[test_idx]
+    rf = RandomForestClassifier()
+    y_ = rf.fit(X_train, y_train).predict(X_test)
+    score = helpers.roc_auc_score_multi(y_test, y_)
+    print(score)
 
     # 10-fold cross-validation for all
     # results = []
