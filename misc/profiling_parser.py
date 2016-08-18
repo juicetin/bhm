@@ -2,11 +2,8 @@ import cProfile
 import pstats
 import sys
 
-stat_dir = 'stats/'
-
 def get_stats(stat_file):
-    stat_path = stat_dir + stat_file
-    p = pstats.Stats(stat_path)
+    p = pstats.Stats(stat_file)
     p.sort_stats('cumtime').print_stats(15)
     return p
 

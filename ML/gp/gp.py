@@ -106,6 +106,8 @@ class GaussianProcess:
         if parallel == True:
             return self.predict_parallel(x, keep_probs)
 
+        print(self.gp_type)
+
         if self.gp_type == 'classification':
             return self.predict_class(x, keep_probs)
 
@@ -262,18 +264,37 @@ class GaussianProcess:
         b = float(args[self.X.shape[1]+3])
         return f_err, l_scales, n_err, a, b
 
+    # Aims to re-use calculations in the shared block of variables between LLOO, LLOO_der
+    def update_LLOO_shared_vars(self, args):
+
+        # If args have changed, update new shared variables
+        if not np.all(args == self.args):
+            f_err, l_scales, n_err, a, b = self.unpack_LLOO_args(args)
+
+            # Update newest args for future matching with calculated shared variables
+            self.args = args
+
+            # Shared variables
+            self.L = self.L_create(self.X, f_err, l_scales, n_err)
+            self.alpha = linalg.solve(self.L.T, (linalg.solve(self.L, self.y))) # save for use with derivative func
+            self.K_inv = np.linalg.inv(self.L.T).dot(np.linalg.inv(self.L))
+            self.mu = self.y - self.alpha/np.diag(self.K_inv)
+            self.sigma_sq = 1/np.diag(self.K_inv)
+
     def LLOO(self, args):
         f_err, l_scales, n_err, a, b = self.unpack_LLOO_args(args)
 
-        L = self.L_create(self.X, f_err, l_scales, n_err)
-        alpha = linalg.solve(L.T, (linalg.solve(L, self.y))) # save for use with derivative func
-        K_inv = np.linalg.inv(L.T).dot(np.linalg.inv(L))
-        mu = self.y - alpha/np.diag(K_inv)
-        sigma_sq = 1/np.diag(K_inv)
+        # # This block is common to both LLOO and LLOO_der
+        # L = self.L_create(self.X, f_err, l_scales, n_err)
+        # alpha = linalg.solve(L.T, (linalg.solve(L, self.y))) # save for use with derivative func
+        # K_inv = np.linalg.inv(L.T).dot(np.linalg.inv(L))
+        # mu = self.y - alpha/np.diag(K_inv)
+        # sigma_sq = 1/np.diag(K_inv)
+        self.update_LLOO_shared_vars(args)
 
         LLOO = -sum(norm.cdf(
-            self.y * (a * mu + b) /
-            np.sqrt(1 + a**2 * sigma_sq)
+            self.y * (a * self.mu + b) /
+            np.sqrt(1 + a**2 * self.sigma_sq)
         ))
 
         return LLOO
@@ -284,46 +305,48 @@ class GaussianProcess:
         
         f_err, l_scales, n_err, a, b = self.unpack_LLOO_args(args)
 
-        # This block is common to both LLOO and LLOO_der
-        L = self.L_create(self.X, f_err, l_scales, n_err)
-        alpha = linalg.solve(L.T, (linalg.solve(L, self.y))) # save for use with derivative func
-        K_inv = np.linalg.inv(L.T).dot(np.linalg.inv(L))
-        mu = self.y - alpha/np.diag(K_inv)
-        sigma_sq = 1/np.diag(K_inv)
+        # # This block is common to both LLOO and LLOO_der
+        # L = self.L_create(self.X, f_err, l_scales, n_err)
+        # alpha = linalg.solve(L.T, (linalg.solve(L, self.y))) # save for use with derivative func
+        # K_inv = np.linalg.inv(L.T).dot(np.linalg.inv(L))
+        # mu = self.y - alpha/np.diag(K_inv)
+        # sigma_sq = 1/np.diag(K_inv)
+        self.update_LLOO_shared_vars(args)
 
-        r = a * mu + b
+        r = a * self.mu + b
 
-        K_i_diag = np.diag(K_inv)
+        K_i_diag = np.diag(self.K_inv)
         dK_dthetas = self.eval_dK_dthetas(f_err, l_scales, n_err) 
-        Zs = np.array([K_inv.dot(dK_dtheta) for dK_dtheta in dK_dthetas])
-        dvar_dthetas = [np.diag(Z.dot(K_inv))/K_i_diag**2 for Z in Zs] 
-        dmu_dthetas = [Z.dot(alpha) / K_i_diag - alpha * dvar_dtheta for Z, dvar_dtheta in zip(Zs, dvar_dthetas)]
+        Zs = np.array([self.K_inv.dot(dK_dtheta) for dK_dtheta in dK_dthetas])
+        dvar_dthetas = [np.diag(Z.dot(self.K_inv))/K_i_diag**2 for Z in Zs] 
+        dmu_dthetas = [Z.dot(self.alpha) / K_i_diag - self.alpha * dvar_dtheta for Z, dvar_dtheta in zip(Zs, dvar_dthetas)]
 
         pdf_on_cdf = norm.pdf(r) / norm.cdf(self.y * r)
 
         # Dervative over LLOO for each of the hyperparameters
         dLLOO_dthetas = [
                 -sum(pdf_on_cdf * 
-                    (self.y * a / np.sqrt(1 + a**2 * sigma_sq)) * 
-                    (dmu_dtheta - 0.5 * a * (a * mu + b) / (1 + a**2 * sigma_sq) * dvar_dtheta))
+                    (self.y * a / np.sqrt(1 + a**2 * self.sigma_sq)) * 
+                    (dmu_dtheta - 0.5 * a * (a * self.mu + b) / (1 + a**2 * self.sigma_sq) * dvar_dtheta))
                     for dmu_dtheta, dvar_dtheta in zip(dmu_dthetas, dvar_dthetas)
         ]
 
         # Derivative of LLOO w.r.t b
         dLLOO_db_arr = (
             pdf_on_cdf *
-            self.y / np.sqrt(1 + a**2 * sigma_sq)
+            self.y / np.sqrt(1 + a**2 * self.sigma_sq)
         )
         dLLOO_db = -sum(dLLOO_db_arr)
 
         # Derivative of LLOO w.r.t a, utilising dLLOO/db
         dLLOO_da = -sum(dLLOO_db_arr *
-                        (mu - b * a * sigma_sq) /
-                        (1 + a**2 * sigma_sq)
+                        (self.mu - b * a * self.sigma_sq) /
+                        (1 + a**2 * self.sigma_sq)
                        )
         
         gradients = dLLOO_dthetas + [dLLOO_da] + [dLLOO_db]
 
+        # return gradients
         return np.array(gradients, dtype=np.float64)
 
     def fit_classes_OvO(self, X, y):
@@ -346,6 +369,7 @@ class GaussianProcess:
 
             # Optimise
             # res = minimize(self.LLOO, x0, method='bfgs', jac=self.LLOO_der)
+            self.args = np.zeros(X.shape[1] + 4)
             bounds = [[0,None]] * (X.shape[1] + 4)
             res = minimize(self.LLOO, x0, method='l-bfgs-b', jac=self.LLOO_der, bounds=bounds)
 
@@ -370,6 +394,7 @@ class GaussianProcess:
             # Optimise and save hyper/parameters for current binary class pair
             # res = minimize(self.LLOO, x0, method='bfgs')
             # res = minimize(self.LLOO, x0, method='bfgs', jac=self.LLOO_der)
+            self.args = np.zeros(X.shape[1] + 4)
             bounds = [[0,None]] * (X.shape[1] + 4)
             res = minimize(self.LLOO, x0, method='l-bfgs-b', jac=self.LLOO_der, bounds=bounds)
 

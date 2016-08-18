@@ -79,7 +79,7 @@ if __name__ == "__main__":
     test_idx = np.array(list(set(np.arange(features.shape[0])) - set(train_idx)))
 
     gp = GaussianProcess(classification_type='OvR')
-    gp_stats = benchmarks.testGP(gp, features_sn, labels, train_idx, n_iter=1)
+    gp_stats = benchmarks.testGP(gp, features_sn, labels_simple, train_idx, n_iter=1)
     print("normal GP: {} \n\taverages: {} {}".format( gp_stats, np.average(gp_stats[0]), np.average(gp_stats[1])))
 
     # gp1 = PoGPE(200)
@@ -202,12 +202,13 @@ if __name__ == "__main__":
             ]
 
     # X_train, X_test, y_train, y_test = train_test_split(features_sn, labels_simple, test_size = 0.1)
-    X_train, X_test = features_sn[train_idx], features_sn[test_idx]
-    y_train, y_test = labels_simple[train_idx], labels_simple[test_idx]
-    rf = RandomForestClassifier()
-    y_ = rf.fit(X_train, y_train).predict(X_test)
-    score = helpers.roc_auc_score_multi(y_test, y_)
-    print(score)
+    # X_train, X_test = features_sn[train_idx], features_sn[test_idx]
+    # y_train, y_test = labels_simple[train_idx], labels_simple[test_idx]
+    # rf = RandomForestClassifier()
+    # y_ = rf.fit(X_train, y_train).predict(X_test)
+    # NOTE this doesn't work! can't roc_auc_score on discrete predictions
+    # score = helpers.roc_auc_score_multi(y_test, y_)
+    # print(score)
 
     # 10-fold cross-validation for all
     # results = []
