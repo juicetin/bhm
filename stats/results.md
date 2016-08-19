@@ -57,9 +57,11 @@ Note that for the 500, 1000 test cases below, they are all using the same 500/10
 | 1000    | S     | GP     | 10F-CV | 100       | ?          |
 | 1000    | E     | GP     | All    | 1         | 0.87626    | Deterministic       | 0.56208 |
 | 1000    | E     | PoEGP  | All    | 5         | 0.80973    |                     | 0.47481 |
+| 1000    | E     | PoEGP  | All    | 200       | 0.80186    |                     | 0.47595 |
 | 1000    | E     | GPoEGP | All    | 5         | 0.80864    |                     | 0.51018 |
+| 1000    | E     | GPoEGP | All    | 200       | 0.80105    |                     | 0.47748 |
 | 1000    | E     | BCM    | All    | 5         | 0.80682    |                     | 0.48167 |
-| 1000    | E     | BCM    | All    | 50        |            |                     |         |
+| 1000    | E     | BCM    | All    | 200       | 0.80421    |                     | 0.48227 |
 | 1000    | E     | GPy    | All    | 1         | 0.87638    | RBF, EP (default)   | 0.57013 |
 
 Key:

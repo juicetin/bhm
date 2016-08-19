@@ -78,12 +78,14 @@ if __name__ == "__main__":
 
     test_idx = np.array(list(set(np.arange(features.shape[0])) - set(train_idx)))
 
-    gp = GaussianProcess(classification_type='OvR')
-    gp_stats = benchmarks.testGP(gp, features_sn, labels_simple, train_idx, n_iter=1)
-    print("normal GP: {} \n\taverages: {} {}".format( gp_stats, np.average(gp_stats[0]), np.average(gp_stats[1])))
+    # gp = GaussianProcess(classification_type='OvR')
+    # gp_stats = benchmarks.testGP(gp, features_sn, labels_simple, train_idx, n_iter=1)
+    # print("normal GP: {} \n\taverages: {} {}".format( gp_stats, np.average(gp_stats[0]), np.average(gp_stats[1])))
+
+    n_iter=200
 
     # gp1 = PoGPE(200)
-    # gp1_stats = benchmarks.testGP(gp1, features_sn, labels_simple, train_idx, n_iter=5)
+    # gp1_stats = benchmarks.testGP(gp1, features_sn, labels_simple, train_idx, n_iter=n_iter)
     # print("PoE: {} \n\taverages:{} {}".format(gp1_stats, np.average(gp1_stats[0]), np.average(gp1_stats[1])))
 
     # gp11 = PoGPE(500)
@@ -95,17 +97,20 @@ if __name__ == "__main__":
     # print("PoE: {} \n\taverages: {} {}".format( gp12_stats, np.average(gp12_stats[0]), np.average(gp12_stats[1])))
 
     # gp2 = GPoGPE(200)
-    # gp2_stats = benchmarks.testGP(gp2, features_sn, labels_simple, train_idx, n_iter=5)
+    # gp2_stats = benchmarks.testGP(gp2, features_sn, labels_simple, train_idx, n_iter=n_iter)
     # print("PoGPE: {} \n\taverages: {} {}".format( gp2_stats, np.average(gp2_stats[0]), np.average(gp2_stats[1])))
 
     # gp3 = BCM(200)
-    # gp3_stats = benchmarks.testGP(gp3, features_sn, labels_simple, train_idx, n_iter=5)
+    # gp3_stats = benchmarks.testGP(gp3, features_sn, labels_simple, train_idx, n_iter=n_iter)
     # print("BCM: {} \n\taverages: {} {}".format( gp3_stats, np.average(gp3_stats[0]), np.average(gp3_stats[1])))
 
     # gp4 = rBCM(200)
     # gp4_stats = benchmarks.testGP(gp4, features_sn, labels_simple, train_idx, n_iter=5)
     # print("BCM: {} \n\taverages: {} {}".format( gp4_stats, np.average(gp4_stats[0]), np.average(gp4_stats[1])))
 
+    # print("PoE: {} \n\taverages:{} {}".format(gp1_stats, np.average(gp1_stats[0]), np.average(gp1_stats[1])))
+    # print("PoGPE: {} \n\taverages: {} {}".format( gp2_stats, np.average(gp2_stats[0]), np.average(gp2_stats[1])))
+    # print("BCM: {} \n\taverages: {} {}".format( gp3_stats, np.average(gp3_stats[0]), np.average(gp3_stats[1])))
 
     # GPy benchmarking
     # test_idx = np.array(list(set(np.arange(16502)) - set(train_idx)))
