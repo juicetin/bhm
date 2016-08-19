@@ -52,6 +52,8 @@ def test(show_plots=True):
     Yt1 = f_output1(Xt1)
     Yt2 = f_output2(Xt2)
 
+    pdb.set_trace()
+
     gp = GaussianProcess()
     gp.fit(X1, Y1)
     y, v = gp.predict(Xt1, Yt1)
