@@ -30,6 +30,7 @@ from ML.gp.poe import PoGPE
 from ML.gp.gpoe import GPoGPE
 from ML.gp.bcm import BCM
 from ML.gp.rbcm import rBCM
+from ML.gp.gp_mt import GPMT
 
 import misc.visualisation as vis
 import misc.load_data as data
@@ -38,7 +39,6 @@ import misc.gpy_benchmark as gpy_benchmarks
 
 # Main function
 if __name__ == "__main__":
-    # Regression testingj
     # benchmarks.regression_dummy_testing()
     # benchmarks.test_basic_2D_data()
     gp = benchmarks.test(show_plots=True)

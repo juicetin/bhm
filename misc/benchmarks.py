@@ -31,6 +31,7 @@ from ML.gp.poe import PoGPE
 from ML.gp.gpoe import GPoGPE
 from ML.gp.bcm import BCM
 from ML.gp.rbcm import rBCM
+from ML.gp.gp_mt import GPMT
 
 import misc.visualisation as vis
 import misc.load_data as data
@@ -52,11 +53,12 @@ def test(show_plots=True):
     Yt1 = f_output1(Xt1)
     Yt2 = f_output2(Xt2)
 
-    pdb.set_trace()
+    # pdb.set_trace()
 
-    gp = GaussianProcess()
+    # gp = GaussianProcess()
+    gp = GPMT()
     gp.fit(X1, Y1)
-    y, v = gp.predict(Xt1, Yt1)
+    y, v = gp.predict(Xt1)
     # vis.plot_confidence(Xt1, y, v)
     score = helpers.regression_score(Yt1, y)
     print(score)
@@ -65,16 +67,15 @@ def test(show_plots=True):
     if show_plots == True:
         vis.show_all()
 
-    gp2 = GaussianProcess()
-    gp2.fit(X2, Y2)
-    y2, v2 = gp2.predict(Xt2, Yt2)
-    score = helpers.regression_score(Yt2, y2)
-    print(score)
-    vis.plot(X2, Y2, Xt2, Yt2, y2, v2)
+    # gp2 = GaussianProcess()
+    # gp2.fit(X2, Y2)
+    # y2, v2 = gp2.predict(Xt2)
+    # score = helpers.regression_score(Yt2, y2)
+    # print(score)
+    # vis.plot(X2, Y2, Xt2, Yt2, y2, v2)
 
-    if show_plots == True:
-        vis.show_all()
-
+    # if show_plots == True:
+    #     vis.show_all()
 
     return gp
 
