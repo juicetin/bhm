@@ -1,4 +1,9 @@
 #!/bin/python3
+# Account for headless server/no display backend
+import matplotlib as mpl
+import os
+if "DISPLAY" not in os.environ:
+    mpl.use('Agg')
 
 import numpy as np
 import copy
@@ -37,8 +42,22 @@ import misc.load_data as data
 import misc.benchmarks as benchmarks
 import misc.gpy_benchmark as gpy_benchmarks
 
+def info(type, value, tb):
+    # if hasattr(sys, 'ps1') or not sys.stderr.isatty():
+    #     sys.__excepthook__(type, value, tb)
+    # else:
+    #     import traceback, pdb
+    #     traceback.print_exception(type, value, tb)
+    #     print
+    #     pdb.pm()
+    import traceback, pdb
+    traceback.print_exception(type, value, tb)
+    print
+    pdb.pm()
+
 # Main function
 if __name__ == "__main__":
+    sys.excepthook = info
     # benchmarks.regression_dummy_testing()
     # benchmarks.test_basic_2D_data()
     gp = benchmarks.test()

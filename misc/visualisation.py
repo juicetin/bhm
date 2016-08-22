@@ -2,11 +2,6 @@ import numpy as np
 from datetime import datetime
 import matplotlib as mpl
 
-# Account for headless server/no display backend
-import os
-if "DISPLAY" not in os.environ:
-    mpl.use('Agg')
-
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.cm as cm
@@ -20,6 +15,7 @@ def plot(X, Y, x, y, y_pred, sigma):
     # Plot function, prediction, and 95% confidence interval based on MSE
     confidence = 1.9600
     fig = plt.figure(figsize=(12,8))
+    print('got here')
 
     # plt.plot(x, y, 'r:', label=u'$f(x) = x\, \sin(x)$')
 
@@ -40,7 +36,6 @@ def plot(X, Y, x, y, y_pred, sigma):
     plt.xlabel('$x$')
     plt.ylabel('$y$')
 
-
     # Handle logic of bounding graph on min/max of x/y coordinates
     y_mins = 1.1*np.array([np.min(Y), np.min(y), np.min(y_pred)])
     y_maxs = 1.1*np.array([np.max(Y), np.max(y), np.max(y_pred)])
@@ -54,13 +49,15 @@ def plot(X, Y, x, y, y_pred, sigma):
 
 def show_all():
     # In a display backend
-    if mpl.get_backend() != 'Agg':
+    backend = mpl.get_backend()
+    print("Using backend {}".format(backend))
+    if backend != 'agg':
         plt.show()
 
     # No display backend
     else:
         date = datetime.now()
-        plt.savefig('images-{}/img.pdf'.format(date))
+        plt.savefig('images/{}.pdf'.format(date))
 
 def add_confidence_plot(ax, x, y, sigma):
     confidence = 1.9600
