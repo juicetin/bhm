@@ -62,9 +62,9 @@ def test(show_plots=True):
     # vis.plot_confidence(Xt1, y, v)
     score = helpers.regression_score(Yt1, y)
     print(score)
-    vis.plot(X1, Y1, Xt1, Yt1, y, v)
 
     if show_plots == True:
+        vis.plot(X1, Y1, Xt1, Yt1, y, v)
         vis.show_all()
 
     # gp2 = GaussianProcess()
