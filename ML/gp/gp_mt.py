@@ -55,9 +55,8 @@ class GPMT(GaussianProcess):
         # Predictive variances
         L = self.L_create(self.X, f_err, l_scales, n_err)
         var = self.predictive_variances(x, L, K_star, f_err, l_scales, n_err)
-        # def predictive_variances(self, x, L, k_star, f_err, l_scales, n_err):
 
-        pdb.set_trace()
+        # pdb.set_trace()
 
         # TODO variances!
         return F[:,0], var
