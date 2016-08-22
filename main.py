@@ -41,7 +41,7 @@ import misc.gpy_benchmark as gpy_benchmarks
 if __name__ == "__main__":
     # benchmarks.regression_dummy_testing()
     # benchmarks.test_basic_2D_data()
-    gp = benchmarks.test(show_plots=True)
+    gp = benchmarks.test()
     sys.exit(0)
 
     print("Loading data from npzs...")
