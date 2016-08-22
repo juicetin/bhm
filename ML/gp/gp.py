@@ -168,6 +168,14 @@ class GaussianProcess:
         self.K_inv = np.linalg.inv(self.L.T).dot(np.linalg.inv(self.L))
         self.alpha = linalg.solve(self.L.T, (linalg.solve(self.L, self.y)))
 
+    def predictive_variances(self, x, L, k_star, f_err, l_scales, n_err):
+        v = np.linalg.solve(L, k_star)
+        var = np.diag(self.K_se(x, x, f_err, l_scales) - v.T.dot(v)) + n_err**2
+        return var
+
+    def predictive_mean(self, alpha, k_star):
+        return k_star.T.dot(alpha)
+
     def predict_regression(self, x, L=None, alpha=None, f_err=None, l_scales=None, n_err=None):
 
         # Assign hyperparameters and other calculated variables
@@ -178,11 +186,13 @@ class GaussianProcess:
             l_scales = self.l_scales
             n_err = self.n_err
 
-        # TODO fix - mean and var need to be calculated per point
+        # f_star = k_star.T.dot(alpha)
+        # v = np.linalg.solve(L, k_star)
+        # var = np.diag(self.K_se(x, x, f_err, l_scales) - v.T.dot(v)) + n_err**2
+
         k_star = self.K_se(self.X, x, f_err, l_scales)
-        f_star = k_star.T.dot(alpha)
-        v = np.linalg.solve(L, k_star)
-        var = np.diag(self.K_se(x, x, f_err, l_scales) - v.T.dot(v)) + n_err**2
+        f_star = self.predictive_mean(alpha, k_star)
+        var = self.predictive_variances(x, L, k_star, f_err, l_scales, n_err)
 
         # Corner case with only one dimension 
         if len(f_star.shape) == 2 and f_star.shape[1] == 1:

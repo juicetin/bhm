@@ -10,11 +10,65 @@ from sklearn.preprocessing import normalize
 from sklearn.preprocessing import scale
 
 class GPMT(GaussianProcess):
+
+    # Fit the GP
+    def fit(self, X, y):
+
+        self.N = X.shape[0]
+        self.M = X.shape[1]
+
+        self.X = X
+        self.y = y
+        # NxM matrix Y such that y = vecY
+        # y_il is response for l-th task on i-th input x_i
+        self.Y = y.reshape(X.shape)
+
+        ########### Initialisation of parameters/variables #############
+        # x0 = np.random.rand(2 + X.shape[1]) # Initial guess
+        x0 = np.array([1] + [1] * X.shape[1] + [0.1])
+        f_err, l_scales, n_err = self.unpack_GP_args(x0)
+        self.Kx = self.Kx_update(self.X, self.X, f_err, l_scales, n_err)
+        self.Kf = 1/self.N * self.Y.T.dot(self.inverse(self.Kx)).dot(self.Y) # NOTE ??? too big!!
+        # self.Kf = np.ones_like(self.Kf)
+        self.sigma_ls = np.full(self.Kf.shape, 0.01)
+        self.F = self.F_update(self.Kf, self.Kx, self.Kx, np.diag(1/self.sigma_ls))
+        self.singular_count = 0
+
+        ################################################################
+
+        self.f_err, self.l_scales, self.n_err = self.MT_EM(f_err, l_scales, n_err)
+        print(self.singular_count)
+
+    # Predict a set of x points
+    def predict(self, x):
+
+        f_err, l_scales, n_err = self.prev_thetas()
+
+        Kf = self.prev_Kf()
+        Kx = self.Kx_update(self.X, self.X, f_err, l_scales, n_err)
+        D = np.diag(self.prev_sigma_ls())
+        K_star = self.Kx_update(self.X, x, f_err, l_scales, n_err, training=False) # TODO
+
+        # Predictive means
+        F = self.F_update(Kf, K_star, Kx, D)
+
+        # Predictive variances
+        L = self.L_create(self.X, f_err, l_scales, n_err)
+        var = self.predictive_variances(x, L, K_star, f_err, l_scales, n_err)
+        # def predictive_variances(self, x, L, k_star, f_err, l_scales, n_err):
+
+        pdb.set_trace()
+
+        # TODO variances!
+        return F[:,0], var
+
+    # Store prev values of hyperparams to keep track of convergence
     def cache_prev_hyperparams(self, f_err, l_scales, n_err):
         self.prev_f_err = f_err
         self.prev_l_scales = l_scales
         self.prev_n_err = n_err
 
+    # Check whether hyperparams have moved less than some tolerance value
     def hyperparams_stabilised(self, f_err, l_scales, n_err, tol):
         try:
             cur = np.array([f_err] + [l_scales] + [n_err])
@@ -24,6 +78,7 @@ class GPMT(GaussianProcess):
         except:
             False
 
+    # Expectectation Maximisation over thetas, Kf, task_noises
     def MT_EM(self, f_err, l_scales, n_err, tol=1e-5, n_iter=None):
         diff = 1
         prev_L_LL = sys.maxsize # Could calculate first iteration - but extra code overhead
@@ -45,7 +100,7 @@ class GPMT(GaussianProcess):
             # # TODO (no?) calculate new Kx - done within the new Kf
             Kx = self.Kx_update(self.X, self.X, f_err, l_scales, n_err)
 
-            # # TODO calculate new F, as new Kx has changed
+            # # TODO calculate new F, as new Kx has changed (no ?)
             # F = self.F_update(self.X, self.prev_Kf(), Kx, D)
 
             # TODO calculate new Kf
@@ -53,7 +108,8 @@ class GPMT(GaussianProcess):
 
             # TODO calculate new sigma_ls
             D = np.diag(self.prev_sigma_ls())
-            F = self.F_update(self.X, Kf, Kx, D)
+            F = self.F_update(Kf, Kx, Kx, D)
+
             sigma_ls = self.sigma_ls_update(self.X, F)
 
             cur_L_LL = self.L_LL(Kf, Kx, F, sigma_ls)
@@ -61,47 +117,12 @@ class GPMT(GaussianProcess):
             prev_L_LL = cur_L_LL
 
             self.update_cur_to_prev(F, Kf, sigma_ls)
+
             print(prev_L_LL)
 
         return f_err, l_scales, n_err
     
-    def fit(self, X, y):
-        self.N = X.shape[0]
-        self.M = X.shape[1]
-
-        self.X = X
-        self.y = y
-        # NxM matrix Y such that y = vecY
-        # y_il is response for l-th task on i-th input x_i
-        self.Y = y.reshape(X.shape)
-
-        ########### Initialisation of parameters/variables #############
-        # x0 = np.random.rand(2 + X.shape[1]) # Initial guess
-        x0 = np.array([1] + [1] * X.shape[1] + [0.1])
-        f_err, l_scales, n_err = self.unpack_GP_args(x0)
-        self.Kx = self.Kx_update(self.X, self.X, f_err, l_scales, n_err)
-        self.Kf = 1/self.N * self.Y.T.dot(self.inverse(self.Kx)).dot(self.Y) # NOTE ??? too big!!
-        # self.Kf = np.ones_like(self.Kf)
-        self.sigma_ls = np.full(self.Kf.shape, 0.01)
-        self.F = self.F_update(X, self.Kf, self.Kx, np.diag(1/self.sigma_ls))
-        self.singular_count = 0
-
-        pdb.set_trace()
-        ################################################################
-
-        self.f_err, self.l_scales, self.n_err = self.MT_EM(f_err, l_scales, n_err)
-        print(self.singular_count)
-
-    def predict(self, x):
-        Kf = self.prev_Kf()
-        Kx = self.Kx_update(self.X, x, self.f_err, self.l_scales, self.n_err)
-        D = np.diag(self.prev_sigma_ls())
-        F = self.F_update(x, Kf, Kx, D)
-        sigma_ls = self.sigma_ls_update(x, F)
-
-        # pdb.set_trace()
-        return F, sigma_ls
-
+    # L_comp log likelihood
     def L_LL(self, Kf, Kx, F, sigma_ls):
         YmF = self.Y - F
         D_inv = np.diag(1/sigma_ls)
@@ -144,7 +165,7 @@ class GPMT(GaussianProcess):
         Kx = self.Kx_update(self.X, self.X, f_err, l_scales, n_err)
         Kf = self.Kf_update(self.X, f_err, l_scales, n_err, self.prev_F())
         D = np.diag(self.prev_sigma_ls())
-        F  = self.F_update(self.X, Kf, Kx, D)
+        F  = self.F_update(Kf, Kx, Kx, D)
 
         Kx_inv = self.inverse(Kx)
         Kf_det = np.linalg.det(F.T.dot(Kx_inv).dot(F))
@@ -173,7 +194,7 @@ class GPMT(GaussianProcess):
             inv = np.linalg.inv(m)
         else:
             print('SINGULAR MATRIX')
-            pdb.set_trace()
+            # pdb.set_trace()
             # While loop here
             inv = np.linalg.inv(m + np.diag([0.1] * m.shape[0]))
 
@@ -200,20 +221,20 @@ class GPMT(GaussianProcess):
     # Vector of function values corresponding to Y
     #   Inference is needed when learning hyperparameters for noisy observations
 
-    def F_update(self, x, Kf, Kx, D):
-        I = np.identity(x.shape[0])
+    def F_update(self, Kf, Kx_star, Kx, D):
+        I = np.identity(Kx.shape[0])
         sigma = np.kron(Kf, Kx) + np.kron(D, I)
-
-        means = np.kron(Kf, Kx).T.dot(np.linalg.inv(sigma)).dot(self.y)
+        sigma_inv = self.inverse(sigma)
+        means = np.kron(Kf, Kx_star).T.dot(sigma_inv).dot(self.y)
         return means
 
     # Covariance functions over inputs
     # NOTE stationary covariance functions as K^f explains variance
     #   unit variance, (zero mean?)
-    def Kx_update(self, X, x, f_err, l_scales, n_err):
+    def Kx_update(self, X, x, f_err, l_scales, n_err, training=True):
         # TODO follow NOTE from comment above function
-        K = self.K_se(X, x, f_err, l_scales)
-        if X.shape == x.shape:
+        K = self.K_se(X, x, f_err, l_scales) 
+        if training == True:
             K = K + n_err**2 * np.identity(X.shape[0])
         return K
 
