@@ -9,9 +9,9 @@ import pdb
 import GPy
 
 from sklearn.preprocessing import normalize
+from sklearn.preprocessing import scale
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.preprocessing import scale
 from sklearn.svm import SVC
 from sklearn.cross_validation import train_test_split
 from sklearn import datasets
@@ -41,19 +41,21 @@ import misc.gpy_benchmark as gpy_benchmarks
 if __name__ == "__main__":
     # benchmarks.regression_dummy_testing()
     # benchmarks.test_basic_2D_data()
-    gp = benchmarks.test(show_plots=True)
-    sys.exit(0)
+    # gp = benchmarks.test(show_plots=True)
+    # sys.exit(0)
 
     print("Loading data from npzs...")
     labels, labelcounts, bath_locations, features = data.load_training_data()
     multi_locations, multi_features, multi_labels = data.load_multi_label_data()
-    qp_locations, validQueryID, x_bins, query, y_bins = data.load_test_data()
 
-    print("Filter down to non-nan queries and locations...")
-    valid_query_idxs = np.where( (~np.isnan(query).any(axis=1) & np.isfinite(query).all(axis=1)) )[0]
-    query = query[valid_query_idxs]
-    qp_locations = qp_locations[valid_query_idxs]
-    infinite_idx = np.where(~np.isfinite(query).all(axis=1))[0]
+    # qp_locations, validQueryID, x_bins, query, y_bins = data.load_test_data()
+    # query_sn = scale(normalize(query))
+
+    # print("Filter down to non-nan queries and locations...")
+    # valid_query_idxs = np.where( (~np.isnan(query).any(axis=1) & np.isfinite(query).all(axis=1)) )[0]
+    # query = query[valid_query_idxs]
+    # qp_locations = qp_locations[valid_query_idxs]
+    # infinite_idx = np.where(~np.isfinite(query).all(axis=1))[0]
 
     print("Loading features...")
     features = np.array(features)
@@ -65,7 +67,6 @@ if __name__ == "__main__":
     print("Scaling features...")
     # features_s = scale(features)
     features_sn = scale(normalize(features))
-    query_sn = scale(normalize(query))
 
     # labels = np.array(labels)
     labels_simple = data.summarised_labels(labels)
@@ -82,11 +83,11 @@ if __name__ == "__main__":
     # gp_stats = benchmarks.testGP(gp, features_sn, labels_simple, train_idx, n_iter=1)
     # print("normal GP: {} \n\taverages: {} {}".format( gp_stats, np.average(gp_stats[0]), np.average(gp_stats[1])))
 
-    n_iter=200
+    n_iter=1
 
-    # gp1 = PoGPE(200)
-    # gp1_stats = benchmarks.testGP(gp1, features_sn, labels_simple, train_idx, n_iter=n_iter)
-    # print("PoE: {} \n\taverages:{} {}".format(gp1_stats, np.average(gp1_stats[0]), np.average(gp1_stats[1])))
+    gp1 = PoGPE(200)
+    gp1_stats = benchmarks.testGP(gp1, features_sn, labels_simple, train_idx, n_iter=n_iter)
+    print("PoE: {} \n\taverages:{} {}".format(gp1_stats, np.average(gp1_stats[0]), np.average(gp1_stats[1])))
 
     # gp11 = PoGPE(500)
     # gp11_stats = benchmarks.testGP(gp11, features_sn, labels_simple, train_idx, n_iter=1)

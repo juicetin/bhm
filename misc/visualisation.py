@@ -34,10 +34,14 @@ def plot(X, Y, x, y, y_pred, sigma):
     plt.xlabel('$x$')
     plt.ylabel('$y$')
 
-    # Limit graph display
-    # plt.ylim(-120, 120)
-    plt.ylim(-100, 0)
-    plt.xlim(0, 100)
+
+    # Handle logic of bounding graph on min/max of x/y coordinates
+    y_mins = 1.1*np.array([np.min(Y), np.min(y), np.min(y_pred)])
+    y_maxs = 1.1*np.array([np.max(Y), np.max(y), np.max(y_pred)])
+    x_mins = 1.05*np.array([np.min(X), np.min(x)])
+    x_maxs = 1.05*np.array([np.max(X), np.max(x)])
+    plt.ylim(np.min(y_mins), np.max(y_maxs))
+    plt.xlim(np.min(x_mins), np.max(x_maxs))
 
     # plt.legend(loc='upper left')
     # plt.show()
