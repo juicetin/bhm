@@ -154,6 +154,7 @@ class GPMT(GaussianProcess):
         self.Kf = Kf
         self.sigma_ls = sigma_ls
 
+    # > 75% time spent in this function
     def thetas_NLL(self, args):
         f_err, l_scales, n_err = self.unpack_GP_args(args)
         # print("cur iter: ", end=" ", flush=True)

@@ -1,3 +1,4 @@
+import pdb
 import numpy as np
 
 # Sklearn
@@ -5,8 +6,6 @@ from sklearn.metrics import f1_score
 from sklearn.metrics import roc_auc_score
 from sklearn.cross_validation import StratifiedShuffleSplit
 from sklearn.metrics import mean_squared_error
-
-import pdb
 
 def partition_indexes(length, blocks):
     block_size = int(length/blocks)
@@ -16,11 +15,11 @@ def partition_indexes(length, blocks):
     idxs[-1] = (idxs[-1][0], length)
     return idxs
 
-def sigmoid(x):
-    return 1/(1+np.exp(-x))
+def sigmoid(vector):
+    return 1/(1+np.exp(-vector))
 
-def score(y_, y):
-    return f1_score(y, y_, average='weighted')
+def score(y_preds, y_actuals):
+    return f1_score(y_actuals, y_preds, average='weighted')
 
 def regression_score(y_true, y_pred):
     return mean_squared_error(y_true, y_pred)
@@ -38,7 +37,7 @@ def roc_auc_score_multi(y_actuals, y_preds):
         try:
             cur_auroc = roc_auc_score(cur_y_actual, cur_ova_pred)
             print('success')
-        except:
+        except ValueError:
             print("AUC score derp")
             pdb.set_trace()
         aurocs[cur_class] = cur_auroc
@@ -74,11 +73,10 @@ def binarised_labels_copy(labels, pos_class):
     return new_labels
 
 # NOTE cdist can't deal with sympy symbols :(
-def sqeucl_dist(x, xs):
-    m = np.sum(np.power(
-        np.repeat(x[:,None,:], len(x), axis=1) - 
-        np.resize(xs, (len(x), xs.shape[0], xs.shape[1])), 
+def sqeucl_dist(data1, data2):
+    dist_matrix = np.sum(np.power(
+        np.repeat(data1[:, None, :], len(data1), axis=1) -
+        np.resize(data2, (len(data1), data2.shape[0], data2.shape[1])),
         2), axis=2)
 
-    return m
-
+    return dist_matrix
