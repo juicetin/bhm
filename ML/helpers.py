@@ -73,10 +73,10 @@ def binarised_labels_copy(labels, pos_class):
     return new_labels
 
 # NOTE cdist can't deal with sympy symbols :(
-def sqeucl_dist(data1, data2):
+def sqeucl_dist(x, xs):
     dist_matrix = np.sum(np.power(
-        np.repeat(data1[:, None, :], len(data1), axis=1) -
-        np.resize(data2, (len(data1), data2.shape[0], data2.shape[1])),
+        np.repeat(x[:, None, :], len(x), axis=1) -
+        np.resize(xs, (len(x), xs.shape[0], xs.shape[1])),
         2), axis=2)
 
     return dist_matrix
