@@ -189,16 +189,18 @@ class GPMT(GaussianProcess):
 
     # Adjusts for singular matrices ._.
     def inverse(self, m):
-        cond_num = np.linalg.cond(m)
-        if np.isfinite(cond_num): # and cond_num < 1/sys.float_info.epsilon:
-            inv = np.linalg.inv(m)
-        else:
-            print('SINGULAR MATRIX')
-            # pdb.set_trace()
-            # While loop here
-            inv = np.linalg.inv(m + np.diag([0.1] * m.shape[0]))
-
-        return inv
+        # cond_num = np.linalg.cond(m)
+        # if np.isfinite(cond_num): # and cond_num < 1/sys.float_info.epsilon:
+        #     inv = np.linalg.inv(m)
+        # else:
+        #     print('SINGULAR MATRIX')
+        #     # pdb.set_trace()
+        #     # While loop here
+        #     inv = np.linalg.inv(m + np.diag([0.1] * m.shape[0]))
+        try:
+            return np.linalg.inv(m)
+        except:
+            return np.linalg.inv(m+ np.diag([0.01] * m.shape[0]))
 
     # Returns updated K^f matrix, given x, current hyperparameters, and Function values
     def Kf_update(self, x, f_err, l_scales, n_err, F):
