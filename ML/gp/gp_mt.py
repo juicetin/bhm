@@ -207,7 +207,6 @@ class GPMT(GaussianProcess):
         Kx = self.Kx_update(self.X, x, f_err, l_scales, n_err)
         N = self.N
 
-        cond_num = np.linalg.cond(Kx)
         # Adjust matrix if singular - NOTE results break if singular matrices DO occur
         Kx_inv = self.inverse(Kx)
         Kf = 1/N * F.T.dot(np.linalg.inv(Kx_inv)).dot(F) # NOTE singular matrix Kx here sometimes!
