@@ -65,8 +65,9 @@ if __name__ == "__main__":
 
     # NOTE _s suffix kept here for clarity
     print("Scaling features...")
-    # features_s = scale(features)
-    features_sn = scale(normalize(features))
+    # features_s = scale(features)  # Wrong axis :O
+    features_sn = (normalize(scale(features), axis=0)) # 0.8359, 0.5323 for PoGPE
+    # features_s = scale(features) # MARGINALLY better than normalize(scale)
 
     # labels = np.array(labels)
     labels_simple = data.summarised_labels(labels)
