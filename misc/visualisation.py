@@ -1,6 +1,12 @@
 import numpy as np
+from datetime import datetime
 import matplotlib as mpl
-# mpl.use('Agg')
+
+# Account for headless server/no display backend
+import os
+if "DISPLAY" not in os.environ:
+    mpl.use('Agg')
+
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.cm as cm
@@ -45,10 +51,16 @@ def plot(X, Y, x, y, y_pred, sigma):
 
     # plt.legend(loc='upper left')
     # plt.show()
-    # plt.savefig('img.pdf')
 
 def show_all():
-    plt.show()
+    # In a display backend
+    if mpl.get_backend() != 'Agg':
+        plt.show()
+
+    # No display backend
+    else:
+        date = datetime.now()
+        plt.savefig('images-{}/img.pdf'.format(date))
 
 def add_confidence_plot(ax, x, y, sigma):
     confidence = 1.9600

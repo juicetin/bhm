@@ -57,6 +57,7 @@ def test(show_plots=True):
 
     # gp = GaussianProcess()
     gp = GPMT()
+    # gp = BCM(50)
     gp.fit(X1, Y1)
     y, v = gp.predict(Xt1)
     # vis.plot_confidence(Xt1, y, v)
