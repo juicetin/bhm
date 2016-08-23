@@ -60,8 +60,8 @@ if __name__ == "__main__":
     sys.excepthook = info
     # benchmarks.regression_dummy_testing()
     # benchmarks.test_basic_2D_data()
-    gp = benchmarks.test()
-    sys.exit(0)
+    # gp = benchmarks.test()
+    # sys.exit(0)
 
     print("Loading data from npzs...")
     labels, labelcounts, bath_locations, features = data.load_training_data()
@@ -93,11 +93,14 @@ if __name__ == "__main__":
 
     ########################################### Product of Experts ###########################################
 
-    # size = 100
-    # train_idx = data.mini_batch_idxs(labels_simple, size, 'even')
-    train_idx = np.load('data/semi-optimal-1000-subsample.npy')
+    size = 100
+    train_idx = data.mini_batch_idxs(labels_simple, size, 'even')
+    # train_idx = np.load('data/semi-optimal-1000-subsample.npy')
 
     test_idx = np.array(list(set(np.arange(features.shape[0])) - set(train_idx)))
+
+    gp = GaussianProcess()
+    gp.fit(features_sn[train_idx], labels_simple[train_idx])
 
     # gp = GaussianProcess(classification_type='OvR')
     # gp_stats = benchmarks.testGP(gp, features_sn, labels_simple, train_idx, n_iter=1)
@@ -105,9 +108,9 @@ if __name__ == "__main__":
 
     n_iter=1
 
-    gp1 = PoGPE(200)
-    gp1_stats = benchmarks.testGP(gp1, features_sn, labels_simple, train_idx, n_iter=n_iter)
-    print("PoE: {} \n\taverages:{} {}".format(gp1_stats, np.average(gp1_stats[0]), np.average(gp1_stats[1])))
+    # gp1 = PoGPE(200)
+    # gp1_stats = benchmarks.testGP(gp1, features_sn, labels_simple, train_idx, n_iter=n_iter)
+    # print("PoE: {} \n\taverages:{} {}".format(gp1_stats, np.average(gp1_stats[0]), np.average(gp1_stats[1])))
 
     # gp11 = PoGPE(500)
     # gp11_stats = benchmarks.testGP(gp11, features_sn, labels_simple, train_idx, n_iter=1)

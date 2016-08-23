@@ -60,9 +60,15 @@ def test():
     # gp = BCM(50)
     gp.fit(X1, Y1)
     y, v = gp.predict(Xt1)
-    # vis.plot_confidence(Xt1, y, v)
     score = helpers.regression_score(Yt1, y)
     print(score)
+
+    # m = GPy.models.GPCoregionalizedRegression(X1, Y1)
+    # # m.optimize()
+    # pdb.set_trace()
+    # # y, v = m.predict(Xt1)
+    # score = helpers.regression_score(Yt1, y)
+    # print(score)
 
     vis.plot(X1, Y1, Xt1, Yt1, y, v)
     vis.show_all()

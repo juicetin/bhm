@@ -56,9 +56,6 @@ class GPMT(GaussianProcess):
         L = self.L_create(self.X, f_err, l_scales, n_err)
         var = self.predictive_variances(x, L, K_star, f_err, l_scales, n_err)
 
-        # pdb.set_trace()
-
-        # TODO variances!
         return F[:,0], var
 
     # Store prev values of hyperparams to keep track of convergence
@@ -139,7 +136,6 @@ class GPMT(GaussianProcess):
                    - M*N/2 * np.log(2*np.pi)
         # 1d data - only 1 task
         else:
-            # pdb.set_trace()
             L_ll = - N/2 * np.log(Kf) \
                    - M/2 * np.log(np.linalg.det(self.Kx)) \
                    - 0.5 * np.trace((np.linalg.inv(Kf)).dot(F.T).dot(Kx_inv.dot(F))) \
@@ -189,18 +185,11 @@ class GPMT(GaussianProcess):
 
     # Adjusts for singular matrices ._.
     def inverse(self, m):
-        # cond_num = np.linalg.cond(m)
-        # if np.isfinite(cond_num): # and cond_num < 1/sys.float_info.epsilon:
-        #     inv = np.linalg.inv(m)
-        # else:
-        #     print('SINGULAR MATRIX')
-        #     # pdb.set_trace()
-        #     # While loop here
-        #     inv = np.linalg.inv(m + np.diag([0.1] * m.shape[0]))
         try:
             return np.linalg.inv(m)
         except:
-            return np.linalg.inv(m+ np.diag([0.01] * m.shape[0]))
+            print('singular!')
+            return self.inverse(m+ np.diag([0.01] * m.shape[0]))
 
     # Returns updated K^f matrix, given x, current hyperparameters, and Function values
     def Kf_update(self, x, f_err, l_scales, n_err, F):
@@ -255,3 +244,7 @@ class GPMT(GaussianProcess):
 
     def prev_sigma_ls(self):
         return self.sigma_ls
+
+    def pack_GP_args(self, f_err, l_scales, n_err):
+        pass
+
