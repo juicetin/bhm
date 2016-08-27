@@ -36,6 +36,7 @@ from ML.gp.gpoe import GPoGPE
 from ML.gp.bcm import BCM
 from ML.gp.rbcm import rBCM
 from ML.gp.gp_mt import GPMT
+from ML.dir_mul.dirichlet_multinomial import DirichletMultinomialRegression
 
 import misc.visualisation as vis
 import misc.load_data as data
@@ -66,6 +67,7 @@ if __name__ == "__main__":
     print("Loading data from npzs...")
     labels, labelcounts, bath_locations, features = data.load_training_data()
     multi_locations, multi_features, multi_labels = data.load_multi_label_data()
+    multi_labels = data.multi_label_counts(multi_labels)
 
     # qp_locations, validQueryID, x_bins, query, y_bins = data.load_test_data()
     # query_sn = scale(normalize(query))
@@ -99,14 +101,17 @@ if __name__ == "__main__":
 
     test_idx = np.array(list(set(np.arange(features.shape[0])) - set(train_idx)))
 
-    gp = GaussianProcess()
-    gp.fit(features_sn[train_idx], labels_simple[train_idx])
+    # gp = GaussianProcess()
+    # gp.fit(features_sn[train_idx], labels_simple[train_idx])
 
     # gp = GaussianProcess(classification_type='OvR')
     # gp_stats = benchmarks.testGP(gp, features_sn, labels_simple, train_idx, n_iter=1)
     # print("normal GP: {} \n\taverages: {} {}".format( gp_stats, np.average(gp_stats[0]), np.average(gp_stats[1])))
 
     n_iter=1
+
+    dm = DirichletMultinomialRegression()
+    dm.fit(features_sn, multi_labels)
 
     # gp1 = PoGPE(200)
     # gp1_stats = benchmarks.testGP(gp1, features_sn, labels_simple, train_idx, n_iter=n_iter)

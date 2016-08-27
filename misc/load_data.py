@@ -1,5 +1,6 @@
 import numpy as np
 from pandas import read_csv
+import pdb
 
 # Load all the data
 def load_training_data():
@@ -72,3 +73,22 @@ def summarised_labels(labels):
 def csv_to_npz(filename):
     data = read_csv(filename, sep=',')
     return data
+
+def fill(labels, num_uniqs):
+    counts = np.bincount(labels)
+    missing = num_uniqs - len(counts)
+    if missing > 0:
+        counts = np.concatenate((counts, [0] * missing), axis=0)
+    if (len(counts) != 25):
+        pdb.set_trace()
+        print(len(counts))
+    return list(counts)[1:]
+
+def multi_label_counts(labels):
+    uniqs = np.unique(np.concatenate(labels, axis=0))
+    num_uniqs = uniqs.shape[0]
+    multi_labels = np.array([fill(labellist, num_uniqs+1) for labellist in labels])
+    multi_labels = np.concatenate(multi_labels, axis=0)
+    multi_labels = multi_labels.reshape(labels.shape[0], num_uniqs)
+
+    return multi_labels
