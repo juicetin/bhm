@@ -5,12 +5,17 @@
 import logging
 import numpy as np
 from scipy.special import psi, gammaln
-from yavanna.linalg import logistic, softplus, softmax
-from revrand.optimize import minimize
+# from yavanna.linalg import logistic, softplus, softmax    # no yavanna! (?)
+from revrand.mathfun.special import softplus, softmax
+from scipy.stats import logistic as sci_logistic
+# from revrand.optimize import minimize
+from scipy.optimize import minimize
+
+def logistic(M):
+    return sci_logistic.cdf(M)
 
 # Set up logging
 log = logging.getLogger(__name__)
-
 
 def dirmultreg_learn(X, C, activation='soft', reg=1, verbose=False, ftol=1e-6,
                      maxit=1000):
@@ -74,7 +79,7 @@ def dirmultreg_learn(X, C, activation='soft', reg=1, verbose=False, ftol=1e-6,
         return MAP, grad.flatten()
 
     optres = minimize(MAPobj, np.ones(K * D), jac=True, method='L-BFGS-B',
-                      ftol=ftol, maxiter=maxit)
+                      tol=ftol, options={'maxiter':maxit})
 
     if verbose:
         log.info("Success: {}, final objective = {}."

@@ -2,85 +2,71 @@ import numpy as np
 from scipy.misc import factorial
 from ML.utils import gamma
 from ML.utils import digamma
+from ML.utils import gammaln
 from scipy.stats import norm
 from scipy.optimize import minimize
 import pdb
 
 class DirichletMultinomialRegression:
+    def __init__(self, reg=5):
+        self.phi = reg # Variance of the weights - regulariser
 
-    def fit(self, X, Y):
+    def fit(self, X, C):
         self.X = X
-        self.Y = Y
+        self.C = C.astype(np.float64)
+        self.D = X.shape[1]
+        self.K = C.shape[1]
 
-        uniq_labels = Y[0].shape[0]
-        x0 = [1] * uniq_labels
-        bounds = [[0, None]] * uniq_labels
-        res = minimize(self.dirmult_ll, x0, method='l-bfgs-b', jac=self.dirmult_ll_grad, bounds=bounds)
-        # res = minimize(self.dirmult_ll, x0, method='l-bfgs-b', bounds=bounds)
+        uniq_labels = C[0].shape[0]
+        x0 = np.ones(uniq_labels * X.shape[1])              # weights - KxD
+        # bounds = [[0, None]] * (uniq_labels * X.shape[1])
+        res = minimize(self.dirmult_ll, x0, method='l-bfgs-b', jac=True)
+        # res = minimize(self.dirmult_ll, x0, method='bfgs', options={'maxiter':100})
+        
+        self.res = res
+        self.W = res['x'].reshape(self.K, self.D)
 
-        pdb.set_trace()
+    def predict(self, x, counts=1):
+        alpha = self.dm_alpha(x, self.W)
+        return counts * (alpha/alpha.sum(axis=1)[:,np.newaxis])
 
-    def predict(self, X, y):
-        pass
-
-    def dirichlet_variance(self, alphas):
-        a_0 = np.sum(alphas)
-        d_var = (alphas * (a_0 - alphas)) / (a_0**2 * (a_0 + 1))
-        return d_var
-
-    def dm_alpha(self, x, weights):
+    # x = (N, D)
+    # w = (K, D)
+    def dm_alpha(self, X, W):
         # return np.array([np.exp(x * w) for w in weights])
-        return np.exp(weights)
+        return np.exp(X.dot(W.T))
 
     def dirmult_ll(self, args):
-        w = args
-        alpha = self.dm_alpha(self.X, w) # exp {xT.w} ; data * weights
-        phi = self.dirichlet_variance(alpha)
+        W = args.reshape(self.K, self.D)    # w has dimensions KxD!
+        alpha = self.dm_alpha(self.X, W) # exp {xT.w} ; alpha_k per k (class) per data point
 
-        # a = np.sum(                                     # sum_n(
-        #     np.log(np.sum(self.Y, axis=1)) -            # log(M_k)-
-        #     np.sum(np.log(factorial(self.Y)), axis=1) + # sum (log(C_k!))+
-        #     np.log(gamma(np.sum(alpha, axis=0))) -      # log(gamma(sum_k( alpha_k(x_n))))-
-        #     np.log(gamma(np.sum(self.Y + alpha)))       # log(gamma(sum_k(C_nk + alpha_k(x_n))))
-        # )
-        # b = np.sum(
-        #     np.log(gamma(self.Y + alpha)) - 
-        #     np.log(gamma(alpha))
-        # )
-        # c = np.sum(
-        #     -phi/2 * np.log(2*np.pi*phi) -
-        #     0.5 * w.T.dot(phi).dot(w)
-        # )
+        C_alpha = self.C + alpha
+        alpha_sum = alpha.sum(axis=1)
+        C_alpha_sum = C_alpha.sum(axis=1)
+        C_sum = self.C.sum(axis=1); C_sum[C_sum == 0] = 1e-10
 
-        joint_ll = np.sum(                                # sum_n(
-            np.log(np.sum(self.Y, axis=1)) -            # log(M_k)-
-            np.sum(np.log(factorial(self.Y)), axis=1) + # sum (log(C_k!))+
-            np.log(gamma(np.sum(alpha, axis=0))) -      # log(gamma(sum_k( alpha_k(x_n))))-
-            np.log(gamma(np.sum(self.Y + alpha)))       # log(gamma(sum_k(C_nk + alpha_k(x_n))))
-        ) + \
-        np.sum(
-            np.log(gamma(self.Y + alpha)) - 
-            np.log(gamma(alpha))
-        ) + \
-        np.sum(
-            -phi/2 * np.log(2*np.pi*phi) -
-            0.5 * w.T.dot(phi) * w
-        )
+        # MAP
+        joint_ll = (np.sum(                             # sum_n(
+            np.log(C_sum) -                             #   log(M_k)                    # infinites here! - some points aren't labelled anything...?
+            (np.log(factorial(self.C))).sum(axis=1) +   #   - sum (log(C_k!))
+            gammaln(alpha_sum) -                        #   + log(gamma(sum_k( alpha_k(x_n))))
+            gammaln(C_alpha_sum)                        #   - log(gamma(sum_k(C_nk + alpha_k(x_n))))
+        ) +                                             # ) +
+        np.sum(                                         # sum_n sum_k (
+            gammaln(C_alpha) -                          #   log(gamma(C_k + alpha))
+            gammaln(alpha)                              #   - log(gamma(alpha_k(x_n)))
+        ) +                                             # ) +
+        np.sum(                                         # sum_k (
+            -self.phi/2 * np.log(2*np.pi*self.phi) -    #   -phi/2 * log(2*pi*phi)
+            0.5 * (W**2) / self.phi                     #   - 1/2 * w_kT * (phi*I) * w)k
+        ))                                              # )
 
-        return -joint_ll
+        # Grad
+        joint_ll_grad = (alpha * (
+            (digamma(alpha_sum) -
+                digamma(C_alpha_sum))[: , np.newaxis] +
+            digamma(C_alpha) -
+            digamma(alpha)
+        )).T.dot(self.X) - 1/self.phi * W
 
-    def dirmult_ll_grad(self, args):
-        w = args
-        alpha = self.dm_alpha(self.X, w)     # (K, ) exp {xT.w} ; data * weights
-        phi = self.dirichlet_variance(alpha) # (K, )
-
-        joint_ll_grad = np.sum(
-            self.X * alpha * (
-                digamma(np.sum(alpha)) -      # Wrong dimensions here?
-                digamma(np.sum(self.Y + alpha)) + 
-                digamma(np.sum(self.Y + alpha)) -   # Shouldn't be identical to above?
-                digamma(alpha)
-            )
-        ) - 1/alpha*w
-
-        return -joint_ll_grad
+        return [-joint_ll, -joint_ll_grad.flatten()]

@@ -32,6 +32,7 @@ from ML.gp.gpoe import GPoGPE
 from ML.gp.bcm import BCM
 from ML.gp.rbcm import rBCM
 from ML.gp.gp_mt import GPMT
+from ML.dir_mul.dirichlet_multinomial import DirichletMultinomialRegression
 
 import misc.visualisation as vis
 import misc.load_data as data
@@ -304,3 +305,30 @@ def testGP(gp, features, labels, idx, n_iter=5):
         aurocs.append(auroc)
         scores.append(score)
     return aurocs, scores
+
+def dm_test_data():
+    # Settings
+    sampperclass1 = 20
+    sampperclass2 = 20
+    multisamp1 = 500
+    multisamp2 = 10
+    kfolds = 5
+    activation = 'soft'
+
+    # Make data
+    X1 = np.random.multivariate_normal([-5, -5], [[1, 0], [0, 1]], sampperclass1)
+    X2 = np.random.multivariate_normal([5, 5], [[1, 0], [0, 1]], sampperclass2)
+    C1 = np.random.multinomial(multisamp1, [0.7, 0.2, 0.1], sampperclass1)
+    C2 = np.random.multinomial(multisamp2, [0.2, 0.7, 0.1], sampperclass2)
+
+    # Concatenate data
+    X = np.vstack((X1, X2))
+    C = np.vstack((C1, C2))
+
+    return X, C
+
+def dir_mul():
+    X, C = dm_test_data()
+    dm = DirichletMultinomialRegression()
+    dm.fit(X, C)
+    pdb.set_trace()

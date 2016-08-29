@@ -4,6 +4,7 @@ import matplotlib as mpl
 
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+# from misc.benchmarks import dm_test_data
 import matplotlib.cm as cm
 import pdb
 
@@ -223,3 +224,32 @@ def show_map(locations, labels, x_bins, y_bins, display=True):
         plt.show()
     else:
         plt.savefig('map.pdf')
+
+def multi_label_histogram(multi_labels):
+    """
+    Plots a histogram of how many classifications are contained within each label set
+    """
+    non_zero_labels = np.array([np.sum(labels != 0) for labels in multi_labels])
+    bins = np.bincount(non_zero_labels)
+    # plt.hist(bins[1:], bins.shape[0]-1)
+    plt.hist(non_zero_labels, bins=range(1,bins.shape[0]), bottom=1)
+    for i, txt in enumerate(bins):
+        plt.annotate(str(txt), (i, 0), xytext=(i,-300), va='top', ha='center')
+    pdb.set_trace()
+    plt.savefig('label_occurrences_full24classes.pdf')
+
+def plot_coords(locations):
+    """
+    Plots a given set of x,y coordinates.
+    Locations are given as a list of (x,y) tuples
+    """
+    x = locations[:,0]
+    y = locations[:,1]
+    plt.scatter(x, y)
+    plt.show()
+
+# def dm_test_data():
+#     X,C = dm_test_data()
+#     pdb.set_trace()
+#     plt.scatter(X[:,0], X[:,1])
+#     plt.savefig('tmp.pdf')
