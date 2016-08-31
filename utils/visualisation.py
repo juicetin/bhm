@@ -4,7 +4,7 @@ import matplotlib as mpl
 
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
-# from misc.benchmarks import dm_test_data
+# from utils.benchmarks import dm_test_data
 import matplotlib.cm as cm
 from matplotlib import colors
 import pdb

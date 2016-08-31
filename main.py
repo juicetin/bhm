@@ -38,10 +38,10 @@ from ML.gp.rbcm import rBCM
 from ML.gp.gp_mt import GPMT
 from ML.dir_mul.dirichlet_multinomial import DirichletMultinomialRegression
 
-import misc.visualisation as vis
-import misc.load_data as data
-import misc.benchmarks as benchmarks
-import misc.gpy_benchmark as gpy_benchmarks
+import utils.visualisation as vis
+import utils.load_data as data
+import utils.benchmarks as benchmarks
+import utils.gpy_benchmark as gpy_benchmarks
 
 def info(type, value, tb):
     # if hasattr(sys, 'ps1') or not sys.stderr.isatty():
