@@ -192,7 +192,7 @@ def plot_classes(X, Y, Y_pred):
 
         plt.show()
 
-def show_map(locations, labels, x_bins=None, y_bins=None, display=True, filename='map.pdf', vmin=None, vmax=None):
+def show_map(locations, labels, x_bins=None, y_bins=None, display=True, filename='map', vmin=None, vmax=None):
     """
     Given the x, y coord locations and corresponding labels, plot this on imshow (null points
     will be shown as blank in the background).
@@ -237,7 +237,7 @@ def show_map(locations, labels, x_bins=None, y_bins=None, display=True, filename
     if display == True:
         plt.show()
     else:
-        plt.savefig(filename)
+        plt.savefig(filename + '.png')
 
     plt.cla()
     plt.clf()

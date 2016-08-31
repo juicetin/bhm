@@ -94,11 +94,11 @@ if __name__ == "__main__":
 
     vmin = 0
     vmax = 2
-    vis.show_map(X, C_max, display=False, filename='toydata_orig.pdf', vmin=vmin, vmax=vmax)
-    vis.show_map(X, preds_me_orig_max, display=False, filename='toydata_preds_orig_me.pdf', vmin=vmin, vmax=vmax)
-    vis.show_map(X, preds_nicta_orig_max, display=False, filename='toydata_preds_orig_oth.pdf', vmin=vmin, vmax=vmax)
-    vis.show_map(coords, preds_me_max, display=False, filename='toydata_full_preds_me.pdf', vmin=vmin, vmax=vmax)
-    vis.show_map(coords, preds_nicta_max, display=False, filename='toydata_full_preds_oth.pdf', vmin=vmin, vmax=vmax)
+    vis.show_map(X, C_max, display=False, filename='toydata_orig', vmin=vmin, vmax=vmax)
+    vis.show_map(X, preds_me_orig_max, display=False, filename='toydata_preds_orig_me', vmin=vmin, vmax=vmax)
+    vis.show_map(X, preds_nicta_orig_max, display=False, filename='toydata_preds_orig_oth', vmin=vmin, vmax=vmax)
+    vis.show_map(coords, preds_me_max, display=False, filename='toydata_full_preds_me', vmin=vmin, vmax=vmax)
+    vis.show_map(coords, preds_nicta_max, display=False, filename='toydata_full_preds_oth', vmin=vmin, vmax=vmax)
 
     sys.exit(0)
 
