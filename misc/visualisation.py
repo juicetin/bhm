@@ -6,6 +6,7 @@ from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 # from misc.benchmarks import dm_test_data
 import matplotlib.cm as cm
+from matplotlib import colors
 import pdb
 
 def draw_map(X_train, X_test, y_train, y_test):
@@ -191,7 +192,20 @@ def plot_classes(X, Y, Y_pred):
 
         plt.show()
 
-def show_map(locations, labels, x_bins, y_bins, display=True):
+def show_map(locations, labels, x_bins=None, y_bins=None, display=True, filename='map.pdf', vmin=None, vmax=None):
+    """
+    Given the x, y coord locations and corresponding labels, plot this on imshow (null points
+    will be shown as blank in the background).
+    """
+
+    if (x_bins == None and y_bins == None):
+        # TODO built xbins and ybins
+        ax_coords = np.arange(-7, 7.2, 0.2)
+        # x, y = np.meshgrid(ax_coords, ax_coords)
+
+        x_bins = np.concatenate((np.unique(locations[:,0]), ax_coords))
+        y_bins = np.concatenate((np.unique(locations[:,1]), ax_coords))
+
     x_bins.sort()
     y_bins.sort()
 
@@ -206,15 +220,15 @@ def show_map(locations, labels, x_bins, y_bins, display=True):
 
     print("Building coordinate matrix with NaNs except where actual measurements exist...")
     X, Y = np.meshgrid(x_bins, y_bins)
-
     Z = np.zeros((X.shape[0], X.shape[1]))
+
     Z[:] = None
     x_locations = [x_bin_coord_map[x] for x, y in locations]
     y_locations = [y_bin_coord_map[y] for y, y in locations]
     Z[(y_locations, x_locations)] = labels
 
     print("Bulding image...")
-    plt.imshow(Z, extent=[x_min, x_max, y_min, y_max], origin='lower')
+    plt.imshow(Z, extent=[x_min, x_max, y_min, y_max], origin='lower', cmap=cm.Spectral, vmin=vmin, vmax=vmax)
 
     print("Setting colourbar (legend)...")
     plt.colorbar()
@@ -223,12 +237,16 @@ def show_map(locations, labels, x_bins, y_bins, display=True):
     if display == True:
         plt.show()
     else:
-        plt.savefig('map.pdf')
+        plt.savefig(filename)
+
+    plt.cla()
+    plt.clf()
 
 def multi_label_histogram(multi_labels):
     """
     Plots a histogram of how many classifications are contained within each label set
     """
+
     non_zero_labels = np.array([np.sum(labels != 0) for labels in multi_labels])
     bins = np.bincount(non_zero_labels)
     # plt.hist(bins[1:], bins.shape[0]-1)
@@ -238,7 +256,7 @@ def multi_label_histogram(multi_labels):
     pdb.set_trace()
     plt.savefig('label_occurrences_full24classes.pdf')
 
-def plot_coords(locations):
+def plot_coords(locations, filename='tmp.pdf'):
     """
     Plots a given set of x,y coordinates.
     Locations are given as a list of (x,y) tuples
@@ -246,7 +264,8 @@ def plot_coords(locations):
     x = locations[:,0]
     y = locations[:,1]
     plt.scatter(x, y)
-    plt.show()
+    plt.savefig(filename)
+    #plt.show()
 
 # def dm_test_data():
 #     X,C = dm_test_data()

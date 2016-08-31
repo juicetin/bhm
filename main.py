@@ -62,9 +62,45 @@ if __name__ == "__main__":
     # benchmarks.regression_dummy_testing()
     # benchmarks.test_basic_2D_data()
     # gp = benchmarks.test()
+
+    from matplotlib import pyplot as plt
     X, C = benchmarks.dm_test_data() 
+    C_max = np.argmax(C, axis=1)
+
     from ML.dir_mul.nicta.dirmultreg import dirmultreg_learn, dirmultreg_predict
-    # sys.exit(0)
+    W = dirmultreg_learn(X, C, activation='exp')
+
+
+    dm = DirichletMultinomialRegression()
+    dm.fit(X,C)
+
+    preds_me_orig = dm.predict(X)
+    preds_me_orig_max = np.argmax(preds_me_orig, axis=1)
+    preds_nicta_orig = dirmultreg_predict(X, W, activation='soft')[0]
+    preds_nicta_orig_max = np.argmax(preds_nicta_orig, axis=1)
+
+    print("{}\n{}\n{}\n".format(C_max, preds_me_orig_max, preds_nicta_orig_max))
+
+    # (-7, 7), (7, 7), (-7, -7), (7, -7)
+    ax_coords = np.arange(-7, 7.2, 0.2)
+    x, y = np.meshgrid(ax_coords, ax_coords)
+    coords = np.array([[xc, yc] for xc, yc in zip(np.concatenate(x), np.concatenate(y))])
+
+    preds_nicta, _ = dirmultreg_predict(coords, W, activation='soft')
+    preds_nicta_max = np.argmax(preds_nicta, axis=1)
+
+    preds_me = dm.predict(coords)
+    preds_me_max = np.argmax(preds_me, axis=1)
+
+    vmin = 0
+    vmax = 2
+    vis.show_map(X, C_max, display=False, filename='toydata_orig.pdf', vmin=vmin, vmax=vmax)
+    vis.show_map(X, preds_me_orig_max, display=False, filename='toydata_preds_orig_me.pdf', vmin=vmin, vmax=vmax)
+    vis.show_map(X, preds_nicta_orig_max, display=False, filename='toydata_preds_orig_oth.pdf', vmin=vmin, vmax=vmax)
+    vis.show_map(coords, preds_me_max, display=False, filename='toydata_full_preds_me.pdf', vmin=vmin, vmax=vmax)
+    vis.show_map(coords, preds_nicta_max, display=False, filename='toydata_full_preds_oth.pdf', vmin=vmin, vmax=vmax)
+
+    sys.exit(0)
 
     print("Loading data from npzs...")
     labels, labelcounts, bath_locations, features = data.load_training_data()
@@ -72,7 +108,7 @@ if __name__ == "__main__":
     # multi_labels = data.summarised_labels(multi_labels)
     multi_labels = data.multi_label_counts(multi_labels)
 
-    # qp_locations, validQueryID, x_bins, query, y_bins = data.load_test_data()
+    qp_locations, validQueryID, x_bins, query, y_bins = data.load_test_data()
     # query_sn = scale(normalize(query))
 
     # print("Filter down to non-nan queries and locations...")

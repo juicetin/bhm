@@ -318,8 +318,8 @@ def dm_test_data():
     # Make data
     X1 = np.random.multivariate_normal([-5, -5], [[1, 0], [0, 1]], sampperclass1)
     X2 = np.random.multivariate_normal([5, 5], [[1, 0], [0, 1]], sampperclass2)
-    C1 = np.random.multinomial(multisamp1, [0.7, 0.2, 0.1], sampperclass1)
-    C2 = np.random.multinomial(multisamp2, [0.2, 0.7, 0.1], sampperclass2)
+    C1 = np.random.multinomial(multisamp1, [0.001, 0.7, 0.2], sampperclass1)
+    C2 = np.random.multinomial(multisamp2, [0.001, 0.2, 0.7], sampperclass2)
 
     # Concatenate data
     X = np.vstack((X1, X2))
