@@ -44,5 +44,8 @@ def downsample_spatial_data(coords, data, label_counts, reduction_factor=4):
     y_step = (y_max-y_min)/y_block_cnt
     reduced_y_coords = np.arange(y_min, y_max+y_step, y_step)
     x, y = np.meshgrid(reduced_x_coords, reduced_y_coords)
+    
+    # TODO transform x, y into the origin of each grid
+    #   take out last row and last column - remaining should achieve this
 
     code.interact(local=locals())
