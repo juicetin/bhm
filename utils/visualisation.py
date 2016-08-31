@@ -256,7 +256,7 @@ def multi_label_histogram(multi_labels):
     pdb.set_trace()
     plt.savefig('label_occurrences_full24classes.pdf')
 
-def plot_coords(locations, filename='tmp.pdf'):
+def plot_coords(locations, filename='tmp.pdf', display=True):
     """
     Plots a given set of x,y coordinates.
     Locations are given as a list of (x,y) tuples
@@ -264,8 +264,10 @@ def plot_coords(locations, filename='tmp.pdf'):
     x = locations[:,0]
     y = locations[:,1]
     plt.scatter(x, y)
-    plt.savefig(filename)
-    #plt.show()
+    if display == False:
+        plt.savefig(filename)
+    else:
+        plt.show()
 
 # def dm_test_data():
 #     X,C = dm_test_data()

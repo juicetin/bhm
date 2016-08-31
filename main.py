@@ -2,7 +2,7 @@
 # Account for headless server/no display backend
 import matplotlib as mpl
 import os
-if "DISPLAY" not in os.environ or os.environ['DISPLAY'] == ':0':
+if "DISPLAY" not in os.environ: # or os.environ['DISPLAY'] == ':0':
     mpl.use('Agg')
 
 import numpy as np
@@ -38,6 +38,7 @@ from ML.gp.rbcm import rBCM
 from ML.gp.gp_mt import GPMT
 from ML.dir_mul.dirichlet_multinomial import DirichletMultinomialRegression
 
+import utils
 import utils.visualisation as vis
 import utils.load_data as data
 import utils.benchmarks as benchmarks
@@ -63,50 +64,18 @@ if __name__ == "__main__":
     # benchmarks.test_basic_2D_data()
     # gp = benchmarks.test()
 
-    from matplotlib import pyplot as plt
-    X, C = benchmarks.dm_test_data() 
-    C_max = np.argmax(C, axis=1)
-
-    from ML.dir_mul.nicta.dirmultreg import dirmultreg_learn, dirmultreg_predict
-    W = dirmultreg_learn(X, C, activation='exp')
-
-
-    dm = DirichletMultinomialRegression()
-    dm.fit(X,C)
-
-    preds_me_orig = dm.predict(X)
-    preds_me_orig_max = np.argmax(preds_me_orig, axis=1)
-    preds_nicta_orig = dirmultreg_predict(X, W, activation='soft')[0]
-    preds_nicta_orig_max = np.argmax(preds_nicta_orig, axis=1)
-
-    print("{}\n{}\n{}\n".format(C_max, preds_me_orig_max, preds_nicta_orig_max))
-
-    # (-7, 7), (7, 7), (-7, -7), (7, -7)
-    ax_coords = np.arange(-7, 7.2, 0.2)
-    x, y = np.meshgrid(ax_coords, ax_coords)
-    coords = np.array([[xc, yc] for xc, yc in zip(np.concatenate(x), np.concatenate(y))])
-
-    preds_nicta, _ = dirmultreg_predict(coords, W, activation='soft')
-    preds_nicta_max = np.argmax(preds_nicta, axis=1)
-
-    preds_me = dm.predict(coords)
-    preds_me_max = np.argmax(preds_me, axis=1)
-
-    vmin = 0
-    vmax = 2
-    vis.show_map(X, C_max, display=False, filename='toydata_orig', vmin=vmin, vmax=vmax)
-    vis.show_map(X, preds_me_orig_max, display=False, filename='toydata_preds_orig_me', vmin=vmin, vmax=vmax)
-    vis.show_map(X, preds_nicta_orig_max, display=False, filename='toydata_preds_orig_oth', vmin=vmin, vmax=vmax)
-    vis.show_map(coords, preds_me_max, display=False, filename='toydata_full_preds_me', vmin=vmin, vmax=vmax)
-    vis.show_map(coords, preds_nicta_max, display=False, filename='toydata_full_preds_oth', vmin=vmin, vmax=vmax)
-
-    sys.exit(0)
+    # benchmarks.dir_mul_bench()
+    # sys.exit(0)
 
     print("Loading data from npzs...")
     labels, labelcounts, bath_locations, features = data.load_training_data()
     multi_locations, multi_features, multi_labels = data.load_multi_label_data()
     # multi_labels = data.summarised_labels(multi_labels)
     multi_labels = data.multi_label_counts(multi_labels)
+    
+    ########### DOWNSAMPLING ##########
+    # from utils.downsample import downsample_spatial_data
+    # downsample_spatial_data(bath_locations, features, multi_labels)
 
     qp_locations, validQueryID, x_bins, query, y_bins = data.load_test_data()
     # query_sn = scale(normalize(query))
@@ -131,6 +100,8 @@ if __name__ == "__main__":
 
     # labels = np.array(labels)
     labels_simple = data.summarised_labels(labels)
+
+
 
     ########################################### Product of Experts ###########################################
 

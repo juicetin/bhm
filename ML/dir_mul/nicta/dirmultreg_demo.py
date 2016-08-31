@@ -5,17 +5,18 @@ import logging
 import numpy as np
 import matplotlib.pyplot as pl
 from revrand import basis_functions as bases
-from yavanna.supervised.dirmultreg import dirmultreg_learn, dirmultreg_predict
-from yavanna.linalg.linalg import logsumexp
-from yavanna.distrib import dirichlet
+# from yavanna.supervised.dirmultreg import dirmultreg_learn, dirmultreg_predict
+from dirmultreg import dirmultreg_learn, dirmultreg_predict
+# from yavanna.linalg.linalg import logsumexp
+from scipy.misc import logsumexp
+# from yavanna.distrib import dirichlet
 
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
-
-def main():
+if __name__ == "__main__":
 
     # Settings
     sampperclass1 = 20
@@ -33,7 +34,7 @@ def main():
 
     # Concatenate data
     X = np.vstack((X1, X2))
-    XFeature = bases.RadialBasis(X)(X, lenscale=1)
+    XFeature = bases.RadialBasis(X).transform(X, lenscale=1)
     C = np.vstack((C1, C2))
 
     # Cross-validation
@@ -62,16 +63,18 @@ def main():
     XQuery = np.concatenate((xeva.ravel()[:,np.newaxis],
                              yeva.ravel()[:,np.newaxis]),axis=1)
     # XQueryFeature = radialFeatureGen(XQuery,X, s=5)
-    XQueryFeature = bases.RadialBasis(X)(XQuery, lenscale=5)
+    # XQueryFeature = bases.RadialBasis(X)(XQuery, lenscale=5)
+    Xbasis = bases.RadialBasis(X)
+    XQueryFeature = Xbasis.transform(X, lenscale=1)
 
     #Evaluate most common draw
     EC, _ = dirmultreg_predict(XQueryFeature, W, counts=100)
     maxCat = np.argmax(EC,axis=1)
-    pl.figure()
-    pl.scatter(XQuery[:,0],XQuery[:,1],c=maxCat,s=50)
-    pl.plot(X[:,0],X[:,1],'bo')
-    pl.title('Most common draw')
-    pl.colorbar()
+    # pl.figure()
+    # pl.scatter(XQuery[:,0],XQuery[:,1],c=maxCat,s=50)
+    # pl.plot(X[:,0],X[:,1],'bo')
+    # pl.title('Most common draw')
+    # pl.colorbar()
 
     #Calculate entropy
     if activation == 'soft':
@@ -95,37 +98,35 @@ def main():
     else:
         raise Exception('Choose a valid activation function')
 
-    H = np.zeros(alphaQuery.shape[0])
-    for i in range(alphaQuery.shape[0]):
-        H[i] = dirichlet.entropy(alphaQuery[i,:])
+    # H = np.zeros(alphaQuery.shape[0])
+    # for i in range(alphaQuery.shape[0]):
+    #     H[i] = dirichlet.entropy(alphaQuery[i,:])
 
     # H = np.log(H-np.min(H)+1e-300)
 
     #Plot entropy
-    pl.figure()
-    pl.scatter(XQuery[:,0],XQuery[:,1],c=H,s=50)
-    pl.plot(X[:,0],X[:,1],'bo')
-    pl.colorbar()
-    pl.title('Entropy')
+    # pl.figure()
+    # pl.scatter(XQuery[:,0],XQuery[:,1],c=H,s=50)
+    # pl.plot(X[:,0],X[:,1],'bo')
+    # pl.colorbar()
+    # pl.title('Entropy')
 
 
-    for i in range(alphaQuery.shape[0]):
-        H[i] = dirichlet.entropy(alphaQuery[i,:])
+    # for i in range(alphaQuery.shape[0]):
+    #     H[i] = dirichlet.entropy(alphaQuery[i,:])
 
-    stdDev = np.zeros(alphaQuery.shape)
-    for i in range(alphaQuery.shape[0]):
-        stdDev[i,:] = dirichlet.var(alphaQuery[i,:])
+    # stdDev = np.zeros(alphaQuery.shape)
+    # for i in range(alphaQuery.shape[0]):
+    #     stdDev[i,:] = dirichlet.var(alphaQuery[i,:])
 
-    stdMaxCat = np.zeros(alphaQuery.shape[0])
-    for i in range(alphaQuery.shape[0]):
-        stdMaxCat[i] = stdDev[i,maxCat[i]]
+    # stdMaxCat = np.zeros(alphaQuery.shape[0])
+    # for i in range(alphaQuery.shape[0]):
+    #     stdMaxCat[i] = stdDev[i,maxCat[i]]
 
-    pl.figure()
-    pl.scatter(XQuery[:,0],XQuery[:,1],c=stdMaxCat,s=50)
-    pl.plot(X[:,0],X[:,1],'bo')
-    pl.title('Standard deviation on most commonly drawn category')
-    pl.colorbar()
-    pl.show()
+    # pl.figure()
+    # pl.scatter(XQuery[:,0],XQuery[:,1],c=stdMaxCat,s=50)
+    # pl.plot(X[:,0],X[:,1],'bo')
+    # pl.title('Standard deviation on most commonly drawn category')
+    # pl.colorbar()
+    # pl.show()
 
-if __name__ == "__main__":
-    main()

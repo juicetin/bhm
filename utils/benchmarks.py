@@ -34,10 +34,54 @@ from ML.gp.rbcm import rBCM
 from ML.gp.gp_mt import GPMT
 from ML.dir_mul.dirichlet_multinomial import DirichletMultinomialRegression
 
-import misc.visualisation as vis
-import misc.load_data as data
-import misc.gpy_benchmark
+import utils.visualisation as vis
+import utils.load_data as data
+import utils.gpy_benchmark
+
 import pdb
+import code
+
+def dir_mul_bench(gen_maps=False):
+    from matplotlib import pyplot as plt
+    X, C = dm_test_data() 
+    C_max = np.argmax(C, axis=1)
+
+    from ML.dir_mul.nicta.dirmultreg import dirmultreg_learn, dirmultreg_predict
+    W = dirmultreg_learn(X, C, activation='exp')
+
+
+    dm = DirichletMultinomialRegression()
+    dm.fit(X,C)
+
+    preds_me_orig = dm.predict(X)
+    preds_me_orig_max = np.argmax(preds_me_orig, axis=1)
+    preds_nicta_orig = dirmultreg_predict(X, W, activation='soft')[0]
+    preds_nicta_orig_max = np.argmax(preds_nicta_orig, axis=1)
+
+    print("{}\n{}\n{}\n".format(C_max, preds_me_orig_max, preds_nicta_orig_max))
+
+    # (-7, 7), (7, 7), (-7, -7), (7, -7)
+    ax_coords = np.arange(-7, 7.2, 0.2)
+    x, y = np.meshgrid(ax_coords, ax_coords)
+    coords = np.array([[xc, yc] for xc, yc in zip(np.concatenate(x), np.concatenate(y))])
+
+    preds_nicta, _ = dirmultreg_predict(coords, W, activation='soft')
+    preds_nicta_max = np.argmax(preds_nicta, axis=1)
+
+    preds_me = dm.predict(coords)
+    preds_me_max = np.argmax(preds_me, axis=1)
+
+    if gen_maps == True:
+        vmin = 0
+        vmax = 2
+        vis.show_map(X, C_max, display=False, filename='toydata_orig', vmin=vmin, vmax=vmax)
+        vis.show_map(X, preds_me_orig_max, display=False, filename='toydata_preds_orig_me', vmin=vmin, vmax=vmax)
+        vis.show_map(X, preds_nicta_orig_max, display=False, filename='toydata_preds_orig_oth', vmin=vmin, vmax=vmax)
+        vis.show_map(coords, preds_me_max, display=False, filename='toydata_full_preds_me', vmin=vmin, vmax=vmax)
+        vis.show_map(coords, preds_nicta_max, display=False, filename='toydata_full_preds_oth', vmin=vmin, vmax=vmax)
+
+    print("Entering interactive mode in benchmarks.dir_mul_bench")
+    code.interact(local=locals())
 
 def test():
     f_output1 = lambda x: 4. * np.cos(x/5.) - .4*x - 35. + np.random.rand(x.size)[:,None] * 2.
