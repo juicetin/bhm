@@ -198,13 +198,13 @@ def show_map(locations, labels, x_bins=None, y_bins=None, display=True, filename
     will be shown as blank in the background).
     """
 
-    if (x_bins == None and y_bins == None):
-        # TODO built xbins and ybins
-        ax_coords = np.arange(-7, 7.2, 0.2)
-        # x, y = np.meshgrid(ax_coords, ax_coords)
+    # if (x_bins == None and y_bins == None):
+    #     # TODO built xbins and ybins
+    #     ax_coords = np.arange(-7, 7.2, 0.2)
+    #     # x, y = np.meshgrid(ax_coords, ax_coords)
 
-        x_bins = np.concatenate((np.unique(locations[:,0]), ax_coords))
-        y_bins = np.concatenate((np.unique(locations[:,1]), ax_coords))
+    #     x_bins = np.concatenate((np.unique(locations[:,0]), ax_coords))
+    #     y_bins = np.concatenate((np.unique(locations[:,1]), ax_coords))
 
     x_bins.sort()
     y_bins.sort()
@@ -237,7 +237,7 @@ def show_map(locations, labels, x_bins=None, y_bins=None, display=True, filename
     if display == True:
         plt.show()
     else:
-        plt.savefig(filename + '.png')
+        plt.savefig(filename + '.pdf')
 
     plt.cla()
     plt.clf()

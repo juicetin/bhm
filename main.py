@@ -1,6 +1,7 @@
 #!/bin/python3
 # Account for headless server/no display backend
 import matplotlib as mpl
+import psutil
 import os
 if "DISPLAY" not in os.environ: # or os.environ['DISPLAY'] == ':0':
     mpl.use('Agg')
@@ -37,6 +38,7 @@ from ML.gp.bcm import BCM
 from ML.gp.rbcm import rBCM
 from ML.gp.gp_mt import GPMT
 from ML.dir_mul.dirichlet_multinomial import DirichletMultinomialRegression
+from ML.dir_mul.nicta.dirmultreg import dirmultreg_learn, dirmultreg_predict
 
 import utils
 import utils.visualisation as vis
@@ -45,13 +47,12 @@ import utils.benchmarks as benchmarks
 import utils.gpy_benchmark as gpy_benchmarks
 
 def info(type, value, tb):
-    # if hasattr(sys, 'ps1') or not sys.stderr.isatty():
-    #     sys.__excepthook__(type, value, tb)
-    # else:
-    #     import traceback, pdb
-    #     traceback.print_exception(type, value, tb)
-    #     print
-    #     pdb.pm()
+    """
+    This function is for replacing Python's default exception hook
+    so that we drop into the debugger on uncaught exceptions to be
+    able to immediately identify the issue/potentially recover
+    operations
+    """
     import traceback, pdb
     traceback.print_exception(type, value, tb)
     print
@@ -67,6 +68,8 @@ if __name__ == "__main__":
     # benchmarks.dir_mul_bench()
     # sys.exit(0)
 
+    no_coord_features = False # Keeping coords as features improves performance :/
+
     print("Loading data from npzs...")
     labels, labelcounts, bath_locations, features = data.load_training_data()
     multi_locations, multi_features, multi_labels = data.load_multi_label_data()
@@ -75,39 +78,41 @@ if __name__ == "__main__":
     
     ########### DOWNSAMPLING ##########
     from utils.downsample import downsample_spatial_data
-    downsample_spatial_data(bath_locations, features, multi_labels)
+    red_coords, red_features, red_mlabels = downsample_spatial_data(bath_locations, features, multi_labels)
+    # vis.show_map(red_coords, np.argmax(red_mlabels,axis=1), np.unique(red_coords[:,0]), np.unique(red_coords[:,1]), display=False, vmin=0, vmax=23, filename='reduced_training_map')
+    # vis.show_map(red_coords, np.argmax(red_mlabels,axis=1), np.unique(red_coords[:,0]), np.unique(red_coords[:,1]), vmin=0, vmax=23)
 
-    qp_locations, validQueryID, x_bins, query, y_bins = data.load_test_data()
-    # query_sn = scale(normalize(query))
+    # Don't load full dataset without sufficient free memory
+    if psutil.virtual_memory().available >= 2e9:
+        qp_locations, validQueryID, x_bins, query, y_bins = data.load_test_data()
+        query_sn = scale(normalize(query))
 
-    # print("Filter down to non-nan queries and locations...")
-    # valid_query_idxs = np.where( (~np.isnan(query).any(axis=1) & np.isfinite(query).all(axis=1)) )[0]
-    # query = query[valid_query_idxs]
-    # qp_locations = qp_locations[valid_query_idxs]
-    # infinite_idx = np.where(~np.isfinite(query).all(axis=1))[0]
+        print("Filter down to non-nan queries and locations...")
+        valid_query_idxs = np.where( (~np.isnan(query).any(axis=1) & np.isfinite(query).all(axis=1)) )[0]
+        query = query[valid_query_idxs]
+        qp_locations = qp_locations[valid_query_idxs]
+        infinite_idx = np.where(~np.isfinite(query).all(axis=1))[0]
 
     print("Loading features...")
     features = np.array(features)
 
     # Remove long/lat coordinates
-    # features = features[:,2:]
+    if no_coord_features:
+        features = features[:,2:]
 
     # NOTE _s suffix kept here for clarity
     print("Scaling features...")
-    # features_s = scale(features)  # Wrong axis :O
     features_sn = (normalize(scale(features), axis=0)) # 0.8359, 0.5323 for PoGPE
     # features_s = scale(features) # MARGINALLY better than normalize(scale)
 
     # labels = np.array(labels)
     labels_simple = data.summarised_labels(labels)
 
-
-
     ########################################### Product of Experts ###########################################
 
     size = 100
-    # train_idx = data.mini_batch_idxs(labels_simple, size, 'even')
-    train_idx = np.load('data/semi-optimal-1000-subsample.npy')
+    train_idx = data.mini_batch_idxs(labels_simple, size, 'even')
+    # train_idx = np.load('data/semi-optimal-1000-subsample.npy')
 
     test_idx = np.array(list(set(np.arange(features.shape[0])) - set(train_idx)))
 
@@ -118,11 +123,11 @@ if __name__ == "__main__":
     # gp_stats = benchmarks.testGP(gp, features_sn, labels_simple, train_idx, n_iter=1)
     # print("normal GP: {} \n\taverages: {} {}".format( gp_stats, np.average(gp_stats[0]), np.average(gp_stats[1])))
 
-    n_iter=1
 
     dm = DirichletMultinomialRegression()
     # dm.fit(features_sn[train_idx], multi_labels[train_idx])
 
+    # n_iter=1
     # gp1 = PoGPE(200)
     # gp1_stats = benchmarks.testGP(gp1, features_sn, labels_simple, train_idx, n_iter=n_iter)
     # print("PoE: {} \n\taverages:{} {}".format(gp1_stats, np.average(gp1_stats[0]), np.average(gp1_stats[1])))
@@ -265,9 +270,10 @@ if __name__ == "__main__":
     #########################################################################################################
 
     ############################################ Visualisation #############################################
-    # x_bins_training, y_bins_training = list(set(bath_locations[:,0])), list(set(bath_locations[:,1]))
+    x_bins_training, y_bins_training = list(set(bath_locations[:,0])), list(set(bath_locations[:,1]))
     # vis.show_map(qp_locations, query[:,2], x_bins, y_bins, display=False)
-    # vis.show_map(bath_locations, labels, x_bins_training, y_bins_training, display=False)
+    # vis.show_map(bath_locations, labels, x_bins_training, y_bins_training, display=False, vmin=1, vmax=24, filename='training_class_map')
+    # vis.show_map(bath_locations, labels, x_bins_training, y_bins_training, vmin=1, vmax=24)
     #########################################################################################################
 
     # benchmarks.classification_dummy_testing()
