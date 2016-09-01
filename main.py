@@ -74,8 +74,8 @@ if __name__ == "__main__":
     multi_labels = data.multi_label_counts(multi_labels)
     
     ########### DOWNSAMPLING ##########
-    # from utils.downsample import downsample_spatial_data
-    # downsample_spatial_data(bath_locations, features, multi_labels)
+    from utils.downsample import downsample_spatial_data
+    downsample_spatial_data(bath_locations, features, multi_labels)
 
     qp_locations, validQueryID, x_bins, query, y_bins = data.load_test_data()
     # query_sn = scale(normalize(query))
