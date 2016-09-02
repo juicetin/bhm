@@ -1,6 +1,7 @@
 import code
 import math
 import numpy as np
+from scipy.cluster import hierarchy
 import pdb
 
 def label_stats(multi_labels):
@@ -98,12 +99,19 @@ def downsample_by_fixed_grid(coords, data, label_counts, reduction_factor=2):
             .format(np.min(grid_bins), np.max(grid_bins), np.average(grid_bins)))
     print("=============================================")
 
-    # code.interact(local=locals())
+
+    hclusters = hierarchy.linkage(coords, 'ward')
+    code.interact(local=locals())
 
     return reduced_coords, reduced_features, reduced_mlabels
 
 def downsample_limited_nearest_points():
-    pass
+    """
+    Uses hierarchical clustering to group points into clusters based on criteria:
+        1. Cannot exceed more than a certain total count of label counts
+        2. Cannot exceed more than a certain number of points per aggregation cluster
+        3. Points grouped together in cluster must not exceed distance X
+    """
 
 def downsample_spatial_data(coords, data, label_counts):
     """
