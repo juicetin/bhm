@@ -74,13 +74,13 @@ def downsample_by_fixed_grid(coords, data, label_counts, reduction_factor=2):
 
         cur_grid_key = find_nearest_grid(x_point, x_step, x_min, y_point, y_step, y_min)
         grid_dist_cmp = np.sqrt((x_point-cur_grid_key[0])**2 + (y_point-cur_grid_key[1])**2)
-        
+
         # Create bin if doesn't exist yet
         if cur_grid_key not in coord_bins:
             coord_bins[cur_grid_key] = [features, labels, grid_dist_cmp, 1]
         # Otherwise aggregate labels/update features if necessary
-        else:
-            # TODO take closest coordinate to centre of low-res grid instead of first seen
+    else:
+        # TODO take closest coordinate to centre of low-res grid instead of first seen
             _, _, prev_smallest_grid_dist_cmp, _ = coord_bins[cur_grid_key]
             coord_bins[cur_grid_key][1] += labels
             coord_bins[cur_grid_key][3] += 1
@@ -105,9 +105,25 @@ def downsample_by_fixed_grid(coords, data, label_counts, reduction_factor=2):
 
     return reduced_coords, reduced_features, reduced_mlabels
 
+def find_child_nodes_in_dendrogram(dendrogram, dend_idx, orig_size):
+    """
+    Given a dendorgram object, a dendrogram index, and the size of the original
+    input data, this function finds all the child nodes of a particular node.
+    Generalised so that the child node of an original node will simply be itself
+    (as opposed to what the strict definition would give - null).
+    """
+
+    # Once we've reached the original set of nodes, return this in an array
+    if dend_idx < orig_size:
+        return [dend_idx]
+
+    dend_row = dendrogram[dend_idx-orig_size]
+    return find_child_nodes_in_dendrogram(dendrogram, dend_row[0], orig_size) + \
+        find_child_nodes_in_dendrogram(dendrogram, dend_row[1], orig_size)
+
 def assign_points_in_cluster(num_points, cluster_idx, dendrogram, dend_entry, cluster_assignments):
     """
-    For a given dendogram entry, find all nodes within cluster and assign them their cluster.
+    For a given dendrogram entry, find all nodes within cluster and assign them their cluster.
     Exit function if any entry encountered with nodes that are already assigned clusters.
     """
     # Create list to hold indexes in cluster (?)
@@ -118,7 +134,20 @@ def assign_points_in_cluster(num_points, cluster_idx, dendrogram, dend_entry, cl
 
     # If cluster size is hit, start a new cluster
 
-def downsample_limited_nearest_points(coords, cluster_idx, dendogram, clust_dist=21, clust_size=5):
+    # return number of nodes added to clusters this round!
+
+    idx_stack = [dend_entry[1], dend_entry[0]]
+    while len(stack) > 0:
+        top_idx = idx_stack.pop()
+
+        if top_idx < num_points:
+            # Index is that of one of the original points
+            cluster_assignments[top_idx] = cluster_idx
+        else:
+            # Index is one of the dendrogram clusters
+            dend_idx = dendrogram[top_idx - num_points]
+
+def downsample_limited_nearest_points(coords, cluster_idx, dendrogram, clust_dist=21, clust_size=5):
     """
     Uses hierarchical clustering to group points into clusters based on criteria:
         1. Cannot exceed more than a certain total count of label counts
@@ -128,13 +157,25 @@ def downsample_limited_nearest_points(coords, cluster_idx, dendogram, clust_dist
     clusters = {}
     cluster_assignments = np.full(-1, coords.shape[0])
     cluster_idx = 0
+    points_assigned_count = 0
 
-    for dend_entry in reversed(dendogram):
+    # Iterate over all dendrogram entries to create desired clusters
+    for dend_entry in reversed(dendrogram):
 
-        # Check if distance between the two points/clusters are within the limits
-        if dend_entry[2] < clust_dist:
-            assign_points_in_cluster(coords.shape[0], cluster_idx, dendrogram, dend_entry, cluster_assignments)
+        # Check if necessary conditions to form a cluster are met
+        if cluster_cond_check(dend_entry, clust_dist, clust_size):
+            points_assigned_count += assign_points_in_cluster(coords.shape[0], cluster_idx, dendrogram, dend_entry, cluster_assignments)
+            cluster_idx += 1
 
+            # Stop going through dendrogram once all points have been assigned
+            if points_assigned_count == coords:
+                break
+
+def cluster_cond_check(dend_row, clust_dist, clust_size):
+    """
+    Function for checking whether conditions for a dendrogram row can be taken as a cluster
+    """
+    return dend_row[2] <= clust_dist && dend_row[3] <= clust_size
 
 def downsample_spatial_data(coords, data, label_counts):
     """
