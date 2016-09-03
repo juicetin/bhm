@@ -4,7 +4,7 @@ import matplotlib as mpl
 import psutil
 import os
 if "DISPLAY" not in os.environ: # or os.environ['DISPLAY'] == ':0':
-    mpl.use('Agg')
+    mpl.use('SVG')
 
 import numpy as np
 import copy

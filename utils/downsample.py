@@ -100,18 +100,41 @@ def downsample_by_fixed_grid(coords, data, label_counts, reduction_factor=2):
     print("=============================================")
 
 
-    hclusters = hierarchy.linkage(coords, 'ward')
+    # hclusters = hierarchy.linkage(coords, 'ward')
     code.interact(local=locals())
 
     return reduced_coords, reduced_features, reduced_mlabels
 
-def downsample_limited_nearest_points():
+def assign_points_in_cluster(num_points, cluster_idx, dendrogram, dend_entry, cluster_assignments):
+    """
+    For a given dendogram entry, find all nodes within cluster and assign them their cluster.
+    Exit function if any entry encountered with nodes that are already assigned clusters.
+    """
+    # Create list to hold indexes in cluster (?)
+
+    # Iteratively iterate into each index until size of cluster is 2 (can't do recursive as we have
+    #   to keep track of number of points added - recursive branches won't know how many nodes 
+    #   the other branch has)
+
+    # If cluster size is hit, start a new cluster
+
+def downsample_limited_nearest_points(coords, cluster_idx, dendogram, clust_dist=21, clust_size=5):
     """
     Uses hierarchical clustering to group points into clusters based on criteria:
         1. Cannot exceed more than a certain total count of label counts
         2. Cannot exceed more than a certain number of points per aggregation cluster
         3. Points grouped together in cluster must not exceed distance X
     """
+    clusters = {}
+    cluster_assignments = np.full(-1, coords.shape[0])
+    cluster_idx = 0
+
+    for dend_entry in reversed(dendogram):
+
+        # Check if distance between the two points/clusters are within the limits
+        if dend_entry[2] < clust_dist:
+            assign_points_in_cluster(coords.shape[0], cluster_idx, dendrogram, dend_entry, cluster_assignments)
+
 
 def downsample_spatial_data(coords, data, label_counts):
     """
