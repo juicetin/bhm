@@ -78,7 +78,9 @@ def dirmultreg_learn(X, C, activation='soft', reg=1, verbose=False, ftol=1e-6,
 
         return MAP, grad.flatten()
 
-    optres = minimize(MAPobj, np.ones(K * D), jac=True, method='L-BFGS-B',
+    # start_W = np.ones(K*D)
+    start_W = np.random.rand(K*D)
+    optres = minimize(MAPobj, start_W, jac=True, method='L-BFGS-B',
                       tol=ftol, options={'maxiter':maxit})
 
     if verbose:

@@ -85,26 +85,32 @@ def csv_to_npz(filename):
     data = read_csv(filename, sep=',')
     return data
 
-def fill(labels, num_uniqs):
+def fill(labels, num_uniqs, zero_indexed=False):
     counts = np.bincount(labels)
-    missing = num_uniqs - len(counts)
+    if zero_indexed == False:
+        missing = num_uniqs - len(counts)
+    else:
+        missing = num_uniqs - len(counts) + 1
     if missing > 0:
         counts = np.concatenate((counts, [0] * missing), axis=0)
     # if (len(counts) != 25):
     #     pdb.set_trace()
     #     print(len(counts))
-    return list(counts)[1:]
+
+    if zero_indexed == False:
+        return list(counts)
+    else:
+        return list(counts)[1:]
 
 
-def multi_label_counts(labels):
+def multi_label_counts(labels, zero_indexed=False):
     """
     Converts lists of uneven category counts into a bincount of them in a uniform matrix 
     """
 
     uniqs = np.unique(np.concatenate(labels, axis=0))
     num_uniqs = uniqs.shape[0]
-    multi_labels = np.array([fill(labellist, num_uniqs+1) for labellist in labels])
-    multi_labels = np.concatenate(multi_labels, axis=0)
-    multi_labels = multi_labels.reshape(labels.shape[0], num_uniqs)
+    multi_labels = np.array([fill(labellist, num_uniqs, zero_indexed) for labellist in labels])
+    multi_labels = np.concatenate(multi_labels, axis=0).reshape(labels.shape[0], num_uniqs)
 
     return multi_labels

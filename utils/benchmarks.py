@@ -376,3 +376,33 @@ def dir_mul():
     dm = DirichletMultinomialRegression()
     dm.fit(X, C)
     pdb.set_trace()
+    
+
+def other_algos_bench():
+    ########################################## Compare other Algos ###########################################
+    classifiers = [
+            # neighbors.KNeighborsClassifier(n_neighbors=5),                  
+            # LogisticRegression(),                                           
+            # LogisticRegression(multi_class='multinomial', solver='lbfgs'), 
+            RandomForestClassifier(),                                       
+            # SVC()
+            ]
+
+    # X_train, X_test, y_train, y_test = train_test_split(features_sn, labels_simple, test_size = 0.1)
+    # X_train, X_test = features_sn[train_idx], features_sn[test_idx]
+    # y_train, y_test = labels_simple[train_idx], labels_simple[test_idx]
+    # rf = RandomForestClassifier()
+    # y_ = rf.fit(X_train, y_train).predict(X_test)
+    # NOTE this doesn't work! can't roc_auc_score on discrete predictions
+    # score = helpers.roc_auc_score_multi(y_test, y_)
+    # print(score)
+
+    # 10-fold cross-validation for all
+    # results = []
+    # for classifier in classifiers:
+    #     results.append(cross_validate_algo(features, labels, 10, classifier))
+
+    # # 10-fold cross-validation for all
+    # for classifier in classifiers:
+    #     cross_validate_algo(features, labels, 10, classifier)
+    #########################################################################################################

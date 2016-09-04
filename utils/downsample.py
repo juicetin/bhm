@@ -126,28 +126,23 @@ def assign_points_in_cluster(num_points, cluster_idx, dendrogram, dend_entry, cl
     For a given dendrogram entry, find all nodes within cluster and assign them their cluster.
     Exit function if any entry encountered with nodes that are already assigned clusters.
     """
-    # Create list to hold indexes in cluster (?)
 
-    # Iteratively iterate into each index until size of cluster is 2 (can't do recursive as we have
-    #   to keep track of number of points added - recursive branches won't know how many nodes 
-    #   the other branch has)
+    # Python list of child nodes at the dendrogram node
+    child_idxs = np.array(find_child_nodes_in_dendrogram(dendrogram, dend_entry[0], num_points) +
+                 find_child_nodes_in_dendrogram(dendrogram, dend_entry[1], num_points)).astype(int)
 
-    # If cluster size is hit, start a new cluster
+    # Check that none of these child nodes have yet been assigned clusters
+    unassigned_count = np.sum(cluster_assignments[child_idxs] == 0)
 
-    # return number of nodes added to clusters this round!
+    if unassigned_count == child_idxs.shape[0]:
+        cluster_assignments[child_idxs] = cluster_idx
+        return child_idxs.shape[0]
 
-    idx_stack = [dend_entry[1], dend_entry[0]]
-    while len(stack) > 0:
-        top_idx = idx_stack.pop()
+    # Some child nodes already have a cluster!
+    cluster_assignments[np.where(cluster_assignments[child_idxs] == 0)] = cluster_idx
+    return unassigned_count
 
-        if top_idx < num_points:
-            # Index is that of one of the original points
-            cluster_assignments[top_idx] = cluster_idx
-        else:
-            # Index is one of the dendrogram clusters
-            dend_idx = dendrogram[top_idx - num_points]
-
-def downsample_limited_nearest_points(coords, cluster_idx, dendrogram, clust_dist=21, clust_size=5):
+def downsample_limited_nearest_points(coords, dendrogram, data, label_counts, clust_dist=21, clust_size=5):
     """
     Uses hierarchical clustering to group points into clusters based on criteria:
         1. Cannot exceed more than a certain total count of label counts
@@ -155,8 +150,8 @@ def downsample_limited_nearest_points(coords, cluster_idx, dendrogram, clust_dis
         3. Points grouped together in cluster must not exceed distance X
     """
     clusters = {}
-    cluster_assignments = np.full(-1, coords.shape[0])
-    cluster_idx = 0
+    cluster_assignments = np.full(coords.shape[0], 0)
+    cluster_idx = 1
     points_assigned_count = 0
 
     # Iterate over all dendrogram entries to create desired clusters
@@ -168,19 +163,45 @@ def downsample_limited_nearest_points(coords, cluster_idx, dendrogram, clust_dis
             cluster_idx += 1
 
             # Stop going through dendrogram once all points have been assigned
-            if points_assigned_count == coords:
+            if points_assigned_count == coords.shape[0]:
                 break
+
+    # return cluster_assignments
+    # TODO return all the *ACTUAL* stuff
+    reduced_data = {}
+    for idx, entry in enumerate(cluster_assignments):
+
+        # For non-0 index (unassigned) cluster-ids
+        if entry != 0:
+            # TODO do an update on coords and features here too - rules TBC!
+            if entry not in reduced_data:
+                reduced_data[entry] = [coords[idx], data[idx], label_counts[idx]]
+            else:
+                reduced_data[entry][-1] += label_counts[idx]
+
+        else:
+            reduced_data[entry] = [coords[idx], data[idx], label_counts[idx]]
+
+    reduced_data_dict_vals = np.array(list(reduced_data.values()))
+    reduced_coords      = np.concatenate(reduced_data_dict_vals[:,0]).reshape(reduced_data_dict_vals.shape[0], 2)
+    reduced_features    = np.concatenate(reduced_data_dict_vals[:,1]).reshape(reduced_data_dict_vals.shape[0], data.shape[1])
+    reduced_mlabels     = np.concatenate(reduced_data_dict_vals[:,2]).reshape(reduced_data_dict_vals.shape[0], label_counts.shape[1])
+    return reduced_coords, reduced_features, reduced_mlabels
 
 def cluster_cond_check(dend_row, clust_dist, clust_size):
     """
     Function for checking whether conditions for a dendrogram row can be taken as a cluster
     """
-    return dend_row[2] <= clust_dist && dend_row[3] <= clust_size
+    return dend_row[2] <= clust_dist and dend_row[3] <= clust_size
 
-def downsample_spatial_data(coords, data, label_counts):
+def downsample_spatial_data(coords, data, label_counts, method='cluster-rules'):
     """
     Takes input *data* (any number of dimensions) and *label_counts*, where each row
     corresponds to an array of 'bincounts' that can be added to each other that would
     correspond to aggregation of points
     """
-    return downsample_by_fixed_grid(coords, data, label_counts, reduction_factor=1.1)
+    if method == 'cluster-rules':
+        dendrogram = np.load('data/hcluster_idxs.npy')
+        return downsample_limited_nearest_points(coords, dendrogram, data, label_counts)
+    elif method == 'fixed-grid':
+        return downsample_by_fixed_grid(coords, data, label_counts, reduction_factor=1.1)

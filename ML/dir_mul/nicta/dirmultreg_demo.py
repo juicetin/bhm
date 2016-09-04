@@ -85,7 +85,7 @@ if __name__ == "__main__":
         alphaQuery = np.zeros([NQuery,K])
         for k in range(K):
             XQueryW = XQueryFeature.dot(W[k,:].T)
-            alphaQuery[:,k] = logsumexp(np.concatenate((np.zeros([NQuery,1]), XQueryW[:,np.newaxis]),axis=1),axis=1)
+            alphaQuery[:,k] = logsumexp(np.concatenate((np.zeros([NQuery,1]), XQueryW[:,np.newaxis])),axis=1) # dimensions wrong???
             alphaQuery[alphaQuery==0]=1e-300
 
             XW = XFeature.dot(W[k,:].T)
@@ -119,9 +119,9 @@ if __name__ == "__main__":
     # for i in range(alphaQuery.shape[0]):
     #     stdDev[i,:] = dirichlet.var(alphaQuery[i,:])
 
-    # stdMaxCat = np.zeros(alphaQuery.shape[0])
-    # for i in range(alphaQuery.shape[0]):
-    #     stdMaxCat[i] = stdDev[i,maxCat[i]]
+    stdMaxCat = np.zeros(alphaQuery.shape[0])
+    for i in range(alphaQuery.shape[0]):
+        stdMaxCat[i] = stdDev[i,maxCat[i]]
 
     # pl.figure()
     # pl.scatter(XQuery[:,0],XQuery[:,1],c=stdMaxCat,s=50)
