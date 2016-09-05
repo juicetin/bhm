@@ -65,6 +65,7 @@ if __name__ == "__main__":
 
     no_coord_features = False # Keeping coords as features improves performance :/
     ensemble_testing = False
+    downsampled_param_search = False
 
     ######## LOAD DATA ########
     print("Loading data from npzs...")
@@ -91,16 +92,19 @@ if __name__ == "__main__":
     red_coords, red_features, red_mlabels = downsample_spatial_data(bath_locations, features_sn, multi_labels)
     ml_argsort = np.argsort(red_mlabels.sum(axis=1))
 
-    mlabels_max = np.argmax(red_mlabels, axis=1)
-    mlabels_max_bins = np.bincount(mlabels_max)
-    errors = np.zeros(red_mlabels.shape[0])
-    for i in range(1, red_mlabels.shape[0]):
-        W = dirmultreg_learn(red_features[ml_argsort[-i:]], red_mlabels[ml_argsort[-i:]])
-        preds = dirmultreg_predict(red_features, W)[0]
-        preds_max = np.argmax(preds, axis=1)
-        preds_max_bins = np.bincount(preds_max)
-        labels_error = np.sum(np.abs(preds_max_bins - mlabels_max_bins))
-        errors[i-1] = labels_error
+    if downsampled_param_search == True:
+        mlabels_max = np.argmax(red_mlabels, axis=1)
+        mlabels_max_bins = np.bincount(mlabels_max)
+        errors = np.zeros(red_mlabels.shape[0])
+        for i in range(1, red_mlabels.shape[0]):
+            print(i, end=' ', flush=True)
+            W = dirmultreg_learn(red_features[ml_argsort[-i:]], red_mlabels[ml_argsort[-i:]])
+            preds = dirmultreg_predict(red_features, W)[0]
+            preds_max = np.argmax(preds, axis=1)
+            preds_max_bins = np.bincount(preds_max)
+            labels_error = np.sum(np.abs(preds_max_bins - mlabels_max_bins))
+            errors[i-1] = labels_error
+        print()
     
     # vis.show_map(red_coords, np.argmax(red_mlabels, axis=1), display=False)
     # vis.show_map(red_coords, np.argmax(red_mlabels, axis=1))
@@ -110,13 +114,13 @@ if __name__ == "__main__":
     # Don't load full dataset without sufficient free memory
     if psutil.virtual_memory().available >= 2e9:
         qp_locations, validQueryID, x_bins, query, y_bins = data.load_test_data()
-        query_sn = scale(normalize(query))
 
         print("Filter down to non-nan queries and locations...")
         valid_query_idxs = np.where( (~np.isnan(query).any(axis=1) & np.isfinite(query).all(axis=1)) )[0]
         query = query[valid_query_idxs]
         qp_locations = qp_locations[valid_query_idxs]
         infinite_idx = np.where(~np.isfinite(query).all(axis=1))[0]
+        query_sn = scale(normalize(query))
 
 
     # labels = np.array(labels)
