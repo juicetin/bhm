@@ -86,3 +86,13 @@ feature_perms = [features, features_n, features_s, features_ns, features_sn]
 [0.72739502569246961, 0.71183799527284519, 0.65632134135368103]
 feature_perms = [features_s, features_ns, features_sn]
 
+
+# GP vs DM multilabels
+* simplified classes
+GP  bincount: array([  81855,  454609,  704545, 1457161])
+DM1 bincount: array([ 475263,  382189, 1103195,  737523]) (hc clusters)
+DM2 bincount: array([  27730,  505781,  615009, 1549650]) (all points)
+DM3 bincount: array([ 255393,  376389,  731513, 1334875]) (fixed clusters)
+matching labels between the GP,DM1: 1706038/2698170
+matching labels between the GP,DM2: 1582175/2698170
+matching labels between the GP,DM3: 1749599/2698170
