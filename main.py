@@ -71,7 +71,7 @@ if __name__ == "__main__":
     print("Loading data from npzs...")
     labels, labelcounts, bath_locations, features = data.load_training_data()
     multi_locations, multi_features, multi_labels = data.load_multi_label_data()
-    # multi_labels = data.summarised_labels(multi_labels)
+    multi_labels = data.summarised_labels(multi_labels)
     multi_labels = data.multi_label_counts(multi_labels)
 
     ######### FEATURES ##########
@@ -128,7 +128,7 @@ if __name__ == "__main__":
     print("Fitting DM regressor...")
     dm.fit(red_features, red_mlabels)
     preds = dm.predict(query_sn)
-    vis.show_map(qp_locations, preds.argmax(axis=1), display=False, vmin=1, vmax=24, filename='full_preditions_2016-09-05_dirmul_alllabels')
+    # vis.show_map(qp_locations, preds.argmax(axis=1), display=False, vmin=1, vmax=24, filename='full_preditions_2016-09-05_dirmul_alllabels')
 
     # labels = np.array(labels)
     labels_simple = data.summarised_labels(labels)
