@@ -127,6 +127,8 @@ if __name__ == "__main__":
     dm = DirichletMultinomialRegression()
     print("Fitting DM regressor...")
     dm.fit(red_features, red_mlabels)
+    preds = dm.predict(query_sn)
+    vis.show_map(qp_locations, preds.argmax(axis=1), display=False, vmin=1, vmax=24, filename='full_preditions_2016-09-05_dirmul_alllabels')
 
     # labels = np.array(labels)
     labels_simple = data.summarised_labels(labels)

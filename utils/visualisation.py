@@ -6,6 +6,7 @@ from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 # from utils.benchmarks import dm_test_data
 import matplotlib.cm as cm
+import matplotlib as mpl
 from matplotlib import colors
 import pdb
 
@@ -234,7 +235,20 @@ def show_map(locations, labels, x_bins=None, y_bins=None, display=True, filename
     plt.imshow(Z, extent=[x_min, x_max, y_min, y_max], origin='lower', cmap=cm.Spectral, vmin=vmin, vmax=vmax)
 
     print("Setting colourbar (legend)...")
-    plt.colorbar()
+    cmap = cm.jet
+    cmaplist = [cmap(i) for i in range(cmap.N)]
+    cmap = cmap.from_list('custom cmap', cmaplist, cmap.N)
+
+    # Slightly hacky - unfortunately neeeded for 0-count argmaxs of 24 labels
+    if np.unique(labels).shape[0] < 5:
+        uniq_labels = np.arange(1, 5)
+    else:
+        uniq_labels = np.arange(1, 25)
+
+    bounds = np.linspace(uniq_labels.min(), uniq_labels.max(), uniq_labels.shape[0])
+    norm = mpl.colors.BoundaryNorm(bounds, cmap.N)
+    # mpl.colorbar.ColorbarBase(ax, cmap=cmap, norm=norm, spacing='Proportional', boundaries=bounds, format='%li')
+    plt.colorbar(cmap=cmap, norm=norm, spacing='Proportional', boundaries=bounds, format='%li')
 
     print("Image generated!")
     if display == True:
