@@ -104,5 +104,11 @@ class TestGPMethods(unittest.TestCase):
         self.assertEqual(11, np.sum(l_scales == np.arange(1,12)))
         self.assertEqual(n_err, 12)
 
+    def test_class_summarisation(self):
+        print("Testing that class summarisation for multi labels works...")
+        multi_locations, multi_features, multi_labels = data.load_multi_label_data()
+        multi_labels = data.summarised_labels(multi_labels)
+        multi_labels = data.multi_label_counts(multi_labels)
+
 if __name__ == '__main__':
     unittest.main()
