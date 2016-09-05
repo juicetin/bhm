@@ -241,9 +241,9 @@ def show_map(locations, labels, x_bins=None, y_bins=None, display=True, filename
 
     # Slightly hacky - unfortunately neeeded for 0-count argmaxs of 24 labels
     if np.unique(labels).shape[0] < 5:
-        uniq_labels = np.arange(1, 5)
+        uniq_labels = np.arange(5)
     else:
-        uniq_labels = np.arange(1, 25)
+        uniq_labels = np.arange(25)
 
     bounds = np.linspace(uniq_labels.min(), uniq_labels.max(), uniq_labels.shape[0])
     norm = mpl.colors.BoundaryNorm(bounds, cmap.N)
