@@ -58,7 +58,7 @@ def dir_mul_bench(gen_maps=False):
     preds_nicta_orig = dirmultreg_predict(X, W, activation='soft')[0]
     preds_nicta_orig_max = np.argmax(preds_nicta_orig, axis=1)
 
-    print("{}\n{}\n{}\n".format(C_max, preds_me_orig_max, preds_nicta_orig_max))
+    print("Origs: {}\nMpreds:{}\nOpreds:{}\n".format(C_max, preds_me_orig_max, preds_nicta_orig_max))
 
     # (-7, 7), (7, 7), (-7, -7), (7, -7)
     ax_coords = np.arange(-7, 7.2, 0.2)
@@ -72,13 +72,14 @@ def dir_mul_bench(gen_maps=False):
     preds_me_max = np.argmax(preds_me, axis=1)
 
     if gen_maps == True:
+        path='images/toydata/'
         vmin = 0
         vmax = 2
-        vis.show_map(X, C_max, display=False, filename='toydata_orig', vmin=vmin, vmax=vmax)
-        vis.show_map(X, preds_me_orig_max, display=False, filename='toydata_preds_orig_me', vmin=vmin, vmax=vmax)
-        vis.show_map(X, preds_nicta_orig_max, display=False, filename='toydata_preds_orig_oth', vmin=vmin, vmax=vmax)
-        vis.show_map(coords, preds_me_max, display=False, filename='toydata_full_preds_me', vmin=vmin, vmax=vmax)
-        vis.show_map(coords, preds_nicta_max, display=False, filename='toydata_full_preds_oth', vmin=vmin, vmax=vmax)
+        vis.show_map(X, C_max, display=False, filename=path+'toydata_orig', vmin=vmin, vmax=vmax)
+        vis.show_map(X, preds_me_orig_max, display=False, filename=path+'toydata_preds_orig_me', vmin=vmin, vmax=vmax)
+        vis.show_map(X, preds_nicta_orig_max, display=False, filename=path+'toydata_preds_orig_oth', vmin=vmin, vmax=vmax)
+        vis.show_map(coords, preds_me_max, display=False, filename=path+'toydata_full_preds_me', vmin=vmin, vmax=vmax)
+        vis.show_map(coords, preds_nicta_max, display=False, filename=path+'toydata_full_preds_oth', vmin=vmin, vmax=vmax)
 
     print("Entering interactive mode in benchmarks.dir_mul_bench")
     code.interact(local=locals())

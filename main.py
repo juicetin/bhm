@@ -89,6 +89,7 @@ if __name__ == "__main__":
     
     ########### DOWNSAMPLING ##########
     from utils.downsample import downsample_spatial_data
+    print("Downsampling data...")
     red_coords, red_features, red_mlabels = downsample_spatial_data(bath_locations, features_sn, multi_labels)
     ml_argsort = np.argsort(red_mlabels.sum(axis=1))
 
@@ -124,6 +125,7 @@ if __name__ == "__main__":
         query_sn = scale(normalize(query))
 
     dm = DirichletMultinomialRegression()
+    print("Fitting DM regressor...")
     dm.fit(red_features, red_mlabels)
 
     # labels = np.array(labels)
