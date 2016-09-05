@@ -71,7 +71,7 @@ if __name__ == "__main__":
     print("Loading data from npzs...")
     labels, labelcounts, bath_locations, features = data.load_training_data()
     multi_locations, multi_features, multi_labels = data.load_multi_label_data()
-    multi_labels = data.summarised_labels(multi_labels)
+    # multi_labels = data.summarised_labels(multi_labels)
     multi_labels = data.multi_label_counts(multi_labels)
 
     ######### FEATURES ##########
@@ -92,6 +92,7 @@ if __name__ == "__main__":
     red_coords, red_features, red_mlabels = downsample_spatial_data(bath_locations, features_sn, multi_labels)
     ml_argsort = np.argsort(red_mlabels.sum(axis=1))
 
+    ######## DOWNSAMPLING PARAM SEARCH #########
     if downsampled_param_search == True:
         mlabels_max = np.argmax(red_mlabels, axis=1)
         mlabels_max_bins = np.bincount(mlabels_max)
@@ -122,6 +123,8 @@ if __name__ == "__main__":
         infinite_idx = np.where(~np.isfinite(query).all(axis=1))[0]
         query_sn = scale(normalize(query))
 
+    dm = DirichletMultinomialRegression()
+    dm.fit(red_features, red_mlabels)
 
     # labels = np.array(labels)
     labels_simple = data.summarised_labels(labels)

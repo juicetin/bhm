@@ -88,16 +88,13 @@ def csv_to_npz(filename):
 def fill(labels, num_uniqs, zero_indexed=False):
     counts = np.bincount(labels)
     if zero_indexed == False:
-        missing = num_uniqs - len(counts)
-    else:
         missing = num_uniqs - len(counts) + 1
+    else:
+        missing = num_uniqs - len(counts)
     if missing > 0:
         counts = np.concatenate((counts, [0] * missing), axis=0)
-    # if (len(counts) != 25):
-    #     pdb.set_trace()
-    #     print(len(counts))
 
-    if zero_indexed == False:
+    if zero_indexed != False:
         return list(counts)
     else:
         return list(counts)[1:]
