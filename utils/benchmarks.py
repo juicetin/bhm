@@ -379,11 +379,11 @@ def dir_mul():
     pdb.set_trace()
     
 
-def other_algos_bench():
+def other_algos_bench(features, labels):
     ########################################## Compare other Algos ###########################################
     classifiers = [
-            # neighbors.KNeighborsClassifier(n_neighbors=5),                  
-            # LogisticRegression(),                                           
+            neighbors.KNeighborsClassifier(n_neighbors=5),                  
+            LogisticRegression(),                                           
             # LogisticRegression(multi_class='multinomial', solver='lbfgs'), 
             RandomForestClassifier(),                                       
             # SVC()
@@ -399,9 +399,11 @@ def other_algos_bench():
     # print(score)
 
     # 10-fold cross-validation for all
-    # results = []
-    # for classifier in classifiers:
-    #     results.append(cross_validate_algo(features, labels, 10, classifier))
+    results = []
+    for classifier in classifiers:
+        results.append(cross_validate_algo(features, labels, 10, classifier))
+
+    return results
 
     # # 10-fold cross-validation for all
     # for classifier in classifiers:

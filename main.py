@@ -24,6 +24,7 @@ from sklearn.cross_validation import train_test_split
 from sklearn import datasets
 from sklearn.metrics import roc_auc_score
 from sklearn import neighbors
+from sklearn.preprocessing import PolynomialFeatures
 
 # Import our ML algorithms
 from ML.validation import cross_validate_algo
@@ -66,10 +67,11 @@ if __name__ == "__main__":
     no_coord_features = False # Keeping coords as features improves performance :/
     ensemble_testing = False
     downsampled_param_search = False
+    dm_test = True
 
     ######## LOAD DATA ########
     print("Loading data from npzs...")
-    labels, labelcounts, bath_locations, features = data.load_training_data()
+    labels, labelcounts, bath_locations, fFalseeatures = data.load_training_data()
     multi_locations, multi_features, multi_labels = data.load_multi_label_data()
     multi_labels = data.summarised_labels(multi_labels)
     multi_labels = data.multi_label_counts(multi_labels, zero_indexed=True)
@@ -124,11 +126,15 @@ if __name__ == "__main__":
         infinite_idx = np.where(~np.isfinite(query).all(axis=1))[0]
         query_sn = scale(normalize(query))
 
-    dm = DirichletMultinomialRegression()
-    print("Fitting DM regressor...")
-    dm.fit(red_features, red_mlabels)
-    preds = dm.predict(query_sn)
-    vis.show_map(qp_locations, preds.argmax(axis=1), display=False, filename='full_predictions_dirmul_simplelabels_2016-09-05')
+    if dm_test == True:
+        pf = PolynomialFeatures(2)
+        f = pf.fit_transform(red_features)
+        dm = DirichletMultinomialRegression()
+        print("Fitting DM regressor...")
+        dm.fit(f, red_mlabels)
+        print("Forming predictions...")
+        preds = dm.predict(pf.fit_transform(query_sn))
+        vis.show_map(qp_locations, preds.argmax(axis=1), display=False, filename='full_predictions_dirmul_simplelabels_2016-09-11')
 
     # labels = np.array(labels)
     labels_simple = data.summarised_labels(labels)
