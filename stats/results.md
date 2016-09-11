@@ -101,14 +101,19 @@ matching labels between the GP,DM3: 2087761/2698170 (77.37692584233017%)
 ### DM4
 * vs GP
     For mismatches, from 2nd most probable to least probable compared to det_labels:
-        0 most likely occurrences: 1735
-        1 most likely occurrences: 58080
-        2 most likely occurrences: 550594
+        2 most likely occurrences: 1735
+        3 most likely occurrences: 58080
+        4 most likely occurrences: 550594
     Argmax of the dm distrs and the deterministic labels had: 2087761 matches, i.e. 0.7737692584233017%
 * vs LR default
     For mismatches, from 2nd most probable to least probable compared to det_labels:
-        0 most likely occurrences: 10736
-        1 most likely occurrences: 109680
-        2 most likely occurrences: 424054
+        2 most likely occurrences: 10736
+        3 most likely occurrences: 109680
+        4 most likely occurrences: 424054
     Argmax of the dm distrs and the deterministic labels had: 2153700 matches, i.e. 0.7982076740902168%
-
+* vs RF default
+    For mismatches, from 2nd most probable to least probable compared to det_labels:
+        2 most likely occurrences: 901393
+        3 most likely occurrences: 683908
+        4 most likely occurrences: 463301
+    Argmax of the dm distrs and the deterministic labels had: 649568 matches, i.e. 0.2407439116141681%
