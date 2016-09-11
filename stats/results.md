@@ -19,12 +19,12 @@
 
 ## Cache size with time taken to do partial derivatives
 X, y = datasets.make_classification(n_samples=100,
-        n_features=5, 
-        n_clusters_per_class=2,
-        n_redundant=0, 
-        n_repeated=0,
-        n_informative=5,
-        n_classes=5)
+n_features=5, 
+n_clusters_per_class=2,
+n_redundant=0, 
+n_repeated=0,
+n_informative=5,
+n_classes=5)
 | Cache size         | Generated Data Parameters   | Derivations (m)   | Lambdafication (m)   | dK_dtheta eval (m)  |
 | :----------------: | :-------------------------: | :---------------: | :------------------: | :-----------------: |
 | 1000 (default)     | As above, cProfile mode     | 12:42.67          | Untimed              |
@@ -76,8 +76,8 @@ S = stratified
 | 1000                | Even           | GPoEGP   | All points    | 4           | 0.78657,0.75807,0.77583,0.79221         | Expert size: 200, ditto                        | 0.32996,0.25872,0.29148,0.32702         |
 | 1000                | Even           | BCM      | All points    | 5           | 0.79755,0.79548,0.78110,0.79423,0.77881 | Ditto                                          | 0.55378,0.77672,0.56987,0.43165,0.23686 |
 
-NOTE best for simple classes - scaling, then normalising features
-order: original, normalised, scaled, normalised-scaled, scaled-normalised
+    NOTE best for simple classes - scaling, then normalising features
+    order: original, normalised, scaled, normalised-scaled, scaled-normalised
 # [0.13911784653850162,   0.62549115824070989,  0.80419877283841434,  0.80067072027980024, 0.77420703810759661, 
 #  0.0014678899082568807, 0.017750714162373553, 0.012602890116646892, 0.02482014086796169, 0.029004894912527762]
 feature_perms = [features, features_n, features_s, features_ns, features_sn]
@@ -88,11 +88,27 @@ feature_perms = [features_s, features_ns, features_sn]
 
 
 # GP vs DM multilabels
-* simplified classes
+## simplified classes
 GP  bincount: array([  81855,  454609,  704545, 1457161])
-DM1 bincount: array([ 475263,  382189, 1103195,  737523]) (hc clusters)
-DM2 bincount: array([  27730,  505781,  615009, 1549650]) (all points)
+DM1 bincount: array([  27730,  505781,  615009, 1549650]) (all points)
+DM2 bincount: array([ 475263,  382189, 1103195,  737523]) (hc clusters)
 DM3 bincount: array([ 255393,  376389,  731513, 1334875]) (fixed clusters)
-matching labels between the GP,DM1: 1706038/2698170
-matching labels between the GP,DM2: 1582175/2698170
-matching labels between the GP,DM3: 1749599/2698170
+DM4 bincount: array([ 297410,  379470,  874949, 1146341]) (fixed clusters, poly-space 2)
+matching labels between the GP,DM1: 1582175/2698170 (56.54320502328307%)
+matching labels between the GP,DM2: 1706038/2698170 (63.22944810742096%)
+matching labels between the GP,DM3: 1749599/2698170 (64.84391272603283%)
+matching labels between the GP,DM3: 2087761/2698170 (77.37692584233017%)
+### DM4
+* vs GP
+    For mismatches, from 2nd most probable to least probable compared to det_labels:
+        0 most likely occurrences: 1735
+        1 most likely occurrences: 58080
+        2 most likely occurrences: 550594
+    Argmax of the dm distrs and the deterministic labels had: 2087761 matches, i.e. 0.7737692584233017%
+* vs LR default
+    For mismatches, from 2nd most probable to least probable compared to det_labels:
+        0 most likely occurrences: 10736
+        1 most likely occurrences: 109680
+        2 most likely occurrences: 424054
+    Argmax of the dm distrs and the deterministic labels had: 2153700 matches, i.e. 0.7982076740902168%
+

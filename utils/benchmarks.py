@@ -384,6 +384,7 @@ def other_algos_bench(features, labels):
     classifiers = [
             neighbors.KNeighborsClassifier(n_neighbors=5),                  
             LogisticRegression(),                                           
+            DirichletMultinomialRegression()
             # LogisticRegression(multi_class='multinomial', solver='lbfgs'), 
             RandomForestClassifier(),                                       
             # SVC()
@@ -409,3 +410,22 @@ def other_algos_bench(features, labels):
     # for classifier in classifiers:
     #     cross_validate_algo(features, labels, 10, classifier)
     #########################################################################################################
+
+def dm_vs_det_stats(dm_distrs, det_labels):
+    """
+    Compares the output of the Dirichlet Multinomial Regressor (its distribution of labels) with that of a set of deterministic results (including the argmax of a GP Classifier)
+    """
+    result_str = ""
+
+    dm_argsorted = np.argsort(dm_distrs, axis=1)
+    mismatch_idxs = np.where(dm_distrs.argmax(axis=1) != det_labels)
+    rankings = np.array([np.where(x==y)[0][0] for x,y in zip(dm_argsorted[mismatch_idxs], det_labels[mismatch_idxs])])
+    result_str += "For mismatches, from 2nd most probable to least probable compared to det_labels:\n"
+    for i, cnt in enumerate(np.bincount(rankings)):
+        result_str += "\t\t\t{} most likely occurrences: {}\n".format(i, cnt)
+
+    match_count = np.sum((dm_distrs.argmax(axis=1) == det_labels))
+    result_str += "Argmax of the dm distrs and the deterministic labels had: {} matches, i.e. {}%".format(match_count, match_count/det_labels.shape[0])
+
+    print(result_str)
+    return result_str

@@ -71,7 +71,7 @@ if __name__ == "__main__":
 
     ######## LOAD DATA ########
     print("Loading data from npzs...")
-    labels, labelcounts, bath_locations, fFalseeatures = data.load_training_data()
+    labels, labelcounts, bath_locations, features = data.load_training_data()
     multi_locations, multi_features, multi_labels = data.load_multi_label_data()
     multi_labels = data.summarised_labels(multi_labels)
     multi_labels = data.multi_label_counts(multi_labels, zero_indexed=True)
@@ -134,10 +134,12 @@ if __name__ == "__main__":
         dm.fit(f, red_mlabels)
         print("Forming predictions...")
         preds = dm.predict(pf.fit_transform(query_sn))
-        vis.show_map(qp_locations, preds.argmax(axis=1), display=False, filename='full_predictions_dirmul_simplelabels_2016-09-11')
+        # vis.show_map(qp_locations, preds.argmax(axis=1), display=False, filename='full_predictions_dirmul_simplelabels_2016-09-11')
 
     # labels = np.array(labels)
     labels_simple = data.summarised_labels(labels)
+
+    gp_preds = np.load('data/plain_gp_simplelabels_querypreds.npy')
 
     ########################################### Product of Experts ###########################################
     if ensemble_testing == True:
