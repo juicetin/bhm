@@ -384,7 +384,6 @@ def other_algos_bench(features, labels):
     classifiers = [
             neighbors.KNeighborsClassifier(n_neighbors=5),                  
             LogisticRegression(),                                           
-            DirichletMultinomialRegression()
             # LogisticRegression(multi_class='multinomial', solver='lbfgs'), 
             RandomForestClassifier(),                                       
             # SVC()

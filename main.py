@@ -129,17 +129,30 @@ if __name__ == "__main__":
     if dm_test == True:
         pf = PolynomialFeatures(2)
         f = pf.fit_transform(red_features)
+        q = pf.fit_transform(query_sn)
         dm = DirichletMultinomialRegression()
         print("Fitting DM regressor...")
         dm.fit(f, red_mlabels)
         print("Forming predictions...")
-        preds = dm.predict(pf.fit_transform(query_sn))
+        preds = dm.predict(q)
         # vis.show_map(qp_locations, preds.argmax(axis=1), display=False, filename='full_predictions_dirmul_simplelabels_2016-09-11')
+        vis.show_map(qp_locations, preds.argmax(axis=1), display=False, filename='full_predictions_dirmul_polyspace2', vmin=1, vmax=24)
 
     # labels = np.array(labels)
     labels_simple = data.summarised_labels(labels)
 
     gp_preds = np.load('data/plain_gp_simplelabels_querypreds.npy')
+
+    f = pf.fit_transform(features_sn)
+    lr = LogisticRegression()
+    lr.fit(f, labels)
+    lr_preds = lr.predict(q)
+    vis.show_map(qp_locations, lr_preds, display=False, vmin=1, vmax=24, filename='full_predictions_logisticregression_polyspace2')
+
+    rf = RandomForestClassifier()
+    rf.fit(f, labels)
+    rf_preds = rf.predict(q)
+    vis.show_map(qp_locations, rf_preds, display=False, vmin=1, vmax=24, filename='full_predictions_randomforest_polyspace2')
 
     ########################################### Product of Experts ###########################################
     if ensemble_testing == True:
