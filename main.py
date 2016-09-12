@@ -68,13 +68,15 @@ if __name__ == "__main__":
     ensemble_testing = False
     downsampled_param_search = False
     dm_test = True
+    summarise_labels = False
 
     ######## LOAD DATA ########
     print("Loading data from npzs...")
     labels, labelcounts, bath_locations, features = data.load_training_data()
     multi_locations, multi_features, multi_labels = data.load_multi_label_data()
-    multi_labels = data.summarised_labels(multi_labels)
-    multi_labels = data.multi_label_counts(multi_labels, zero_indexed=True)
+    if summarise_labels == True:
+        multi_labels = data.summarised_labels(multi_labels)
+    multi_labels = data.multi_label_counts(multi_labels, zero_indexed=False)
 
     ######### FEATURES ##########
     print("Loading features...")
@@ -143,16 +145,16 @@ if __name__ == "__main__":
 
     gp_preds = np.load('data/plain_gp_simplelabels_querypreds.npy')
 
-    f = pf.fit_transform(features_sn)
-    lr = LogisticRegression()
-    lr.fit(f, labels)
-    lr_preds = lr.predict(q)
-    vis.show_map(qp_locations, lr_preds, display=False, vmin=1, vmax=24, filename='full_predictions_logisticregression_polyspace2')
+    # f = pf.fit_transform(features_sn)
+    # lr = LogisticRegression()
+    # lr.fit(f, labels)
+    # lr_preds = lr.predict(q)
+    # vis.show_map(qp_locations, lr_preds, display=False, vmin=1, vmax=24, filename='full_predictions_logisticregression_polyspace2')
 
-    rf = RandomForestClassifier()
-    rf.fit(f, labels)
-    rf_preds = rf.predict(q)
-    vis.show_map(qp_locations, rf_preds, display=False, vmin=1, vmax=24, filename='full_predictions_randomforest_polyspace2')
+    # rf = RandomForestClassifier()
+    # rf.fit(f, labels)
+    # rf_preds = rf.predict(q)
+    # vis.show_map(qp_locations, rf_preds, display=False, vmin=1, vmax=24, filename='full_predictions_randomforest_polyspace2')
 
     ########################################### Product of Experts ###########################################
     if ensemble_testing == True:

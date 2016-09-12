@@ -17,6 +17,8 @@ from ML.helpers import partition_indexes
 from ML.helpers import sqeucl_dist
 import math
 
+import utils.load_data as data
+
 class TestGPMethods(unittest.TestCase):
 
     def test_multi_length_scale(self):
@@ -100,15 +102,33 @@ class TestGPMethods(unittest.TestCase):
         gp.X = np.random.rand(30, 11)
         f_err, l_scales, n_err, = gp.unpack_GP_args(np.arange(13))
         
-        self.assertEqual(f_err, 0)
+        self.assertEqual(0, f_err)
         self.assertEqual(11, np.sum(l_scales == np.arange(1,12)))
-        self.assertEqual(n_err, 12)
+        self.assertEqual(12, n_err)
 
-    def test_class_summarisation(self):
+    # def test_class_summarisation(self):
+    #     print("Testing that class summarisation for multi labels works...")
+    #     multi_locations, multi_features, multi_labels = data.load_multi_label_data()
+    #     multi_labels = data.summarised_labels(multi_labels)
+    #     multi_labels = data.multi_label_counts(multi_labels)
+
+    def test_fill_list_to_count_conversion(self):
         print("Testing that class summarisation for multi labels works...")
-        multi_locations, multi_features, multi_labels = data.load_multi_label_data()
-        multi_labels = data.summarised_labels(multi_labels)
-        multi_labels = data.multi_label_counts(multi_labels)
+        labels = np.array([1, 2, 2, 3, 5])
+        res = data.fill(labels, 7, zero_indexed=False)
+        self.assertEqual((np.array([1,2,1,0,1,0,0])==res).sum(), 7)
+
+        labels = np.array([0, 1, 2, 2, 3, 5])
+        res = data.fill(labels, 7, zero_indexed=True)
+        self.assertEqual((np.array([1,1,2,1,0,1,0])==res).sum(), 7)
+
+        labels = np.array([0, 1, 2, 2, 3, 5, 6, 6, 7])
+        res = data.fill(labels, 8, zero_indexed=True)
+        self.assertEqual((np.array([1,1,2,1,0,1,2,1])==res).sum(), 8)
+
+        labels = np.array([1, 2, 2, 3, 5, 6, 6])
+        res = data.fill(labels, 6, zero_indexed=False)
+        self.assertEqual((np.array([1,2,1,0,1,2])==res).sum(), 6)
 
 if __name__ == '__main__':
     unittest.main()
