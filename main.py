@@ -64,11 +64,13 @@ def info(type, value, tb):
 if __name__ == "__main__":
     sys.excepthook = info
 
-    no_coord_features = False # Keeping coords as features improves performance :/
-    ensemble_testing = False
-    downsampled_param_search = False
-    dm_test = True
-    summarise_labels = False
+    no_coord_features           = False # Keeping coords as features improves performance :/
+    ensemble_testing            = False
+    downsampled_param_search    = False
+    downsample                  = False
+    dm_test                     = False
+    summarise_labels            = False
+    load_query                  = False
 
     ######## LOAD DATA ########
     print("Loading data from npzs...")
@@ -92,10 +94,11 @@ if __name__ == "__main__":
     # features_s = scale(features) # MARGINALLY better than normalize(scale)
     
     ########### DOWNSAMPLING ##########
-    from utils.downsample import downsample_spatial_data
-    print("Downsampling data...")
-    red_coords, red_features, red_mlabels = downsample_spatial_data(bath_locations, features_sn, multi_labels, method='fixed-grid')
-    ml_argsort = np.argsort(red_mlabels.sum(axis=1))
+    if downsample==True:
+        from utils.downsample import downsample_spatial_data
+        print("Downsampling data...")
+        red_coords, red_features, red_mlabels = downsample_spatial_data(bath_locations, features_sn, multi_labels, method='fixed-grid')
+        ml_argsort = np.argsort(red_mlabels.sum(axis=1))
 
     ######## DOWNSAMPLING PARAM SEARCH #########
     if downsampled_param_search == True:
@@ -112,13 +115,8 @@ if __name__ == "__main__":
             errors[i-1] = labels_error
         print()
     
-    # vis.show_map(red_coords, np.argmax(red_mlabels, axis=1), display=False)
-    # vis.show_map(red_coords, np.argmax(red_mlabels, axis=1))
-    # vis.show_map(red_coords, np.argmax(red_mlabels,axis=1), np.unique(red_coords[:,0]), np.unique(red_coords[:,1]), display=False, vmin=0, vmax=23, filename='reduced_training_map')
-    # vis.show_map(red_coords, np.argmax(red_mlabels,axis=1), np.unique(red_coords[:,0]), np.unique(red_coords[:,1]), vmin=0, vmax=23)
-
     # Don't load full dataset without sufficient free memory
-    if psutil.virtual_memory().available >= 2e9:
+    if load_query and psutil.virtual_memory().available >= 2e9:
         qp_locations, validQueryID, x_bins, query, y_bins = data.load_test_data()
 
         print("Filter down to non-nan queries and locations...")
@@ -128,41 +126,51 @@ if __name__ == "__main__":
         infinite_idx = np.where(~np.isfinite(query).all(axis=1))[0]
         query_sn = scale(normalize(query))
 
+    pf = PolynomialFeatures(2)
     if dm_test == True:
-        pf = PolynomialFeatures(2)
         f = pf.fit_transform(red_features)
         q = pf.fit_transform(query_sn)
         dm = DirichletMultinomialRegression()
         print("Fitting DM regressor...")
         dm.fit(f, red_mlabels)
         print("Forming predictions...")
-        preds = dm.predict(q)
-        # vis.show_map(qp_locations, preds.argmax(axis=1), display=False, filename='full_predictions_dirmul_simplelabels_2016-09-11')
-        vis.show_map(qp_locations, preds.argmax(axis=1), display=False, filename='full_predictions_dirmul_polyspace2', vmin=1, vmax=24)
+        preds_dm = dm.predict(q)
+        # vis.show_map(qp_locations, preds_dm.argmax(axis=1), display=False, filename='full_predictions_dirmul_simplelabels_2016-09-11')
+        # vis.show_map(qp_locations, preds_dm.argmax(axis=1), display=False, filename='full_predictions_dirmul_polyspace2', vmin=1, vmax=24)
 
     # labels = np.array(labels)
     labels_simple = data.summarised_labels(labels)
 
-    gp_preds = np.load('data/plain_gp_simplelabels_querypreds.npy')
+    preds_gp = np.load('data/plain_gp_simplelabels_querypreds.npy')
 
     # f = pf.fit_transform(features_sn)
     # lr = LogisticRegression()
     # lr.fit(f, labels)
-    # lr_preds = lr.predict(q)
-    # vis.show_map(qp_locations, lr_preds, display=False, vmin=1, vmax=24, filename='full_predictions_logisticregression_polyspace2')
+    # preds_lr = lr.predict(q)
+    # vis.show_map(qp_locations, preds_lr, display=False, vmin=1, vmax=24, filename='full_predictions_logisticregression_polyspace2')
 
     # rf = RandomForestClassifier()
     # rf.fit(f, labels)
-    # rf_preds = rf.predict(q)
-    # vis.show_map(qp_locations, rf_preds, display=False, vmin=1, vmax=24, filename='full_predictions_randomforest_polyspace2')
+    # preds_rf = rf.predict(q)
+    # vis.show_map(qp_locations, preds_rf, display=False, vmin=1, vmax=24, filename='full_predictions_randomforest_polyspace2')
+
+    size = 100
+    train_idx = data.mini_batch_idxs(labels_simple, size, 'even')
+    # train_idx = np.load('data/semi-optimal-1000-subsample.npy')
+    test_idx = np.array(list(set(np.arange(features.shape[0])) - set(train_idx)))
+
+    from ML.gp.revrand_glm import revrand_glm, RGLM
+    rglm = RGLM()
+    print("fitting glm")
+    f = pf.fit_transform(features_sn[train_idx])
+    rglm.fit(f, labels_simple[train_idx])
+    print("predicting glm")
+    q = pf.fit_transform(features_sn[test_idx])
+    pr = rglm.predict(features_sn[test_idx])
+    glm = revrand_glm()
 
     ########################################### Product of Experts ###########################################
     if ensemble_testing == True:
-        size = 100
-        train_idx = data.mini_batch_idxs(labels_simple, size, 'even')
-        # train_idx = np.load('data/semi-optimal-1000-subsample.npy')
-
-        test_idx = np.array(list(set(np.arange(features.shape[0])) - set(train_idx)))
 
         gp = GaussianProcess()
         gp.fit(features_sn[train_idx], labels_simple[train_idx])

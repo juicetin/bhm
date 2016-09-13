@@ -421,10 +421,11 @@ def dm_vs_det_stats(dm_distrs, det_labels):
     rankings = np.array([np.where(x==y)[0][0] for x,y in zip(dm_argsorted[mismatch_idxs], det_labels[mismatch_idxs])])
     result_str += "For mismatches, from 2nd most probable to least probable compared to det_labels:\n"
     for i, cnt in enumerate(np.bincount(rankings)):
-        result_str += "\t\t\t{} most likely occurrences: {}\n".format(i, cnt)
+        result_str += "\t{} most likely occurrences: {}\t{}%\n".format(i, cnt, cnt/mismatch_idxs[0].shape[0]*100)
 
     match_count = np.sum((dm_distrs.argmax(axis=1) == det_labels))
     result_str += "Argmax of the dm distrs and the deterministic labels had: {} matches, i.e. {}%".format(match_count, match_count/det_labels.shape[0])
 
     print(result_str)
     return result_str
+
