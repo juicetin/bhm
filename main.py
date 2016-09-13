@@ -67,10 +67,10 @@ if __name__ == "__main__":
     no_coord_features           = False # Keeping coords as features improves performance :/
     ensemble_testing            = False
     downsampled_param_search    = False
-    downsample                  = False
-    dm_test                     = False
-    summarise_labels            = False
-    load_query                  = False
+    downsample                  = True
+    dm_test                     = True
+    summarise_labels            = True
+    load_query                  = True
 
     ######## LOAD DATA ########
     print("Loading data from npzs...")
@@ -144,30 +144,37 @@ if __name__ == "__main__":
     preds_gp = np.load('data/plain_gp_simplelabels_querypreds.npy')
 
     # f = pf.fit_transform(features_sn)
-    # lr = LogisticRegression()
-    # lr.fit(f, labels)
-    # preds_lr = lr.predict(q)
+    f = features_sn
+    q = query_sn
+
+    lr = LogisticRegression()
+    lr.fit(f, labels_simple)
+    preds_lr = lr.predict(q)
+    res1 = benchmarks.dm_vs_det_stats(preds_dm, preds_lr)
     # vis.show_map(qp_locations, preds_lr, display=False, vmin=1, vmax=24, filename='full_predictions_logisticregression_polyspace2')
 
-    # rf = RandomForestClassifier()
-    # rf.fit(f, labels)
-    # preds_rf = rf.predict(q)
+    rf = RandomForestClassifier()
+    rf.fit(f, labels_simple)
+    preds_rf = rf.predict(q)
+    res2 = benchmarks.dm_vs_det_stats(preds_dm, preds_rf)
     # vis.show_map(qp_locations, preds_rf, display=False, vmin=1, vmax=24, filename='full_predictions_randomforest_polyspace2')
 
-    size = 100
-    train_idx = data.mini_batch_idxs(labels_simple, size, 'even')
-    # train_idx = np.load('data/semi-optimal-1000-subsample.npy')
-    test_idx = np.array(list(set(np.arange(features.shape[0])) - set(train_idx)))
+    res3 = benchmarks.dm_vs_det_stats(preds_dm, preds_gp)
 
-    from ML.gp.revrand_glm import revrand_glm, RGLM
-    rglm = RGLM()
-    print("fitting glm")
-    f = pf.fit_transform(features_sn[train_idx])
-    rglm.fit(f, labels_simple[train_idx])
-    print("predicting glm")
-    q = pf.fit_transform(features_sn[test_idx])
-    pr = rglm.predict(features_sn[test_idx])
-    glm = revrand_glm()
+    # size = 100
+    # train_idx = data.mini_batch_idxs(labels_simple, size, 'even')
+    # # train_idx = np.load('data/semi-optimal-1000-subsample.npy')
+    # test_idx = np.array(list(set(np.arange(features.shape[0])) - set(train_idx)))
+
+    # from ML.gp.revrand_glm import revrand_glm, RGLM
+    # rglm = RGLM()
+    # print("fitting glm")
+    # f = pf.fit_transform(features_sn[train_idx])
+    # rglm.fit(f, labels_simple[train_idx])
+    # print("predicting glm")
+    # q = pf.fit_transform(features_sn[test_idx])
+    # pr = rglm.predict(features_sn[test_idx])
+    # glm = revrand_glm()
 
     ########################################### Product of Experts ###########################################
     if ensemble_testing == True:

@@ -118,58 +118,81 @@ matching labels between the GP,DM3: 2087761/2698170 (77.37692584233017%)
         4 most likely occurrences: 463301
     Argmax of the dm distrs and the deterministic labels had: 649568 matches, i.e. 0.2407439116141681%
 
+### DM4 , with the other using poly features space 2 for features_sn
+*LR
+For mismatches, from 2nd most probable to least probable compared to det_labels:
+    2-th most likely occurrences: 587565    23.022218391052302%
+    3-th most likely occurrences: 463442    18.15877891907459%
+    4-th most likely occurrences: 1501158   58.81900268987311%
+Argmax of the dm distrs and the deterministic labels had: 146005 matches, i.e. 5.411260224522547%
+
+*RF
+For mismatches, from 2nd most probable to least probable compared to det_labels:
+    2-th most likely occurrences: 1389509   60.49202180920257%
+    3-th most likely occurrences: 399720    17.40173756166707%
+    4-th most likely occurrences: 507783    22.106240629130365%
+Argmax of the dm distrs and the deterministic labels had: 401158 matches, i.e. 14.867780755104384%
+
+*GP
+For mismatches, from 2nd most probable to least probable compared to det_labels:
+    2-th most likely occurrences: 822996    32.34209377366476%
+    3-th most likely occurrences: 565519    22.2237635769665%
+    4-th most likely occurrences: 1156144   45.43414264936874%
+Argmax of the dm distrs and the deterministic labels had: 153511 matches, i.e. 5.68944877453978%
+
+
 ## Polynomial space 2
 * DM is the fixed cluster downsampled version
 * DM vs LR
-For mismatches, from 2nd most probable to least probable compared to det_labels:
-        0 most likely occurrences: 61312        2.302184206277387%
-        1 most likely occurrences: 210390       7.899865200265845%
-        2 most likely occurrences: 24302        0.9125078382853775%
-        3 most likely occurrences: 40482        1.5200453587963398%
-        4 most likely occurrences: 68996        2.5907082055113944%
-        5 most likely occurrences: 91085        3.420120831627998%
-        6 most likely occurrences: 97134        3.647252751378975%
-        7 most likely occurrences: 104892       3.938555352375517%
-        8 most likely occurrences: 35636        1.3380844920227846%
-        9 most likely occurrences: 46322        1.73932960600178%
-        10 most likely occurrences: 42616       1.6001742258402456%
-        11 most likely occurrences: 52836       1.9839216584497654%
-        12 most likely occurrences: 83136       3.1216464341903194%
-        13 most likely occurrences: 114827      4.311601413332031%
-        14 most likely occurrences: 161838      6.076802054663357%
-        15 most likely occurrences: 236639      8.885480303843858%
-        16 most likely occurrences: 194856      7.316584122168361%
-        17 most likely occurrences: 197219      7.405311635207138%
-        18 most likely occurrences: 187315      7.03342958309709%
-        19 most likely occurrences: 128548      4.8268067482474155%
-        20 most likely occurrences: 84892       3.187581903041818%
-        21 most likely occurrences: 87092       3.270188982468525%
-        22 most likely occurrences: 310845      11.67181709290668%
-Argmax of the dm distrs and the deterministic labels had: 34960 matches, i.e. 0.012956930067416064%
+    For mismatches, from 2nd most probable to least probable compared to det_labels:
+    0 most likely occurrences: 61312        2.302184206277387%
+    1 most likely occurrences: 210390       7.899865200265845%
+    2 most likely occurrences: 24302        0.9125078382853775%
+    3 most likely occurrences: 40482        1.5200453587963398%
+    4 most likely occurrences: 68996        2.5907082055113944%
+    5 most likely occurrences: 91085        3.420120831627998%
+    6 most likely occurrences: 97134        3.647252751378975%
+    7 most likely occurrences: 104892       3.938555352375517%
+    8 most likely occurrences: 35636        1.3380844920227846%
+    9 most likely occurrences: 46322        1.73932960600178%
+    10 most likely occurrences: 42616       1.6001742258402456%
+    11 most likely occurrences: 52836       1.9839216584497654%
+    12 most likely occurrences: 83136       3.1216464341903194%
+    13 most likely occurrences: 114827      4.311601413332031%
+    14 most likely occurrences: 161838      6.076802054663357%
+    15 most likely occurrences: 236639      8.885480303843858%
+    16 most likely occurrences: 194856      7.316584122168361%
+    17 most likely occurrences: 197219      7.405311635207138%
+    18 most likely occurrences: 187315      7.03342958309709%
+    19 most likely occurrences: 128548      4.8268067482474155%
+    20 most likely occurrences: 84892       3.187581903041818%
+    21 most likely occurrences: 87092       3.270188982468525%
+    22 most likely occurrences: 310845      11.67181709290668%
+    Argmax of the dm distrs and the deterministic labels had: 34960 matches, i.e. 0.012956930067416064%
 * DM vs RF
-For mismatches, from 2nd most probable to least probable compared to det_labels:
-        0 most likely occurrences: 104601       4.034593803987729%
-        1 most likely occurrences: 39866        1.5376823987320851%
-        2 most likely occurrences: 24491        0.9446490650516103%
-        3 most likely occurrences: 34050        1.3133518706874907%
-        4 most likely occurrences: 75513        2.9126325935748745%
-        5 most likely occurrences: 112208       4.328005483292275%
-        6 most likely occurrences: 198469       7.655202126974318%
-        7 most likely occurrences: 198057       7.639310762195368%
-        8 most likely occurrences: 36177        1.3953929699225065%
-        9 most likely occurrences: 34543        1.332367508639001%
-        10 most likely occurrences: 33903       1.3076818934483991%
-        11 most likely occurrences: 37141       1.4325756778033505%
-        12 most likely occurrences: 82242       3.1721786945398116%
-        13 most likely occurrences: 162597      6.271573395541083%
-        14 most likely occurrences: 193475      7.462577185940153%
-        15 most likely occurrences: 234039      9.02718233373949%
-        16 most likely occurrences: 157836      6.087935561287247%
-        17 most likely occurrences: 104497      4.030582391519257%
-        18 most likely occurrences: 124297      4.794293611478503%
-        19 most likely occurrences: 201107      7.756953147088081%
-        20 most likely occurrences: 218005      8.408730530667441%
-        21 most likely occurrences: 93214       3.595382709963693%
-        22 most likely occurrences: 92275       3.559164283926232%
-Argmax of the dm distrs and the deterministic labels had: 105567 matches, i.e. 0.03912540722044942%
+    For mismatches, from 2nd most probable to least probable compared to det_labels:
+    0 most likely occurrences: 104601       4.034593803987729%
+    1 most likely occurrences: 39866        1.5376823987320851%
+    2 most likely occurrences: 24491        0.9446490650516103%
+    3 most likely occurrences: 34050        1.3133518706874907%
+    4 most likely occurrences: 75513        2.9126325935748745%
+    5 most likely occurrences: 112208       4.328005483292275%
+    6 most likely occurrences: 198469       7.655202126974318%
+    7 most likely occurrences: 198057       7.639310762195368%
+    8 most likely occurrences: 36177        1.3953929699225065%
+    9 most likely occurrences: 34543        1.332367508639001%
+    10 most likely occurrences: 33903       1.3076818934483991%
+    11 most likely occurrences: 37141       1.4325756778033505%
+    12 most likely occurrences: 82242       3.1721786945398116%
+    13 most likely occurrences: 162597      6.271573395541083%
+    14 most likely occurrences: 193475      7.462577185940153%
+    15 most likely occurrences: 234039      9.02718233373949%
+    16 most likely occurrences: 157836      6.087935561287247%
+    17 most likely occurrences: 104497      4.030582391519257%
+    18 most likely occurrences: 124297      4.794293611478503%
+    19 most likely occurrences: 201107      7.756953147088081%
+    20 most likely occurrences: 218005      8.408730530667441%
+    21 most likely occurrences: 93214       3.595382709963693%
+    22 most likely occurrences: 92275       3.559164283926232%
+    Argmax of the dm distrs and the deterministic labels had: 105567 matches, i.e. 0.03912540722044942%
 
