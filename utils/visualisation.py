@@ -273,6 +273,15 @@ def multi_label_histogram(multi_labels):
     pdb.set_trace()
     plt.savefig('label_occurrences_full24classes.pdf')
 
+def histogram(freqs):
+    """
+    Plots a histogram 
+    """
+    plt.hist(freqs, bins=freqs.shape[0], weights=freqs, bottom=1)
+    for i, txt in enumerate(freqs):
+        plt.annotate(str(txt), (i, 0), xytext=(i,-300), va='top', ha='center')
+    plt.savefig('freqs.pdf')
+
 def plot_coords(locations, filename='tmp.pdf', display=True):
     """
     Plots a given set of x,y coordinates.

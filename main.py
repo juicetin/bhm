@@ -28,6 +28,7 @@ from sklearn.preprocessing import PolynomialFeatures
 
 # Import our ML algorithms
 from ML.validation import cross_validate_algo
+from ML.validation import cross_validate_dm_argmax
 from ML.knn import kNN
 from ML.random_forests import rf
 from ML.logistic_regression import lr
@@ -68,16 +69,16 @@ if __name__ == "__main__":
     ensemble_testing            = False
     downsampled_param_search    = False
     downsample                  = True
-    dm_test                     = True
-    summarise_labels            = True
-    load_query                  = True
+    dm_test                     = False
+    summarise_labels            = True 
+    load_query                  = False
 
     ######## LOAD DATA ########
     print("Loading data from npzs...")
     labels, labelcounts, bath_locations, features = data.load_training_data()
-    multi_locations, multi_features, multi_labels = data.load_multi_label_data()
+    multi_locations, multi_features, multi_labels_lists = data.load_multi_label_data()
     if summarise_labels == True:
-        multi_labels = data.summarised_labels(multi_labels)
+        multi_labels = data.summarised_labels(multi_labels_lists)
     multi_labels = data.multi_label_counts(multi_labels, zero_indexed=False)
 
     ######### FEATURES ##########
@@ -127,8 +128,8 @@ if __name__ == "__main__":
         query_sn = scale(normalize(query))
 
     pf = PolynomialFeatures(2)
+    f = pf.fit_transform(red_features)
     if dm_test == True:
-        f = pf.fit_transform(red_features)
         q = pf.fit_transform(query_sn)
         dm = DirichletMultinomialRegression()
         print("Fitting DM regressor...")
@@ -138,43 +139,48 @@ if __name__ == "__main__":
         # vis.show_map(qp_locations, preds_dm.argmax(axis=1), display=False, filename='full_predictions_dirmul_simplelabels_2016-09-11')
         # vis.show_map(qp_locations, preds_dm.argmax(axis=1), display=False, filename='full_predictions_dirmul_polyspace2', vmin=1, vmax=24)
 
+        # f = pf.fit_transform(features_sn)
+        f = features_sn
+        q = query_sn
+
+        # lr = LogisticRegression()
+        # lr.fit(f, labels_simple)
+        # preds_lr = lr.predict(q)
+        # res1 = benchmarks.dm_vs_det_stats(preds_dm, preds_lr)
+        # # vis.show_map(qp_locations, preds_lr, display=False, vmin=1, vmax=24, filename='full_predictions_logisticregression_polyspace2')
+
+        # rf = RandomForestClassifier()
+        # rf.fit(f, labels_simple)
+        # preds_rf = rf.predict(q)
+        # res2 = benchmarks.dm_vs_det_stats(preds_dm, preds_rf)
+        # # vis.show_map(qp_locations, preds_rf, display=False, vmin=1, vmax=24, filename='full_predictions_randomforest_polyspace2')
+
+        # res3 = benchmarks.dm_vs_det_stats(preds_dm, preds_gp)
+
     # labels = np.array(labels)
     labels_simple = data.summarised_labels(labels)
 
     preds_gp = np.load('data/plain_gp_simplelabels_querypreds.npy')
 
-    # f = pf.fit_transform(features_sn)
-    f = features_sn
-    q = query_sn
-
-    lr = LogisticRegression()
-    lr.fit(f, labels_simple)
-    preds_lr = lr.predict(q)
-    res1 = benchmarks.dm_vs_det_stats(preds_dm, preds_lr)
-    # vis.show_map(qp_locations, preds_lr, display=False, vmin=1, vmax=24, filename='full_predictions_logisticregression_polyspace2')
-
-    rf = RandomForestClassifier()
-    rf.fit(f, labels_simple)
-    preds_rf = rf.predict(q)
-    res2 = benchmarks.dm_vs_det_stats(preds_dm, preds_rf)
-    # vis.show_map(qp_locations, preds_rf, display=False, vmin=1, vmax=24, filename='full_predictions_randomforest_polyspace2')
-
-    res3 = benchmarks.dm_vs_det_stats(preds_dm, preds_gp)
-
     # size = 100
     # train_idx = data.mini_batch_idxs(labels_simple, size, 'even')
-    # # train_idx = np.load('data/semi-optimal-1000-subsample.npy')
-    # test_idx = np.array(list(set(np.arange(features.shape[0])) - set(train_idx)))
+    train_idx = np.load('data/semi-optimal-1000-subsample.npy')
+    test_idx = np.array(list(set(np.arange(features.shape[0])) - set(train_idx)))
 
     # from ML.gp.revrand_glm import revrand_glm, RGLM
-    # rglm = RGLM()
+    # rglm = RGLM(nbases=2000)
     # print("fitting glm")
-    # f = pf.fit_transform(features_sn[train_idx])
-    # rglm.fit(f, labels_simple[train_idx])
+    # # f = pf.fit_transform(features_sn[train_idx])
+    # rglm.fit(f[train_idx], labels_simple[train_idx])
     # print("predicting glm")
-    # q = pf.fit_transform(features_sn[test_idx])
-    # pr = rglm.predict(features_sn[test_idx])
+    # q = pf.fit_transform(f[test_idx])
+    # pr = rglm.predict(f[test_idx])
     # glm = revrand_glm()
+
+    # res = cross_validate_dm_argmax(f, red_mlabels, DirichletMultinomialRegression())
+
+    freqs = np.bincount(np.concatenate(multi_labels_lists))[1:]
+    vis.histogram(freqs)
 
     ########################################### Product of Experts ###########################################
     if ensemble_testing == True:

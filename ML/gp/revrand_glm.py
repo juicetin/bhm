@@ -10,7 +10,7 @@ from revrand.optimize import AdaDelta, Adam
 # check what nbases
 # lengthscale 10 is quite high -lower?
 # try diff polynomial fns
-def revrand_glm(nbases=50, lenscale=10., regulariser=1, maxiter=3000, batch_size=10, num_features=11):
+def revrand_glm(nbases=50, lenscale=1., regulariser=1, maxiter=3000, batch_size=10, num_features=11):
     # Algorith settings
     updater = Adam()
 
@@ -35,11 +35,15 @@ def revrand_glm(nbases=50, lenscale=10., regulariser=1, maxiter=3000, batch_size
 
 class RGLM:
 
+    def __init__(self, nbases=500):
+        self.nbases=nbases
+
     def fit(self, X, y):
         uniq_y = np.unique(y)
-        glms = np.full(uniq_y.shape, revrand_glm(num_features=X.shape[1]), dtype=np.object)
-        for i in range(uniq_y.shape[0]):
-            glms[i].fit(X, np.array([1 if label == uniq_y[i] else 0 for label in y]))
+        glms = np.full(uniq_y.shape, revrand_glm(nbases=self.nbases, num_features=X.shape[1]), dtype=np.object)
+        for idx, cur_y in enumerate(uniq_y):
+            print('Checking for label: {}'.format(cur_y))
+            glms[idx].fit(X, np.array([1 if label == cur_y else 0 for label in y]))
 
         self.glms = glms
 

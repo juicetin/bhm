@@ -386,7 +386,7 @@ def other_algos_bench(features, labels):
             LogisticRegression(),                                           
             # LogisticRegression(multi_class='multinomial', solver='lbfgs'), 
             RandomForestClassifier(),                                       
-            # SVC()
+            SVC()
             ]
 
     # X_train, X_test, y_train, y_test = train_test_split(features_sn, labels_simple, test_size = 0.1)

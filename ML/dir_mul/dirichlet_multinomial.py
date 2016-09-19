@@ -8,7 +8,7 @@ from scipy.optimize import minimize
 import pdb
 
 class DirichletMultinomialRegression:
-    def __init__(self, reg=5):
+    def __init__(self, reg=1):
         self.phi = reg # Variance of the weights - regulariser
 
     def fit(self, X, C):
@@ -25,6 +25,7 @@ class DirichletMultinomialRegression:
         
         self.res = res
         self.W = res['x'].reshape(self.K, self.D)
+        return self
 
     def predict(self, x, counts=1):
         alpha = self.dm_alpha(x, self.W)

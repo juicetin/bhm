@@ -1,16 +1,16 @@
 # Algorithms and real dataset
-|      Algorithm      |       10F-CV F1      |      10F-CV ACC     |                 Parameters                |  Whitening  |
-|:-------------------:|:--------------------:|:-------------------:|:-----------------------------------------:|:-----------:|
-|         KNN         |  0.04823190144355188 |  0.1419224345208597 |                  k_n = 5                  |             |
-| Logistic Regression | 0.009003066060487903 | 0.17119185801075565 |                                           |             |
-| Logistic Regression | 0.009062553606767254 |  0.1711906099150194 | multi_class='multinomial', solver='lbfgs' |             |
-|    Random Forest    |  0.04959629830094382 | 0.15240680579263258 |                                           |             |
-|         SVC         |  0.00890036952350639 | 0.17119127067158563 |                    OvA                    |             |
-|         KNN         |  0.03527194333788781 | 0.11398630765559899 |                  k_n = 5                  | norm, scale |
-| Logistic Regression | 0.009056450222784309 | 0.17112967347613017 |                                           | norm, scale |
-| Logistic Regression | 0.009149911609957848 | 0.17094869959436892 | multi_class='multinomial', solver='lbfgs' | norm, scale |
-|    Random Forest    |  0.05174641763593827 | 0.15543637464897303 |                                           | norm, scale |
-|         SVC         | 0.009094924719285665 |  0.1711300405631114 |                    OvA                    | norm, scale |
+|      Algorithm      |       10F-CV F1      |      10F-CV ACC     | Parameters | Whitening |      Data     |
+|:-------------------:|:--------------------:|:-------------------:|:----------:|:---------:|:-------------:|
+|         KNN         |  0.7180212553324016  |  0.8752880347998457 |   k_n = 5  |           | simple labels |
+| Logistic Regression |  0.21221134330881872 |  0.7374253253308372 |            |           | simple labels |
+|    Random Forest    |  0.8103659316744121  |  0.9117076519281244 |            |           | simple labels |
+|         SVC         |  0.21221261743619468 |  0.7374255088743278 |     OvA    |           | simple labels |
+|          DM         |   0.287405310254214  |  0.757925654489819  |            |           | simple labels |
+|         KNN         |  0.4711662374785644  |  0.6510716003156948 |   k_n = 5  |           |  full labels  |
+| Logistic Regression |  0.06457891531653175 | 0.25912130389295746 |            |           |  full labels  |
+|    Random Forest    |  0.6075895500970125  |  0.7263355175008718 |            |           |  full labels  |
+|         SVC         | 0.012413092166172946 | 0.16549499843988033 |     OvA    |           |  full labels  |
+|          DM         |  0.13802716811804644 | 0.37856057852908254 |            |           |  full labels  |
 
 * norm - normaliz(s)e
 * scale - zero mean, 1 variance
