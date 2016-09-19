@@ -180,7 +180,12 @@ if __name__ == "__main__":
     # res = cross_validate_dm_argmax(f, red_mlabels, DirichletMultinomialRegression())
 
     freqs = np.bincount(np.concatenate(multi_labels_lists))[1:]
-    vis.histogram(freqs)
+    vis.histogram(freqs, title='Full Multi-labels Histogram', filename='hist_full_multi_labels.pdf')
+
+    vis.clear_plt()
+
+    freqs = np.bincount(labels)[1:]
+    vis.histogram(freqs, title='Full Labels Histogram', filename='hist_full_labels.pdf')
 
     ########################################### Product of Experts ###########################################
     if ensemble_testing == True:
