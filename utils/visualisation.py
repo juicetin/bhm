@@ -273,13 +273,14 @@ def multi_label_histogram(multi_labels):
     pdb.set_trace()
     plt.savefig('label_occurrences_full24classes.pdf')
 
-def histogram(freqs, title=None, filename='freqs.pdf'):
+def histogram(freqs, title=None, filename='freqs.pdf', offset=0):
     """
     Plots a histogram 
     """
-    bins = np.arange(1, freqs.shape[0]+1)
-    plt.hist(bins, bins=bins, weights=freqs)
-    plt.xticks(bins)
+    bins = np.arange(offset, freqs.shape[0]+offset)
+    plt.hist(bins, bins=bins - .5, weights=freqs, lw=0)
+    plt.xticks(bins[:-1])
+
     if title != None:
         plt.title(title)
     # for i, txt in enumerate(freqs):
