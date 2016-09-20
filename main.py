@@ -129,8 +129,9 @@ if __name__ == "__main__":
 
     pf = PolynomialFeatures(2)
     f = pf.fit_transform(red_features)
+    q = pf.fit_transform(query_sn)
+
     if dm_test == True:
-        q = pf.fit_transform(query_sn)
         dm = DirichletMultinomialRegression()
         print("Fitting DM regressor...")
         dm.fit(f, red_mlabels)
@@ -143,19 +144,19 @@ if __name__ == "__main__":
         f = features_sn
         q = query_sn
 
-        # lr = LogisticRegression()
-        # lr.fit(f, labels_simple)
-        # preds_lr = lr.predict(q)
-        # res1 = benchmarks.dm_vs_det_stats(preds_dm, preds_lr)
-        # # vis.show_map(qp_locations, preds_lr, display=False, vmin=1, vmax=24, filename='full_predictions_logisticregression_polyspace2')
-
-        # rf = RandomForestClassifier()
-        # rf.fit(f, labels_simple)
-        # preds_rf = rf.predict(q)
-        # res2 = benchmarks.dm_vs_det_stats(preds_dm, preds_rf)
-        # # vis.show_map(qp_locations, preds_rf, display=False, vmin=1, vmax=24, filename='full_predictions_randomforest_polyspace2')
-
         # res3 = benchmarks.dm_vs_det_stats(preds_dm, preds_gp)
+
+        lr = LogisticRegression()
+        lr.fit(f, labels_simple)
+        preds_lr = lr.predict(q)
+        # res1 = benchmarks.dm_vs_det_stats(preds_dm, preds_lr)
+        vis.show_map(qp_locations, preds_lr, display=False, vmin=1, vmax=24, filename='full_predictions_logisticregression_polyspace2')
+
+        rf = RandomForestClassifier()
+        rf.fit(f, labels_simple)
+        preds_rf = rf.predict(q)
+        # res2 = benchmarks.dm_vs_det_stats(preds_dm, preds_rf)
+        vis.show_map(qp_locations, preds_rf, display=False, vmin=1, vmax=24, filename='full_predictions_randomforest_polyspace2')
 
     # labels = np.array(labels)
     labels_simple = data.summarised_labels(labels)
