@@ -278,7 +278,7 @@ def histogram(freqs, title=None, filename='freqs.pdf', offset=0):
     Plots a histogram 
     """
     bins = np.arange(offset, freqs.shape[0]+offset)
-    plt.hist(bins, bins=bins - .5, weights=freqs, lw=0)
+    plt.hist(bins, bins=bins - .5, weights=freqs, lw=0, color=['blue'])
     plt.xticks(bins[:-1])
 
     if title != None:

@@ -192,6 +192,9 @@ if __name__ == "__main__":
     freqs = np.concatenate((np.bincount(labels_simple), [0]))
     vis.histogram(freqs, title='Simplified Labels Histogram', filename='hist_simple_labels.pdf')
 
+    foo = np.concatenate((np.bincount(data.summarised_labels(np.concatenate(multi_labels_lists))), [0]))
+    vis.histogram(foo, title='Simplified Multi-labels Histogram', filename='hist_simple_multi_labels.pdf') 
+
     ########################################### Product of Experts ###########################################
     if ensemble_testing == True:
 
