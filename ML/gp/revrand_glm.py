@@ -5,12 +5,16 @@ from revrand.basis_functions import RandomMatern52, BiasBasis, RandomRBF
 from revrand.likelihoods import Bernoulli
 from revrand.optimize import AdaDelta, Adam
 
+import logging
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
+
 # TODO
 # bump up nbases
 # check what nbases
 # lengthscale 10 is quite high -lower?
 # try diff polynomial fns
-def revrand_glm(nbases=50, lenscale=1., regulariser=1, maxiter=3000, batch_size=10, num_features=11):
+def revrand_glm(nbases=50, lenscale=1., regulariser=1, maxiter=5, batch_size=10, num_features=11):
     # Algorith settings
     updater = Adam()
 
@@ -27,8 +31,8 @@ def revrand_glm(nbases=50, lenscale=1., regulariser=1, maxiter=3000, batch_size=
             basis,
             regulariser=regulariser_init,
             maxiter=maxiter,
-            batch_size=batch_size,
-            updater=updater
+            # batch_size=batch_size,
+            # updater=updater
             )
     # glm.fit(features, labels)
     return glm
