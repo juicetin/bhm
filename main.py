@@ -66,24 +66,25 @@ def info(type, value, tb):
 if __name__ == "__main__":
     sys.excepthook = info
 
-    no_coord_features           = True # Keeping coords as features improves performance :/
-    ensemble_testing            = False
-    downsampled_param_search    = False
-    downsample                  = True
-    dm_test                     = False
-    summarise_labels            = False
-    load_query                  = True
+    config = {}
+    config['no_coord_features']          = False # Keeping coords as features improves performance :/
+    config['ensemble_testing']           = False
+    config['downsampled_param_search']   = False
+    config['downsample']                 = True
+    config['dm_test']                    = False
+    config['summarise_labels']           = False
+    config['load_query']                 = True
 
     ######## LOAD DATA ########
     print("Loading data from npzs...")
     labels, labelcounts, bath_locations, features = data.load_training_data()
     multi_locations, multi_features, multi_labels_lists = data.load_multi_label_data()
-    if summarise_labels == True:
+    if config['summarise_labels'] == True:
         multi_labels = data.summarised_labels(multi_labels_lists)
     multi_labels = data_transform.multi_label_counts(multi_labels_lists, zero_indexed=False)
 
     # Don't load full dataset without sufficient free memory
-    if load_query and psutil.virtual_memory().available >= 2e9:
+    if config['load_query'] and psutil.virtual_memory().available >= 2e9:
         qp_locations, validQueryID, x_bins, query, y_bins = data.load_test_data()
 
         print("Filter down to non-nan queries and locations...")
@@ -98,7 +99,7 @@ if __name__ == "__main__":
     features = np.array(features)
 
     # Remove long/lat coordinates
-    if no_coord_features:
+    if config['no_coord_features']:
         features = features[:,2:]
         try:
             query_sn = query_sn[:,2:]
@@ -111,11 +112,11 @@ if __name__ == "__main__":
     # features_s = scale(features) # MARGINALLY better than normalize(scale)
     
     ########### DOWNSAMPLING ##########
-    if downsample==True:
+    if config['downsample'] == True:
         red_coords, red_features, red_mlabels, ml_argsort = data_transform.downsample(bath_locations, features_sn, multi_labels)
 
     ######## DOWNSAMPLING PARAM SEARCH #########
-    if downsampled_param_search == True:
+    if config['downsampled_param_search'] == True:
         mlabels_max = np.argmax(red_mlabels, axis=1)
         mlabels_max_bins = np.bincount(mlabels_max)
         errors = np.zeros(red_mlabels.shape[0])
@@ -136,7 +137,7 @@ if __name__ == "__main__":
     # labels = np.array(labels)
     labels_simple = data.summarised_labels(labels)
 
-    if dm_test == True:
+    if config['dm_test'] == True:
         dm = DirichletMultinomialRegression()
         print("Fitting DM regressor...")
         dm.fit(f, red_mlabels)
@@ -166,10 +167,10 @@ if __name__ == "__main__":
     rf.fit(f, labels)
     preds_rf = rf.predict(q)
     # res2 = benchmarks.dm_vs_det_stats(preds_dm, preds_rf)
-    vis.show_map(qp_locations, preds_rf, display=False, vmin=1, vmax=24, filename='full_predictions_randomforest_polyspace2')
+    vis.show_map(qp_locations, preds_rf, display=False, vmin=1, vmax=24, filename='full_predictions_randomforest')
     ###########################
 
-    vis.show_map(bath_locations, labels, display=False, vmin=1, vmax=24, filename='original_map_plot')
+    # vis.show_map(bath_locations, labels, display=False, vmin=1, vmax=24, filename='original_map_plot')
 
     preds_gp = np.load('data/plain_gp_simplelabels_querypreds.npy')
 
@@ -207,7 +208,7 @@ if __name__ == "__main__":
     # vis.histogram(foo, title='Simplified Multi-labels Histogram', filename='hist_simple_multi_labels.pdf') 
 
     ########################################### Product of Experts ###########################################
-    if ensemble_testing == True:
+    if config['ensemble_testing'] == True:
         benchmarks.GP_ensemble_tests(features_sn, labels_simple, train_idx)
 
     #########################################################################################################
