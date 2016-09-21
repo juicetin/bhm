@@ -46,6 +46,7 @@ from ML.dir_mul.nicta.dirmultreg import dirmultreg_learn, dirmultreg_predict
 import utils
 import utils.visualisation as vis
 import utils.load_data as data
+import utils.data_transform as data_transform
 import utils.benchmarks as benchmarks
 import utils.gpy_benchmark as gpy_benchmarks
 
@@ -65,13 +66,13 @@ def info(type, value, tb):
 if __name__ == "__main__":
     sys.excepthook = info
 
-    no_coord_features           = False # Keeping coords as features improves performance :/
+    no_coord_features           = True # Keeping coords as features improves performance :/
     ensemble_testing            = False
     downsampled_param_search    = False
     downsample                  = True
     dm_test                     = False
-    summarise_labels            = True 
-    load_query                  = False
+    summarise_labels            = False
+    load_query                  = True
 
     ######## LOAD DATA ########
     print("Loading data from npzs...")
@@ -79,7 +80,18 @@ if __name__ == "__main__":
     multi_locations, multi_features, multi_labels_lists = data.load_multi_label_data()
     if summarise_labels == True:
         multi_labels = data.summarised_labels(multi_labels_lists)
-    multi_labels = data.multi_label_counts(multi_labels, zero_indexed=False)
+    multi_labels = data_transform.multi_label_counts(multi_labels_lists, zero_indexed=False)
+
+    # Don't load full dataset without sufficient free memory
+    if load_query and psutil.virtual_memory().available >= 2e9:
+        qp_locations, validQueryID, x_bins, query, y_bins = data.load_test_data()
+
+        print("Filter down to non-nan queries and locations...")
+        valid_query_idxs = np.where( (~np.isnan(query).any(axis=1) & np.isfinite(query).all(axis=1)) )[0]
+        query = query[valid_query_idxs]
+        qp_locations = qp_locations[valid_query_idxs]
+        infinite_idx = np.where(~np.isfinite(query).all(axis=1))[0]
+        query_sn = scale(normalize(query))
 
     ######### FEATURES ##########
     print("Loading features...")
@@ -88,6 +100,10 @@ if __name__ == "__main__":
     # Remove long/lat coordinates
     if no_coord_features:
         features = features[:,2:]
+        try:
+            query_sn = query_sn[:,2:]
+        except NameError:
+            print("query points weren't loaded into memory")
 
     # NOTE _s suffix kept here for clarity
     print("Scaling features...")
@@ -96,10 +112,7 @@ if __name__ == "__main__":
     
     ########### DOWNSAMPLING ##########
     if downsample==True:
-        from utils.downsample import downsample_spatial_data
-        print("Downsampling data...")
-        red_coords, red_features, red_mlabels = downsample_spatial_data(bath_locations, features_sn, multi_labels, method='fixed-grid')
-        ml_argsort = np.argsort(red_mlabels.sum(axis=1))
+        red_coords, red_features, red_mlabels, ml_argsort = data_transform.downsample(bath_locations, features_sn, multi_labels)
 
     ######## DOWNSAMPLING PARAM SEARCH #########
     if downsampled_param_search == True:
@@ -116,20 +129,12 @@ if __name__ == "__main__":
             errors[i-1] = labels_error
         print()
     
-    # Don't load full dataset without sufficient free memory
-    if load_query and psutil.virtual_memory().available >= 2e9:
-        qp_locations, validQueryID, x_bins, query, y_bins = data.load_test_data()
-
-        print("Filter down to non-nan queries and locations...")
-        valid_query_idxs = np.where( (~np.isnan(query).any(axis=1) & np.isfinite(query).all(axis=1)) )[0]
-        query = query[valid_query_idxs]
-        qp_locations = qp_locations[valid_query_idxs]
-        infinite_idx = np.where(~np.isfinite(query).all(axis=1))[0]
-        query_sn = scale(normalize(query))
-
     pf = PolynomialFeatures(2)
     f = pf.fit_transform(red_features)
     q = pf.fit_transform(query_sn)
+
+    # labels = np.array(labels)
+    labels_simple = data.summarised_labels(labels)
 
     if dm_test == True:
         dm = DirichletMultinomialRegression()
@@ -146,20 +151,25 @@ if __name__ == "__main__":
 
         # res3 = benchmarks.dm_vs_det_stats(preds_dm, preds_gp)
 
-        lr = LogisticRegression()
-        lr.fit(f, labels_simple)
-        preds_lr = lr.predict(q)
-        # res1 = benchmarks.dm_vs_det_stats(preds_dm, preds_lr)
-        vis.show_map(qp_locations, preds_lr, display=False, vmin=1, vmax=24, filename='full_predictions_logisticregression_polyspace2')
+    ######## PLOT LR/RF ########
+    # f = pf.fit_transform(features_sn)
+    f = features_sn
+    q = query_sn
 
-        rf = RandomForestClassifier()
-        rf.fit(f, labels_simple)
-        preds_rf = rf.predict(q)
-        # res2 = benchmarks.dm_vs_det_stats(preds_dm, preds_rf)
-        vis.show_map(qp_locations, preds_rf, display=False, vmin=1, vmax=24, filename='full_predictions_randomforest_polyspace2')
+    # lr = LogisticRegression()
+    # lr.fit(f, labels)
+    # preds_lr = lr.predict(q)
+    # # res1 = benchmarks.dm_vs_det_stats(preds_dm, preds_lr)
+    # vis.show_map(qp_locations, preds_lr, display=False, vmin=1, vmax=24, filename='full_predictions_logisticregression_polyspace2')
 
-    # labels = np.array(labels)
-    labels_simple = data.summarised_labels(labels)
+    rf = RandomForestClassifier()
+    rf.fit(f, labels)
+    preds_rf = rf.predict(q)
+    # res2 = benchmarks.dm_vs_det_stats(preds_dm, preds_rf)
+    vis.show_map(qp_locations, preds_rf, display=False, vmin=1, vmax=24, filename='full_predictions_randomforest_polyspace2')
+    ###########################
+
+    vis.show_map(bath_locations, labels, display=False, vmin=1, vmax=24, filename='original_map_plot')
 
     preds_gp = np.load('data/plain_gp_simplelabels_querypreds.npy')
 
@@ -180,67 +190,25 @@ if __name__ == "__main__":
 
     # res = cross_validate_dm_argmax(f, red_mlabels, DirichletMultinomialRegression())
 
-    freqs = np.concatenate((np.bincount(np.concatenate(multi_labels_lists))[1:], [0]))
-    vis.histogram(freqs, title='Full Multi-labels Histogram', filename='hist_full_multi_labels.pdf', offset=1)
+    # freqs = np.concatenate((np.bincount(np.concatenate(multi_labels_lists))[1:], [0]))
+    # vis.histogram(freqs, title='Full Multi-labels Histogram', filename='hist_full_multi_labels.pdf', offset=1)
 
-    vis.clear_plt()
+    # vis.clear_plt()
 
-    freqs = np.concatenate((np.bincount(labels)[1:], [0]))
-    vis.histogram(freqs, title='Full Labels Histogram', filename='hist_full_labels.pdf', offset=1)
+    # freqs = np.concatenate((np.bincount(labels)[1:], [0]))
+    # vis.histogram(freqs, title='Full Labels Histogram', filename='hist_full_labels.pdf', offset=1)
 
-    vis.clear_plt()
+    # vis.clear_plt()
 
-    freqs = np.concatenate((np.bincount(labels_simple), [0]))
-    vis.histogram(freqs, title='Simplified Labels Histogram', filename='hist_simple_labels.pdf')
+    # freqs = np.concatenate((np.bincount(labels_simple), [0]))
+    # vis.histogram(freqs, title='Simplified Labels Histogram', filename='hist_simple_labels.pdf')
 
-    foo = np.concatenate((np.bincount(data.summarised_labels(np.concatenate(multi_labels_lists))), [0]))
-    vis.histogram(foo, title='Simplified Multi-labels Histogram', filename='hist_simple_multi_labels.pdf') 
+    # foo = np.concatenate((np.bincount(data.summarised_labels(np.concatenate(multi_labels_lists))), [0]))
+    # vis.histogram(foo, title='Simplified Multi-labels Histogram', filename='hist_simple_multi_labels.pdf') 
 
     ########################################### Product of Experts ###########################################
     if ensemble_testing == True:
-
-        gp = GaussianProcess()
-        gp.fit(features_sn[train_idx], labels_simple[train_idx])
-
-        gp = GaussianProcess(classification_type='OvR')
-        gp_stats = benchmarks.testGP(gp, features_sn, labels_simple, train_idx, n_iter=1)
-        print("normal GP: {} \n\taverages: {} {}".format( gp_stats, np.average(gp_stats[0]), np.average(gp_stats[1])))
-
-        n_iter=1
-        gp1 = PoGPE(200)
-        gp1_stats = benchmarks.testGP(gp1, features_sn, labels_simple, train_idx, n_iter=n_iter)
-        print("PoE: {} \n\taverages:{} {}".format(gp1_stats, np.average(gp1_stats[0]), np.average(gp1_stats[1])))
-
-        gp11 = PoGPE(500)
-        gp11_stats = benchmarks.testGP(gp11, features_sn, labels_simple, train_idx, n_iter=1)
-        print("PoE: {} \n\taverages: {} {}".format( gp11_stats, np.average(gp11_stats[0]), np.average(gp11_stats[1])))
-
-        gp12 = PoGPE(1000)
-        gp12_stats = benchmarks.testGP(gp12, features_sn, labels_simple, train_idx, n_iter=1)
-        print("PoE: {} \n\taverages: {} {}".format( gp12_stats, np.average(gp12_stats[0]), np.average(gp12_stats[1])))
-
-        gp2 = GPoGPE(200)
-        gp2_stats = benchmarks.testGP(gp2, features_sn, labels_simple, train_idx, n_iter=n_iter)
-        print("PoGPE: {} \n\taverages: {} {}".format( gp2_stats, np.average(gp2_stats[0]), np.average(gp2_stats[1])))
-
-        gp3 = BCM(200)
-        gp3_stats = benchmarks.testGP(gp3, features_sn, labels_simple, train_idx, n_iter=n_iter)
-        print("BCM: {} \n\taverages: {} {}".format( gp3_stats, np.average(gp3_stats[0]), np.average(gp3_stats[1])))
-
-        gp4 = rBCM(200)
-        gp4_stats = benchmarks.testGP(gp4, features_sn, labels_simple, train_idx, n_iter=5)
-        print("BCM: {} \n\taverages: {} {}".format( gp4_stats, np.average(gp4_stats[0]), np.average(gp4_stats[1])))
-
-        print("PoE: {} \n\taverages:{} {}".format(gp1_stats, np.average(gp1_stats[0]), np.average(gp1_stats[1])))
-        print("PoGPE: {} \n\taverages: {} {}".format( gp2_stats, np.average(gp2_stats[0]), np.average(gp2_stats[1])))
-        print("BCM: {} \n\taverages: {} {}".format( gp3_stats, np.average(gp3_stats[0]), np.average(gp3_stats[1])))
-
-        # GPy benchmarking
-        test_idx = np.array(list(set(np.arange(16502)) - set(train_idx)))
-        preds = gpy_benchmark.gpy_bench(features_sn, labels_simple, train_idx)
-        auroc = helpers.roc_auc_score_multi(labels_simple[test_idx], preds)
-        score = helpers.score(labels_simple[test_idx], np.argmax(preds, axis=0))
-        print(auroc, score)
+        benchmarks.GP_ensemble_tests(features_sn, labels_simple, train_idx)
 
     #########################################################################################################
 

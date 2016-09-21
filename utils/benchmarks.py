@@ -429,3 +429,46 @@ def dm_vs_det_stats(dm_distrs, det_labels):
     print(result_str)
     return result_str
 
+def GP_ensemble_tests(features, labels, train_idx):
+        gp = GaussianProcess()
+        gp.fit(features[train_idx], labels[train_idx])
+
+        gp = GaussianProcess(classification_type='OvR')
+        gp_stats = testGP(gp, features, labels, train_idx, n_iter=1)
+        print("normal GP: {} \n\taverages: {} {}".format( gp_stats, np.average(gp_stats[0]), np.average(gp_stats[1])))
+
+        n_iter=1
+        gp1 = PoGPE(200)
+        gp1_stats = testGP(gp1, features, labels, train_idx, n_iter=n_iter)
+        print("PoE: {} \n\taverages:{} {}".format(gp1_stats, np.average(gp1_stats[0]), np.average(gp1_stats[1])))
+
+        gp11 = PoGPE(500)
+        gp11_stats = testGP(gp11, features, labels, train_idx, n_iter=1)
+        print("PoE: {} \n\taverages: {} {}".format( gp11_stats, np.average(gp11_stats[0]), np.average(gp11_stats[1])))
+
+        gp12 = PoGPE(1000)
+        gp12_stats = testGP(gp12, features, labels, train_idx, n_iter=1)
+        print("PoE: {} \n\taverages: {} {}".format( gp12_stats, np.average(gp12_stats[0]), np.average(gp12_stats[1])))
+
+        gp2 = GPoGPE(200)
+        gp2_stats = testGP(gp2, features, labels, train_idx, n_iter=n_iter)
+        print("PoGPE: {} \n\taverages: {} {}".format( gp2_stats, np.average(gp2_stats[0]), np.average(gp2_stats[1])))
+
+        gp3 = BCM(200)
+        gp3_stats = testGP(gp3, features, labels, train_idx, n_iter=n_iter)
+        print("BCM: {} \n\taverages: {} {}".format( gp3_stats, np.average(gp3_stats[0]), np.average(gp3_stats[1])))
+
+        gp4 = rBCM(200)
+        gp4_stats = testGP(gp4, features, labels, train_idx, n_iter=5)
+        print("BCM: {} \n\taverages: {} {}".format( gp4_stats, np.average(gp4_stats[0]), np.average(gp4_stats[1])))
+
+        print("PoE: {} \n\taverages:{} {}".format(gp1_stats, np.average(gp1_stats[0]), np.average(gp1_stats[1])))
+        print("PoGPE: {} \n\taverages: {} {}".format( gp2_stats, np.average(gp2_stats[0]), np.average(gp2_stats[1])))
+        print("BCM: {} \n\taverages: {} {}".format( gp3_stats, np.average(gp3_stats[0]), np.average(gp3_stats[1])))
+
+        # GPy benchmarking
+        test_idx = np.array(list(set(np.arange(16502)) - set(train_idx)))
+        preds = gpy_benchmark.gpy_bench(features, labels, train_idx)
+        auroc = helpers.roc_auc_score_multi(labels[test_idx], preds)
+        score = helpers.score(labels[test_idx], np.argmax(preds, axis=0))
+        print(auroc, score)

@@ -99,15 +99,3 @@ def fill(labels, num_uniqs, zero_indexed=False):
     else:
         return list(counts)[1:]
 
-
-def multi_label_counts(labels, zero_indexed=False):
-    """
-    Converts lists of uneven category counts into a bincount of them in a uniform matrix 
-    """
-
-    uniqs = np.unique(np.concatenate(labels, axis=0))
-    num_uniqs = uniqs.shape[0]
-    multi_labels = np.array([fill(labellist, num_uniqs, zero_indexed) for labellist in labels])
-    multi_labels = np.concatenate(multi_labels, axis=0).reshape(labels.shape[0], num_uniqs)
-
-    return multi_labels
