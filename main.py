@@ -67,7 +67,7 @@ if __name__ == "__main__":
     sys.excepthook = info
 
     config = {}
-    config['no_coord_features']          = False # Keeping coords as features improves performance :/
+    config['no_coord_features']          = True # Keeping coords as features improves performance :/
     config['ensemble_testing']           = False
     config['downsampled_param_search']   = False
     config['downsample']                 = True
@@ -163,11 +163,11 @@ if __name__ == "__main__":
     # # res1 = benchmarks.dm_vs_det_stats(preds_dm, preds_lr)
     # vis.show_map(qp_locations, preds_lr, display=False, vmin=1, vmax=24, filename='full_predictions_logisticregression_polyspace2')
 
-    # rf = RandomForestClassifier()
-    # rf.fit(f, labels)
-    # preds_rf = rf.predict(q)
-    # # res2 = benchmarks.dm_vs_det_stats(preds_dm, preds_rf)
-    # vis.show_map(qp_locations, preds_rf, display=False, vmin=1, vmax=24, filename='full_predictions_randomforest')
+    rf = RandomForestClassifier()
+    rf.fit(f, labels)
+    preds_rf = rf.predict(q)
+    # res2 = benchmarks.dm_vs_det_stats(preds_dm, preds_rf)
+    vis.show_map(qp_locations, preds_rf, display=False, vmin=1, vmax=24, filename='full_predictions_randomforest_nocoords')
     ###########################
 
     # vis.show_map(bath_locations, labels, display=False, vmin=1, vmax=24, filename='original_map_plot')
@@ -179,14 +179,14 @@ if __name__ == "__main__":
     train_idx = np.load('data/semi-optimal-1000-subsample.npy')
     test_idx = np.array(list(set(np.arange(features.shape[0])) - set(train_idx)))
 
-    from ML.gp.revrand_glm import revrand_glm, RGLM
-    rglm = RGLM(nbases=2000)
-    print("fitting glm")
-    # f = pf.fit_transform(features_sn[train_idx])
-    rglm.fit(f[train_idx], labels_simple[train_idx])
-    print("predicting glm")
-    q = pf.fit_transform(f[test_idx])
-    pr = rglm.predict(f[test_idx])
+    # from ML.gp.revrand_glm import revrand_glm, RGLM
+    # rglm = RGLM(nbases=2000)
+    # print("fitting glm")
+    # # f = pf.fit_transform(features_sn[train_idx])
+    # rglm.fit(f[train_idx], labels_simple[train_idx])
+    # print("predicting glm")
+    # q = pf.fit_transform(f[test_idx])
+    # pr = rglm.predict(f[test_idx])
 
     # res = cross_validate_dm_argmax(f, red_mlabels, DirichletMultinomialRegression())
 
