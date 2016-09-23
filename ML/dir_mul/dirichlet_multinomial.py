@@ -12,6 +12,7 @@ class DirichletMultinomialRegression:
         self.phi = reg # Variance of the weights - regulariser
 
     def fit(self, X, C):
+
         self.X = X
         self.C = C.astype(np.float64)
         self.D = X.shape[1]
@@ -19,9 +20,8 @@ class DirichletMultinomialRegression:
 
         uniq_labels = C[0].shape[0]
         x0 = np.ones(uniq_labels * X.shape[1])              # weights - KxD
-        # bounds = [[0, None]] * (uniq_labels * X.shape[1])
+        # bounds = [[0, None]] * (uniq_labels * X.shape[1]) # do we want positive params?
         res = minimize(self.dirmult_ll, x0, method='l-bfgs-b', jac=True)
-        # res = minimize(self.dirmult_ll, x0, method='bfgs', options={'maxiter':100})
         
         self.res = res
         self.W = res['x'].reshape(self.K, self.D)

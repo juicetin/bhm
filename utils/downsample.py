@@ -36,12 +36,7 @@ def grid_dist_metric(grid_key, x_point, y_point):
     """
     return np.sqrt((x_point-cur_grid_key[0])**2 + (y_point-cur_grid_key[1])**2)
 
-def downsample_by_fixed_grid(coords, data, label_counts, reduction_factor=2):
-    """
-    Downsamples by allocating each point into the evenly distributed fixed side grids
-    'overlaid' over the original 2-dimensional space
-    """
-
+def fixed_grid_blocksize(coords, reduction_factor):
     # Get extremes of the coordinate system
     x_min = coords[:,0].min()
     x_max = coords[:,0].max()
@@ -63,6 +58,30 @@ def downsample_by_fixed_grid(coords, data, label_counts, reduction_factor=2):
     reduced_x_coords = np.arange(x_min, x_max+x_step, x_step)
     y_step = 21 # math.ceil((y_max-y_min)/y_block_cnt)
     reduced_y_coords = np.arange(y_min, y_max+y_step, y_step)
+
+    return x_min, y_min, x_max, y_max, x_step, y_step, reduced_x_coords, reduced_y_coords
+
+def downsample_by_fixed_grid(coords, data, label_counts, reduction_factor=2):
+    """
+    Downsamples by allocating each point into the evenly distributed fixed side grids
+    'overlaid' over the original 2-dimensional space
+    """
+    # # Decide on number of points in reduced low-res space
+    # reduced_point_count = int(coords.shape[0]/reduction_factor) # default red_factor - 4
+
+    # # Calculate number of x/y blocks
+    # # Assumes x is longer than y!
+    # xy_ratio = (y_max-y_min)/(x_max-x_min)
+    # x_block_cnt = np.sqrt(reduced_point_count/xy_ratio)
+    # y_block_cnt = reduced_point_count/x_block_cnt
+
+    # # Build coordinates in low-res space
+    # # TODO x_step and y_step as long floats too troublesome - round up to nearest integer
+    # x_step = 21 # math.ceil((x_max-x_min)/x_block_cnt)
+    # reduced_x_coords = np.arange(x_min, x_max+x_step, x_step)
+    # y_step = 21 # math.ceil((y_max-y_min)/y_block_cnt)
+    # reduced_y_coords = np.arange(y_min, y_max+y_step, y_step)
+    x_min, y_min, x_max, y_max, x_step, y_step, reduced_x_coords, reduced_y_coords = fixed_grid_blocksize(coords, reduction_factor)
     x_mesh, y_mesh = np.meshgrid(reduced_x_coords, reduced_y_coords)
 
     orig_stats = label_stats(label_counts)

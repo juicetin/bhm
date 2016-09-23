@@ -67,13 +67,13 @@ if __name__ == "__main__":
     sys.excepthook = info
 
     config = {}
-    config['no_coord_features']          = True # Keeping coords as features improves performance :/
+    config['no_coord_features']          = False # Keeping coords as features improves performance :/
     config['ensemble_testing']           = False
     config['downsampled_param_search']   = False
-    config['downsample']                 = True
+    config['downsample']                 = False
     config['dm_test']                    = False
     config['summarise_labels']           = False
-    config['load_query']                 = True
+    config['load_query']                 = False
 
     ######## LOAD DATA ########
     print("Loading data from npzs...")
@@ -112,8 +112,12 @@ if __name__ == "__main__":
     # features_s = scale(features) # MARGINALLY better than normalize(scale)
     
     ########### DOWNSAMPLING ##########
+    pf = PolynomialFeatures(2)
+
     if config['downsample'] == True:
         red_coords, red_features, red_mlabels, ml_argsort = data_transform.downsample(bath_locations, features_sn, multi_labels)
+        f = pf.fit_transform(red_features)
+        q = pf.fit_transform(query_sn)
 
     ######## DOWNSAMPLING PARAM SEARCH #########
     if config['downsampled_param_search'] == True:
@@ -130,10 +134,6 @@ if __name__ == "__main__":
             errors[i-1] = labels_error
         print()
     
-    pf = PolynomialFeatures(2)
-    f = pf.fit_transform(red_features)
-    q = pf.fit_transform(query_sn)
-
     # labels = np.array(labels)
     labels_simple = data.summarised_labels(labels)
 
@@ -154,8 +154,8 @@ if __name__ == "__main__":
 
     ######## PLOT LR/RF ########
     # f = pf.fit_transform(features_sn)
-    f = features_sn
-    q = query_sn
+    # f = features_sn
+    # q = query_sn
 
     # lr = LogisticRegression()
     # lr.fit(f, labels)
@@ -163,11 +163,11 @@ if __name__ == "__main__":
     # # res1 = benchmarks.dm_vs_det_stats(preds_dm, preds_lr)
     # vis.show_map(qp_locations, preds_lr, display=False, vmin=1, vmax=24, filename='full_predictions_logisticregression_polyspace2')
 
-    rf = RandomForestClassifier()
-    rf.fit(f, labels)
-    preds_rf = rf.predict(q)
-    # res2 = benchmarks.dm_vs_det_stats(preds_dm, preds_rf)
-    vis.show_map(qp_locations, preds_rf, display=False, vmin=1, vmax=24, filename='full_predictions_randomforest_nocoords')
+    # rf = RandomForestClassifier()
+    # rf.fit(f, labels)
+    # preds_rf = rf.predict(q)
+    # # res2 = benchmarks.dm_vs_det_stats(preds_dm, preds_rf)
+    # vis.show_map(qp_locations, preds_rf, display=False, vmin=1, vmax=24, filename='full_predictions_randomforest_nocoords')
     ###########################
 
     # vis.show_map(bath_locations, labels, display=False, vmin=1, vmax=24, filename='original_map_plot')

@@ -10,8 +10,7 @@ import matplotlib as mpl
 from matplotlib import colors
 import pdb
 
-def draw_map(X_train, X_test, y_train, y_test):
-    pass
+from utils.downsample import fixed_grid_blocksize
 
 def plot(X, Y, x, y, y_pred, sigma):
 
@@ -304,8 +303,19 @@ def plot_coords(locations, filename='tmp.pdf', display=True):
     else:
         plt.show()
 
-# def dm_test_data():
-#     X,C = dm_test_data()
-#     pdb.set_trace()
-#     plt.scatter(X[:,0], X[:,1])
-#     plt.savefig('tmp.pdf')
+def plot_training_with_grid(locations, filename='training_map.pdf', display=True, reduction_factor=2):
+    """
+    Plots the training datapoints with fixed downsampling grid overlaid on top
+    """
+    _, _, _, _, _, _, reduced_x_coords, reduced_y_coords = fixed_grid_blocksize(locations, reduction_factor)
+    fig = plt.figure()
+    ax = fig.gca()
+    # ax.set_xticks(reduced_x_coords)
+    # ax.set_yticks(reduced_y_coords)
+    # ax.set_yticks([])
+    # ax.set_xticks([375000])
+    plt.scatter(locations[:,0], locations[:,1])
+    plt.grid(linestyle='dashed')
+    plt.savefig(filename)
+
+    pdb.set_trace()
