@@ -72,6 +72,7 @@ class GaussianProcess:
     def dist(self, x1, x2, l_scales):
         # Dividing by length scale first before passing into cdist to
         #   accounts for different length scale for each dimension
+        l_scales = l_scales[:,np.newaxis]
         return cdist(x1/l_scales, x2/l_scales, 'sqeuclidean')
 
     def K_se(self, x1, x2, f_err, l_scales):

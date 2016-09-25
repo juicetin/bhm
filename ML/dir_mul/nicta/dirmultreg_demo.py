@@ -5,11 +5,10 @@ import logging
 import numpy as np
 import matplotlib.pyplot as pl
 from revrand import basis_functions as bases
-# from yavanna.supervised.dirmultreg import dirmultreg_learn, dirmultreg_predict
-from dirmultreg import dirmultreg_learn, dirmultreg_predict
-# from yavanna.linalg.linalg import logsumexp
-from scipy.misc import logsumexp
+from ML.dir_mul.nicta.dirmultreg import dirmultreg_learn, dirmultreg_predict # originally yavanna
+from scipy.misc import logsumexp # originally yavanna
 # from yavanna.distrib import dirichlet
+import pdb
 
 
 # Set up logging
