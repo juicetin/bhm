@@ -287,6 +287,9 @@ def histogram(freqs, title=None, filename='freqs.pdf', offset=0):
     plt.savefig(filename)
 
 def clear_plt():
+    """
+    Clears pyplot caches/etc.
+    """
     plt.cla()
     plt.clf()
 

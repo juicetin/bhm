@@ -75,6 +75,8 @@ if __name__ == "__main__":
     config['summarise_labels']           = False
     config['load_query']                 = False
 
+    from utils import dm_gp_comparison; dm_gp_comparison.dm_vs_gp()
+
     ######## LOAD DATA ########
     print("Loading data from npzs...")
     labels, labelcounts, bath_locations, features = data.load_training_data()

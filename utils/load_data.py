@@ -2,6 +2,11 @@ import numpy as np
 from pandas import read_csv
 import pdb
 
+import matplotlib.pyplot as plt
+from revrand import basis_functions as bases
+from ML.dir_mul.nicta.dirmultreg import dirmultreg_learn, dirmultreg_predict # originally yavanna
+from scipy.misc import logsumexp # originally yavanna
+
 # Load all the data
 def load_training_data():
     bath_and_dom_lowres = np.load('data/bathAndDomLabel_lowres.npz')
@@ -99,3 +104,29 @@ def fill(labels, num_uniqs, zero_indexed=False):
     else:
         return list(counts)[1:]
 
+def generate_dm_toy_ex():
+    # Settings
+    size = 100
+    multisamp1 = 500
+    multisamp2 = 10
+    multisamp3 = 50
+    kfolds = 5
+    activation = 'soft'
+
+    # Make data
+    X1 = np.random.multivariate_normal([-5, -5], [[1, 0], [0, 1]], size)
+    X2 = np.random.multivariate_normal([5, 5], [[1, 0], [0, 1]], size)
+    X3 = np.random.multivariate_normal([-5, 5], [[1, 0], [0, 1]], size)
+    C1 = np.random.multinomial(multisamp1, [0.7, 0.2], size)
+    C2 = np.random.multinomial(multisamp2, [0.2, 0.7], size)
+    C3 = np.random.multinomial(multisamp3, [0.5, 0.5], size)
+
+    # Concatenate data
+    X_train_coords = np.vstack((X1[:size/2], X2[:size/2], X3[:size/2]))
+    C_train = np.vstack((C1[:size/2], C2[:size/2], C3[:size/2]))
+    X_test_coords = np.vstack((X1[size/2:], X2[size/2:], X3[size/2:]))
+    C_test = np.vstack((C1[size/2:], C2[size/2:], C3[size/2:]))
+    X_train = bases.RadialBasis(X_train_coords).transform(X_train_coords, lenscale=1)
+    X_test = bases.RadialBasis(X_test_coords).transform(X_test_coords, lenscale=1)
+
+    return X_train_coords, X_test_coords, X_train, X_test, C_train, C_test
