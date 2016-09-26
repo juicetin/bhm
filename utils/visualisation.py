@@ -322,3 +322,4 @@ def plot_training_with_grid(locations, filename='training_map.pdf', display=True
     plt.savefig(filename)
 
     pdb.set_trace()
+
