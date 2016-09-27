@@ -66,14 +66,13 @@ def info(type, value, tb):
 if __name__ == "__main__":
     sys.excepthook = info
 
-    config = {}
-    config['no_coord_features']          = False # Keeping coords as features improves performance :/
-    config['ensemble_testing']           = False
-    config['downsampled_param_search']   = False
-    config['downsample']                 = False
-    config['dm_test']                    = False
-    config['summarise_labels']           = False
-    config['load_query']                 = False
+    no_coord_features           = True # Keeping coords as features improves performance :/
+    ensemble_testing            = False
+    downsampled_param_search    = False
+    downsample                  = True
+    dm_test                     = False
+    summarise_labels            = False
+    load_query                  = True
 
     from utils import dm_gp_comparison; dm_gp_comparison.dm_vs_gp()
 
@@ -81,12 +80,12 @@ if __name__ == "__main__":
     print("Loading data from npzs...")
     labels, labelcounts, bath_locations, features = data.load_training_data()
     multi_locations, multi_features, multi_labels_lists = data.load_multi_label_data()
-    if config['summarise_labels'] == True:
+    if summarise_labels == True:
         multi_labels = data.summarised_labels(multi_labels_lists)
     multi_labels = data_transform.multi_label_counts(multi_labels_lists, zero_indexed=False)
 
     # Don't load full dataset without sufficient free memory
-    if config['load_query'] and psutil.virtual_memory().available >= 2e9:
+    if load_query and psutil.virtual_memory().available >= 2e9:
         qp_locations, validQueryID, x_bins, query, y_bins = data.load_test_data()
 
         print("Filter down to non-nan queries and locations...")
@@ -101,10 +100,13 @@ if __name__ == "__main__":
     features = np.array(features)
 
     # Remove long/lat coordinates
-    if config['no_coord_features']:
+    if no_coord_features:
         features = features[:,2:]
         try:
             query_sn = query_sn[:,2:]
+        except NameError:
+            print("query points weren't loaded into memory")
+
         except NameError:
             print("query points weren't loaded into memory")
 
@@ -191,8 +193,6 @@ if __name__ == "__main__":
     # pr = rglm.predict(f[test_idx])
 
     # res = cross_validate_dm_argmax(f, red_mlabels, DirichletMultinomialRegression())
-
-    # freqs = np.concatenate((np.bincount(np.concatenate(multi_labels_lists))[1:], [0]))
     # vis.histogram(freqs, title='Full Multi-labels Histogram', filename='hist_full_multi_labels.pdf', offset=1)
 
     # vis.clear_plt()
@@ -209,7 +209,7 @@ if __name__ == "__main__":
     # vis.histogram(foo, title='Simplified Multi-labels Histogram', filename='hist_simple_multi_labels.pdf') 
 
     ########################################### Product of Experts ###########################################
-    if config['ensemble_testing'] == True:
+    if ensemble_testing == True:
         benchmarks.GP_ensemble_tests(features_sn, labels_simple, train_idx)
 
     #########################################################################################################

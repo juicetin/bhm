@@ -323,3 +323,43 @@ def plot_training_with_grid(locations, filename='training_map.pdf', display=True
 
     pdb.set_trace()
 
+
+def plot_toy_data(locations, colours, title='Illustrative example plots', filename='tmp.pdf', display=True):
+    """
+    Plot the toy DM vs GP data to show clusters
+    """
+    x = locations[:,0]
+    y = locations[:,1]
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+
+    ax.scatter(x, y, c=colours)
+    ax.set_title(title)
+    ax.annotate('cluster A', xy=(-4, 2.2), xytext=(-3, 0),
+                        arrowprops=dict(facecolor='black', shrink=0.05),
+                                    )
+    ax.annotate('cluster B', xy=(5.5, 2), xytext=(3, -1),
+                        arrowprops=dict(facecolor='black', shrink=0.05),
+                                    )
+
+    ax.annotate('cluster C', xy=(-3, -7), xytext=(-1, -9),
+                        arrowprops=dict(facecolor='black', shrink=0.05),
+                                    )
+
+    # Show image
+    if display == False:
+        plt.savefig(filename)
+    else:
+        plt.show()
+
+def plot_multilabel_distribution(labels, title='Multi-label distribution', filename='multilabel_distr.pdf', dispaly=True):
+    """
+    Plot a graph of the distribution of multi-labels (a single set)
+    """
+
+    # Show image
+    if display == False:
+        plt.savefig(filename)
+    else:
+        plt.show()
