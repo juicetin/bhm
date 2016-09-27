@@ -7,6 +7,8 @@ from revrand import basis_functions as bases
 from ML.dir_mul.nicta.dirmultreg import dirmultreg_learn, dirmultreg_predict # originally yavanna
 from scipy.misc import logsumexp # originally yavanna
 
+import utils.visualisation as vis
+
 # Load all the data
 def load_training_data():
     bath_and_dom_lowres = np.load('data/bathAndDomLabel_lowres.npz')
@@ -104,7 +106,7 @@ def fill(labels, num_uniqs, zero_indexed=False):
     else:
         return list(counts)[1:]
 
-def generate_dm_toy_ex():
+def generate_dm_toy_ex(plot_toy_graph=False, plot_cluster_distr=False):
     # Settings
     size = 100
     multisamp1 = 500
@@ -136,4 +138,27 @@ def generate_dm_toy_ex():
     # X_train = bases.RadialBasis(X1).transform(X_train_coords, lenscale=1)
     # X_test = bases.RadialBasis(X_test_coords).transform(X_test_coords, lenscale=1)
 
+    if plot_toy_graph == True:
+        vis.plot_toy_data(np.concatenate((X1, X2, X3)), np.concatenate((C_train, C_test)).argmax(axis=1), filename='toydataplot.pdf', display=False)
+    if plot_cluster_distr == True:
+        vis.plot_multilabel_distribution(C1/C1.sum(axis=1)[:,np.newaxis], title='cluster A distribution', filename='toy_clusterA_distr.pdf', display=False)
+        vis.plot_multilabel_distribution(C2/C2.sum(axis=1)[:,np.newaxis], title='cluster B distribution', filename='toy_clusterB_distr.pdf', display=False)
+        vis.plot_multilabel_distribution(C3/C3.sum(axis=1)[:,np.newaxis], title='cluster C distribution', filename='toy_clusterC_distr.pdf', display=False)
+
     return X_train_coords, X_test_coords, X_train, X_test, C_train, C_test
+
+def load_dm_vs_gp_pickles():
+    try:
+        EC          = np.load('tmp_pickles/EC.npy')
+        C_test_norm = np.load('tmp_pickles/C_test_norm.npy')
+        gp_preds    = np.load('tmp_pickles/gp_preds.npy')
+        gp_vars     = np.load('tmp_pickles/gp_vars.npy')
+        X_train_c   = np.load('tmp_pickles/X_train_c.npy')
+        X_test_c    = np.load('tmp_pickles/X_test_c.npy')
+        X_train     = np.load('tmp_pickles/X_train.npy')
+        X_test      = np.load('tmp_pickles/X_test.npy')
+        C_train     = np.load('tmp_pickles/C_train.npy')
+        C_test      = np.load('tmp_pickles/C_test.npy')
+        return EC, C_test_norm, gp_preds, gp_vars, X_train_c, X_test_c, X_train, X_test, C_train, C_test     
+    except FileNotFoundError:
+        print('Your pickles do not exist')

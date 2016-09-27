@@ -74,6 +74,9 @@ if __name__ == "__main__":
     summarise_labels            = False
     load_query                  = True
 
+    # EC, C_test_norm, gp_preds, gp_vars, X_train_c, X_test_c, X_train, X_test, C_train, C_test = data.load_dm_vs_gp_pickles()
+    # sys.exit(0)
+
     from utils import dm_gp_comparison; dm_gp_comparison.dm_vs_gp()
 
     ######## LOAD DATA ########

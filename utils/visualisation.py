@@ -31,7 +31,7 @@ def plot(X, Y, x, y, y_pred, sigma):
     plt.plot(x, y_pred, 'g-', label=u'Prediction', mew=2.0)
     plt.fill(np.concatenate([x, x[::-1]]),
             np.concatenate([y_pred - confidence * sigma,
-                          (y_pred + confidence * sigma)[::-1]]),
+                (y_pred + confidence * sigma)[::-1]]),
             alpha=0.2, fc='b', ec='None', label='95% confidence interval')
 
     # Axes labels
@@ -55,18 +55,18 @@ def show_all():
     print("Using backend {}".format(backend))
     if backend != 'agg':
         plt.show()
-
     # No display backend
     else:
         date = datetime.now()
-        plt.savefig('images/{}.pdf'.format(date))
+
+    plt.savefig('images/{}.pdf'.format(date))
 
 def add_confidence_plot(ax, x, y, sigma):
     confidence = 1.9600
     ax.plot(x, y, 'b-', label=u'Prediction')
     ax.fill(np.concatenate([x, x[::-1]]),
             np.concatenate([y - confidence * sigma,
-                           (y + confidence * sigma)[::-1]]),
+                (y + confidence * sigma)[::-1]]),
             alpha=.5, fc='b', ec='None', label='95% confidence interval')
     ax.set_xlabel('$x$')
     ax.set_ylabel('$y$')
@@ -94,7 +94,7 @@ def plot_confidence(x, y_pred, sigma, title=None):
     plt.plot(x, y_pred, 'b-', label=u'Prediction')
     plt.fill(np.concatenate([x, x[::-1]]),
             np.concatenate([y_pred - confidence * sigma,
-                          (y_pred + confidence * sigma)[::-1]]),
+                (y_pred + confidence * sigma)[::-1]]),
             alpha=.5, fc='b', ec='None', label='95% confidence interval')
     plt.xlabel('$x$')
     plt.ylabel('$y$')
@@ -334,32 +334,77 @@ def plot_toy_data(locations, colours, title='Illustrative example plots', filena
     fig = plt.figure()
     ax = fig.add_subplot(111)
 
-    ax.scatter(x, y, c=colours)
+    ax.scatter(x, y, c=colours, lw=0)
     ax.set_title(title)
     ax.annotate('cluster A', xy=(-4, 2.2), xytext=(-3, 0),
-                        arrowprops=dict(facecolor='black', shrink=0.05),
-                                    )
+            arrowprops=dict(facecolor='black', shrink=0.05),
+            )
     ax.annotate('cluster B', xy=(5.5, 2), xytext=(3, -1),
-                        arrowprops=dict(facecolor='black', shrink=0.05),
-                                    )
+            arrowprops=dict(facecolor='black', shrink=0.05),
+            )
 
     ax.annotate('cluster C', xy=(-3, -7), xytext=(-1, -9),
-                        arrowprops=dict(facecolor='black', shrink=0.05),
-                                    )
+            arrowprops=dict(facecolor='black', shrink=0.05),
+            )
 
     # Show image
     if display == False:
         plt.savefig(filename)
     else:
         plt.show()
+    clear_plt()
 
-def plot_multilabel_distribution(labels, title='Multi-label distribution', filename='multilabel_distr.pdf', dispaly=True):
+def plot_multilabel_distribution(labels, title='Multi-label distribution', filename='multilabel_distr.pdf', display=True):
     """
     Plot a graph of the distribution of multi-labels (a single set)
     """
+    x = np.arange(labels.shape[0]) # x-axis
+    y1 = labels[:,0] # first label
+    y2 = labels[:,1] # second label
+
+    # fig = plt.figure() 
+    # ax = fig.add_subplot(111)
+
+    # ax.scatter(x, y1, c='b')
+    # ax.scatter(x, y2, c='r')
+
+    p1 = plt.bar(x, y1, color='r',  lw=0)
+    p2 = plt.bar(x, y2, bottom=y1, color='b', lw=0)
+
+    plt.title(title)
 
     # Show image
     if display == False:
         plt.savefig(filename)
     else:
         plt.show()
+
+    clear_plt()
+
+def dm_pred_vs_actual(preds, actuals, title='DM predictions vs actuals', filename='dm_pred_plot.pdf', display=False):
+    """
+    Plots all the DM predictions vs actual for the distribution of labels at each point
+    """
+    x = np.arange(1, preds.shape[0]+1)
+    colours = ['b', 'g', 'r', 'c', 'm', 'y', 'b', 'w']
+    # cmap = cm.jet
+    # colours = [cmap(i) for i in range(cmap.N)]
+
+    # for i in range(preds.shape[1]):
+    i=1
+    cur_preds = preds[:,i]
+    cur_actuals = actuals[:,i]
+    plt.scatter(x, cur_preds, marker='x', c=colours[i])
+    plt.scatter(x, cur_actuals, marker='o', c=colours[i])
+
+    plt.title(title)
+    if display == False:
+        plt.savefig(filename)
+
+    clear_plt()
+
+def gp_pred_vs_actual():
+    """
+    Plots the predictions of a GP for a particular class (binary/OvA) with the variance highlighted
+    """
+    clear_plt()
