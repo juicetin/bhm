@@ -42,6 +42,7 @@ from ML.gp.rbcm import rBCM
 from ML.gp.gp_mt import GPMT
 from ML.dir_mul.dirichlet_multinomial import DirichletMultinomialRegression
 from ML.dir_mul.nicta.dirmultreg import dirmultreg_learn, dirmultreg_predict
+from ML.dir_mul.dm_mcmc import dirmultreg_learn as dm_mcmc_learn
 
 import utils
 import utils.visualisation as vis
@@ -72,17 +73,17 @@ if __name__ == "__main__":
     config['downsampled_param_search']   = False
     config['downsample']                 = False
     config['dm_test']                    = False
-    config['summarise_labels']           = False
+    config['summarise_labels']           = True
     config['load_query']                 = False
 
-    from utils import dm_gp_comparison; dm_gp_comparison.dm_vs_gp()
+    # from utils import dm_gp_comparison; dm_gp_comparison.dm_vs_gp()
 
     ######## LOAD DATA ########
     print("Loading data from npzs...")
     labels, labelcounts, bath_locations, features = data.load_training_data()
     multi_locations, multi_features, multi_labels_lists = data.load_multi_label_data()
     if config['summarise_labels'] == True:
-        multi_labels = data.summarised_labels(multi_labels_lists)
+        multi_labels_lists = data_transform.summarised_labels(multi_labels_lists)
     multi_labels = data_transform.multi_label_counts(multi_labels_lists, zero_indexed=False)
 
     # Don't load full dataset without sufficient free memory
@@ -137,7 +138,7 @@ if __name__ == "__main__":
         print()
     
     # labels = np.array(labels)
-    labels_simple = data.summarised_labels(labels)
+    labels_simple = data_transform.summarised_labels(labels)
 
     if config['dm_test'] == True:
         dm = DirichletMultinomialRegression()
