@@ -42,6 +42,7 @@ from ML.gp.rbcm import rBCM
 from ML.gp.gp_mt import GPMT
 from ML.dir_mul.dirichlet_multinomial import DirichletMultinomialRegression
 from ML.dir_mul.nicta.dirmultreg import dirmultreg_learn, dirmultreg_predict
+from ML.dir_mul.dm_mcmc import dirmultreg_learn as dm_mcmc_learn
 
 import utils
 import utils.visualisation as vis
@@ -66,17 +67,18 @@ def info(type, value, tb):
 if __name__ == "__main__":
     sys.excepthook = info
 
-    no_coord_features           = True # Keeping coords as features improves performance :/
-    ensemble_testing            = False
-    downsampled_param_search    = False
-    downsample                  = True
-    dm_test                     = False
-    summarise_labels            = False
-    load_query                  = False
+    config = {}
+    config['no_coord_features']          = False # Keeping coords as features improves performance :/
+    config['ensemble_testing']           = False
+    config['downsampled_param_search']   = False
+    config['downsample']                 = False
+    config['dm_test']                    = False
+    config['summarise_labels']           = True
+    config['load_query']                 = False
 
-    # props = data.load_squidle_data()  
-    # zip_obj = zip(props['latitude'], props['longitude'])  
-    # utm_coords = data.latlong_to_utm(zip_obj) 
+    props = data.load_squidle_data()  
+    zip_obj = zip(props['latitude'], props['longitude'])  
+    utm_coords = data.latlong_to_utm(zip_obj) 
 
     # EC, C_test_norm, gp_preds, gp_vars, X_train_c, X_test_c, X_train, X_test, C_train, C_test = data.load_dm_vs_gp_pickles()
 
@@ -88,8 +90,8 @@ if __name__ == "__main__":
     print("Loading data from npzs...")
     labels, labelcounts, bath_locations, features = data.load_training_data()
     multi_locations, multi_features, multi_labels_lists = data.load_multi_label_data()
-    if summarise_labels == True:
-        multi_labels = data.summarised_labels(multi_labels_lists)
+    if config['summarise_labels'] == True:
+        multi_labels_lists = data_transform.summarised_labels(multi_labels_lists)
     multi_labels = data_transform.multi_label_counts(multi_labels_lists, zero_indexed=False)
 
     # Don't load full dataset without sufficient free memory
@@ -147,7 +149,7 @@ if __name__ == "__main__":
         print()
     
     # labels = np.array(labels)
-    labels_simple = data.summarised_labels(labels)
+    labels_simple = data_transform.summarised_labels(labels)
 
     if config['dm_test'] == True:
         dm = DirichletMultinomialRegression()
