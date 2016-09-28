@@ -1,6 +1,7 @@
 import numpy as np
 from pandas import read_csv
-import pdb
+import pdb; import code
+import utm
 
 import matplotlib.pyplot as plt
 from revrand import basis_functions as bases
@@ -162,3 +163,32 @@ def load_dm_vs_gp_pickles():
         return EC, C_test_norm, gp_preds, gp_vars, X_train_c, X_test_c, X_train, X_test, C_train, C_test     
     except FileNotFoundError:
         print('Your pickles do not exist')
+
+ZONE_NUMBER = 51
+ZONE_LETTER = 'S'
+def utm_to_latlong(bath_locations):
+    return np.array([utm.to_latlon(x, y, ZONE_NUMBER, northern=False) for x, y in bath_locations])
+
+def latlong_to_utm(lat_longs):
+    """
+    latlong
+    """
+    return np.array([utm.from_latlon(x, y) for x, y in lat_longs])
+
+def load_squidle_data(path='../bhm-large-data/'):
+    csvs = ['images-scottreef2011-2016-09-16.csv']
+    keys = ['image__id', 'date_time', 'depth', 'web_location', 'latitude',
+                   'longitude']
+
+    # Set up dict
+    props = {}
+    for key in keys:
+        props[key] = np.array([])
+
+    # Go over all files
+    for csv in csvs:
+        cur_props = read_csv(path+csv)
+        for key in keys:
+            props[key] = np.concatenate((props[key], cur_props[key]))
+
+    return props

@@ -72,12 +72,17 @@ if __name__ == "__main__":
     downsample                  = True
     dm_test                     = False
     summarise_labels            = False
-    load_query                  = True
+    load_query                  = False
+
+    # props = data.load_squidle_data()  
+    # zip_obj = zip(props['latitude'], props['longitude'])  
+    # utm_coords = data.latlong_to_utm(zip_obj) 
 
     # EC, C_test_norm, gp_preds, gp_vars, X_train_c, X_test_c, X_train, X_test, C_train, C_test = data.load_dm_vs_gp_pickles()
-    # sys.exit(0)
 
-    from utils import dm_gp_comparison; dm_gp_comparison.dm_vs_gp()
+    # from utils import dm_gp_comparison; dm_gp_comparison.dm_vs_gp()
+
+    sys.exit(0)
 
     ######## LOAD DATA ########
     print("Loading data from npzs...")
