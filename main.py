@@ -76,26 +76,24 @@ if __name__ == "__main__":
     config['summarise_labels']           = True
     config['load_query']                 = False
 
-    props = data.load_squidle_data()  
-    zip_obj = zip(props['latitude'], props['longitude'])  
-    utm_coords = data.latlong_to_utm(zip_obj) 
+    # props = data.load_squidle_data()  
+    # zip_obj = zip(props['latitude'], props['longitude'])  
+    # utm_coords = data.latlong_to_utm(zip_obj) 
 
     # EC, C_test_norm, gp_preds, gp_vars, X_train_c, X_test_c, X_train, X_test, C_train, C_test = data.load_dm_vs_gp_pickles()
 
     # from utils import dm_gp_comparison; dm_gp_comparison.dm_vs_gp()
 
-    sys.exit(0)
-
     ######## LOAD DATA ########
     print("Loading data from npzs...")
     labels, labelcounts, bath_locations, features = data.load_training_data()
     multi_locations, multi_features, multi_labels_lists = data.load_multi_label_data()
-    if config['summarise_labels'] == True:
-        multi_labels_lists = data_transform.summarised_labels(multi_labels_lists)
     multi_labels = data_transform.multi_label_counts(multi_labels_lists, zero_indexed=False)
+    if config['summarise_labels'] == True:
+        multi_labels = data_transform.summarised_labels(multi_labels)
 
     # Don't load full dataset without sufficient free memory
-    if load_query and psutil.virtual_memory().available >= 2e9:
+    if config['load_query'] and psutil.virtual_memory().available >= 2e9:
         qp_locations, validQueryID, x_bins, query, y_bins = data.load_test_data()
 
         print("Filter down to non-nan queries and locations...")
@@ -110,7 +108,7 @@ if __name__ == "__main__":
     features = np.array(features)
 
     # Remove long/lat coordinates
-    if no_coord_features:
+    if config['no_coord_features']:
         features = features[:,2:]
         try:
             query_sn = query_sn[:,2:]
@@ -219,7 +217,7 @@ if __name__ == "__main__":
     # vis.histogram(foo, title='Simplified Multi-labels Histogram', filename='hist_simple_multi_labels.pdf') 
 
     ########################################### Product of Experts ###########################################
-    if ensemble_testing == True:
+    if config['ensemble_testing'] == True:
         benchmarks.GP_ensemble_tests(features_sn, labels_simple, train_idx)
 
     #########################################################################################################

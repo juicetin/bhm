@@ -154,7 +154,7 @@ def latlong_to_utm(lat_longs):
     """
     latlong
     """
-    return np.array([utm.from_latlon(x, y) for x, y in lat_longs])
+    return np.array([utm.from_latlon(x, y)[:2] for x, y in lat_longs])
 
 def load_squidle_data(path='../bhm-large-data/'):
     csvs = ['images-scottreef2011-2016-09-16.csv']

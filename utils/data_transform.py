@@ -48,11 +48,16 @@ def summarised_labels(labels):
 
     label_map={1:0,2:0,3:1,4:3,5:1,6:3,7:3,8:3,9:3,10:1,11:3,12:3,13:2,14:2,15:2,16:1,17:1,18:0,19:1,20:0,21:0,22:1,23:0,24:0}
 
-    if isinstance(labels[0], list):
+    if isinstance(labels[0], np.ndarray):
         print('Summarising multi label list...')
-        # for i, lst in enumerate(new_labels):
-        #     summarise_list(np.array(lst), np.array(labels[i]), label_map)
-        return np.array([summarise_list(np.array(labels[i]), label_map) for i in range(labels.shape[0])])
+
+        multi_labels = np.zeros((labels.shape[0], 4), dtype=np.int64)
+        for orig_l, summarised_l in label_map.items():
+            multi_labels[:,summarised_l] += labels[:,orig_l-1]
+        return multi_labels
+
+        # return np.array([summarise_list(np.array(labels[i]), label_map) for i in range(labels.shape[0])])
+
     else:
         print('Summarising label list...')
         return summarise_list(labels, label_map)
