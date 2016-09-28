@@ -5,7 +5,7 @@ class GPyC:
     def __init__(self):
         pass
 
-    def fit(X, C):
+    def fit(self, X, C):
         """
         Fit the GPy-wrapper classifier 
         """
@@ -13,11 +13,12 @@ class GPyC:
         uniq_C = np.unique(C)
         self.models = []
         for c in uniq_C:
-            labels = np.array([1 if c == label else 0 for label in C_train.argmax(axis=1)])[:,np.newaxis]
-            m = GPy.models.GPRegression(X_train, labels, kernel=K.copy())
+            labels = np.array([1 if c == label else 0 for label in C])[:,np.newaxis]
+            m = GPy.models.GPRegression(X, labels, kernel=K.copy())
             self.models.append(m)
+        self.models = np.array(self.models)
 
-    def predict(x):
+    def predict(self, x):
         """
         Make predictions using the GPy-wrapper classifier
         """
@@ -25,5 +26,7 @@ class GPyC:
         all_vars = np.empty(all_preds.shape)
         for i, m in enumerate(self.models):
             gp_preds, gp_vars = m.predict(x)
-            all_preds[i] = gp_preds
-            all_vars[i] = all_vars
+            all_preds[i] = gp_preds.flatten()
+            all_vars[i] = gp_vars.flatten()
+
+        return all_preds, all_vars

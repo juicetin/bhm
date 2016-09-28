@@ -76,6 +76,9 @@ if __name__ == "__main__":
     config['summarise_labels']           = True
     config['load_query']                 = False
 
+    # EC, C_test_norm, gp_preds, gp_vars, X_train_c, X_test_c, X_train, X_test, C_train, C_test = data.load_dm_vs_gp_pickles()
+    # sys.exit(0)
+
     # from utils import dm_gp_comparison; dm_gp_comparison.dm_vs_gp()
 
     ######## LOAD DATA ########
@@ -87,7 +90,7 @@ if __name__ == "__main__":
     multi_labels = data_transform.multi_label_counts(multi_labels_lists, zero_indexed=False)
 
     # Don't load full dataset without sufficient free memory
-    if config['load_query'] and psutil.virtual_memory().available >= 2e9:
+    if load_query and psutil.virtual_memory().available >= 2e9:
         qp_locations, validQueryID, x_bins, query, y_bins = data.load_test_data()
 
         print("Filter down to non-nan queries and locations...")
@@ -102,10 +105,13 @@ if __name__ == "__main__":
     features = np.array(features)
 
     # Remove long/lat coordinates
-    if config['no_coord_features']:
+    if no_coord_features:
         features = features[:,2:]
         try:
             query_sn = query_sn[:,2:]
+        except NameError:
+            print("query points weren't loaded into memory")
+
         except NameError:
             print("query points weren't loaded into memory")
 
@@ -192,8 +198,6 @@ if __name__ == "__main__":
     # pr = rglm.predict(f[test_idx])
 
     # res = cross_validate_dm_argmax(f, red_mlabels, DirichletMultinomialRegression())
-
-    # freqs = np.concatenate((np.bincount(np.concatenate(multi_labels_lists))[1:], [0]))
     # vis.histogram(freqs, title='Full Multi-labels Histogram', filename='hist_full_multi_labels.pdf', offset=1)
 
     # vis.clear_plt()
@@ -210,7 +214,7 @@ if __name__ == "__main__":
     # vis.histogram(foo, title='Simplified Multi-labels Histogram', filename='hist_simple_multi_labels.pdf') 
 
     ########################################### Product of Experts ###########################################
-    if config['ensemble_testing'] == True:
+    if ensemble_testing == True:
         benchmarks.GP_ensemble_tests(features_sn, labels_simple, train_idx)
 
     #########################################################################################################
