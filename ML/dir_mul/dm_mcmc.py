@@ -19,7 +19,7 @@ def logistic(M):
 log = logging.getLogger(__name__)
 
 def dirmultreg_learn(X, C, activation='soft', reg=1, verbose=False, ftol=1e-6,
-                     maxit=1000):
+                     maxit=100):
     """ Train a Dirichlet-Multinomial Regressor using MAP to learn the weights.
 
         Arguments:
@@ -46,7 +46,7 @@ def dirmultreg_learn(X, C, activation='soft', reg=1, verbose=False, ftol=1e-6,
     _, D = X.shape
     it = [0]
 
-    def prior_x_likelihood(W):
+    def posterior(W):
         """
         Calculates the log of prior times likelihood for MCMC
         """
@@ -67,21 +67,23 @@ def dirmultreg_learn(X, C, activation='soft', reg=1, verbose=False, ftol=1e-6,
         lgam_terms = (gammaln(asum) - gammaln(acsum)).sum() \
             + (gammaln(C + alpha) - gammaln(alpha)).sum()
 
-        pxl = - lgam_terms + (W**2).sum() / (2 * reg)
+        post = -lgam_terms + (W**2).sum() / (2 * reg)
 
         if verbose:
-            pass
-            # log.info("Iter. {}, Objective = {}".format(it[0], MAP))
-            # it[0] += 1
+            # log.info("Iter. {}, Objective = {}".format(it[0], post))
+            print("Iter. {}, Objective = {}".format(it[0], post))
+            it[0] += 1
 
-        return pxl 
+        # import sys
+        # sys.exit(0)
+        return post
 
-    start_W = np.ones(K*D)
+    start_W = np.random.rand(K*D)
     # start_W = np.random.randn(K*D)
-    ndim, nwalkers = start_W.shape[0], start_W.shape[0]*3
+    ndim, nwalkers = start_W.shape[0], start_W.shape[0]*2
     # pos = [result["x"] + 1e-4*np.random.randn(ndim) for i in range(nwalkers)]
-    pos = [np.random.randn(K*D) for i in range(nwalkers)]
-    sampler = emcee.EnsembleSampler(nwalkers, ndim, prior_x_likelihood, args=[])
+    pos = [np.random.rand(K*D) for i in range(nwalkers)]
+    sampler = emcee.EnsembleSampler(nwalkers, ndim, posterior, args=[])
     sampler.run_mcmc(pos, 500)
     
     samples = sampler.chain[:, 100:, :].reshape((-1, ndim))

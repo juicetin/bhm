@@ -14,6 +14,7 @@ import math
 from datetime import datetime
 import pdb
 import GPy
+from ML.gp.gp_gpy import GPyC
 
 from sklearn.preprocessing import normalize
 from sklearn.preprocessing import scale
@@ -80,7 +81,9 @@ if __name__ == "__main__":
     # zip_obj = zip(props['latitude'], props['longitude'])  
     # utm_coords = data.latlong_to_utm(zip_obj) 
 
-    # EC, C_test_norm, gp_preds, gp_vars, X_train_c, X_test_c, X_train, X_test, C_train, C_test = data.load_dm_vs_gp_pickles()
+    EC, C_test_norm, gp_preds, gp_vars, X_train_c, X_test_c, X_train, X_test, C_train, C_test = data.load_dm_vs_gp_pickles()
+    # vis.dm_pred_vs_actual(EC, C_test_norm, filename='toy_dm_pred_plot')
+    # vis.gp_pred_vs_actual(C_test_norm, gp_preds, gp_vars, display=False, filename='gp_with_vars')
 
     # from utils import dm_gp_comparison; dm_gp_comparison.dm_vs_gp()
 

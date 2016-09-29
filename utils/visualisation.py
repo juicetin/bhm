@@ -4,6 +4,7 @@ import matplotlib as mpl
 
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+from matplotlib.patches import Rectangle
 # from utils.benchmarks import dm_test_data
 import matplotlib.cm as cm
 import matplotlib as mpl
@@ -356,7 +357,7 @@ def plot_toy_data(locations, colours, title='Illustrative example plots', filena
 
 def plot_multilabel_distribution(labels, title='Multi-label distribution', filename='multilabel_distr.pdf', display=True):
     """
-    Plot a graph of the distribution of multi-labels (a single set)
+    Plot a histogram of the distribution of multi-labels (a single set)
     """
     x = np.arange(labels.shape[0]) # x-axis
     y1 = labels[:,0] # first label
@@ -381,7 +382,7 @@ def plot_multilabel_distribution(labels, title='Multi-label distribution', filen
 
     clear_plt()
 
-def dm_pred_vs_actual(preds, actuals, title='DM predictions vs actuals', filename='dm_pred_plot.pdf', display=False):
+def dm_pred_vs_actual(preds, actuals, title='DM predictions vs actuals', filename='dm_pred_plot', display=False):
     """
     Plots all the DM predictions vs actual for the distribution of labels at each point
     """
@@ -390,21 +391,60 @@ def dm_pred_vs_actual(preds, actuals, title='DM predictions vs actuals', filenam
     # cmap = cm.jet
     # colours = [cmap(i) for i in range(cmap.N)]
 
-    # for i in range(preds.shape[1]):
-    i=1
-    cur_preds = preds[:,i]
-    cur_actuals = actuals[:,i]
-    plt.scatter(x, cur_preds, marker='x', c=colours[i])
-    plt.scatter(x, cur_actuals, marker='o', c=colours[i])
+    for i in range(preds.shape[1]):
+        cur_preds = preds[:,i]
+        cur_actuals = actuals[:,i]
+        pred_scat = plt.scatter(x, cur_preds, marker='x', c=colours[i])
+        actual_scat = plt.scatter(x, cur_actuals, marker='o', c=colours[i])
+        plt.legend([pred_scat, actual_scat], ['Predictions', 'Actuals'])
+        plt.title(title + str(i))
 
-    plt.title(title)
-    if display == False:
-        plt.savefig(filename)
+        if display == False:
+            plt.savefig(filename+str(i)+'.pdf')
+        clear_plt()
 
-    clear_plt()
-
-def gp_pred_vs_actual():
+def gp_pred_vs_actual(y_distr, y_pred, sigma, display=False, filename='toy_gp_pred_plot_'):
     """
     Plots the predictions of a GP for a particular class (binary/OvA) with the variance highlighted
     """
-    clear_plt()
+    x = np.arange(1, y_distr.shape[0]+1)
+    for i in range(y_pred.shape[0]):
+        # Create y where positive is the 'current' label
+        y = [1 if max(row) == row[i] else 0 for row in y_distr]
+
+        # Test actuals
+        test_actuals = plt.plot(x, y, 'rx', markersize=2, label=u'Test', mew=2.0)
+    
+        # Predictions and variance
+        predictions = plt.plot(x, y_pred[i], 'g-', label=u'Prediction', mew=2.0)
+        predictions = plt.plot(x, y_pred[i], 'g-', label=u'Prediction', mew=2.0)
+        variance = plt.fill(np.concatenate([x, x[::-1]]),
+                np.concatenate([y_pred[i] - sigma[i],
+                    (y_pred[i] + sigma[i])[::-1]]),
+                alpha=0.2, fc='b', ec='None', label='95% confidence interval')
+    
+        # Axes labels
+        plt.xlabel('$x$')
+        plt.ylabel('$y$')
+        plt.legend([test_actuals[0], predictions[0], variance[0]], ['Test', 'Raw Predictions', 'Variance'])
+    
+        # plt.legend(loc='upper left')
+        if display == False:
+            plt.savefig(filename+str(i)+'.pdf')
+        else:
+            plt.show()
+        clear_plt()
+
+def standalone_toyplot_hist_legend(filename='toyplot_hist_distr_legend.pdf'):
+    fig = plt.figure()
+    figlegend = plt.figure(figsize=(4,3))
+    ax = fig.add_subplot(111)
+    bar1 = ax.bar(range(10), np.random.randn(10), color='r')
+    bar2 = ax.bar(range(10), np.random.randn(10), color='b')
+    x_descript = Rectangle((0, 0), 1, 1, fc="w", fill=False, edgecolor='none', linewidth=0)
+    y_descript = Rectangle((0, 0), 1, 1, fc="w", fill=False, edgecolor='none', linewidth=0)
+    figlegend.legend([x_descript, y_descript, bar1, bar2], ('x-axis - normalised ratio of label', 'y-axis - data point number', 'Label 0', 'Label 1'), 'center')
+
+    # fig.show()
+    # figlegend.show()
+    figlegend.savefig(filename, bbox_inches='tight', pad_inches = 0)

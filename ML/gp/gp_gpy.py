@@ -9,7 +9,7 @@ class GPyC:
         """
         Fit the GPy-wrapper classifier 
         """
-        K = GPy.kern.Matern32(1)
+        K = GPy.kern.Matern32(X.shape[1])
         uniq_C = np.unique(C)
         self.models = []
         for c in uniq_C:

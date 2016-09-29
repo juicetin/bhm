@@ -86,6 +86,8 @@ def dirmultreg_learn(X, C, activation='soft', reg=1, verbose=False, ftol=1e-6,
     if verbose:
         log.info("Success: {}, final objective = {}."
                  .format(optres.success, optres.fun))
+    print("Success: {}, final objective = {}."
+             .format(optres.success, optres.fun))
 
     return np.reshape(optres.x, (K, D))
 

@@ -129,6 +129,18 @@ def generate_dm_toy_ex(plot_toy_graph=False, plot_cluster_distr=False):
 
     return X_train_coords, X_test_coords, X_train, X_test, C_train, C_test
 
+def save_dm_vs_gp_pickles():
+    np.save('tmp_pickles/EC.npy', EC)
+    np.save('tmp_pickles/C_test_norm.npy', C_test_norm)
+    np.save('tmp_pickles/gp_preds.npy', gp_preds)
+    np.save('tmp_pickles/gp_vars.npy', gp_vars)
+    np.save('tmp_pickles/X_train_c.npy', X_train_c)
+    np.save('tmp_pickles/X_test_c.npy', X_test_c)
+    np.save('tmp_pickles/X_train.npy', X_train)
+    np.save('tmp_pickles/X_test.npy', X_test)
+    np.save('tmp_pickles/C_train.npy', C_train)
+    np.save('tmp_pickles/C_test.npy', C_test)
+
 def load_dm_vs_gp_pickles():
     try:
         EC          = np.load('tmp_pickles/EC.npy')
@@ -145,9 +157,9 @@ def load_dm_vs_gp_pickles():
     except FileNotFoundError:
         print('Your pickles do not exist')
 
-ZONE_NUMBER = 51
-ZONE_LETTER = 'S'
 def utm_to_latlong(bath_locations):
+    ZONE_NUMBER = 51
+    ZONE_LETTER = 'S'
     return np.array([utm.to_latlon(x, y, ZONE_NUMBER, northern=False) for x, y in bath_locations])
 
 def latlong_to_utm(lat_longs):

@@ -3,7 +3,7 @@ from sklearn.preprocessing import PolynomialFeatures
 
 from ML.gp.gp_gpy import GPyC
 
-from utils.load_data import generate_dm_toy_ex
+from utils.load_data import generate_dm_toy_ex, save_dm_vs_gp_pickles
 from ML.dir_mul.dirichlet_multinomial import DirichletMultinomialRegression
 from ML.dir_mul.nicta.dirmultreg import dirmultreg_learn, dirmultreg_predict
 from ML.gp.gp import GaussianProcess
@@ -18,7 +18,8 @@ def normalise(data):
 def dm_vs_gp():
     scores = []
 
-    for i in range(20):
+    repeat = 1
+    for i in range(repeat):
         result_list = []
         X_train_c, X_test_c, X_train, X_test, C_train, C_test = generate_dm_toy_ex(False, False)
 
@@ -56,12 +57,12 @@ def dm_vs_gp():
         print(mean_err_gp2)
 
         #Awith pf2 
-        gpy = GPyC()
-        gpy.fit(X_train2, C_train.argmax(axis=1)[:,np.newaxis])
-        gp_preds2, gp_vars2 = gpy.predict(X_test2)
-        mean_err_gp2 = np.average(np.abs(gp_preds2.argmax(axis=0) - C_test.argmax(axis=1)))
-        result_list.append(mean_err_gp2)
-        print(mean_err_gp2)
+        # gpy = GPyC()
+        # gpy.fit(X_train2, C_train.argmax(axis=1)[:,np.newaxis])
+        # gp_preds2, gp_vars2 = gpy.predict(X_test2)
+        # mean_err_gp2 = np.average(np.abs(gp_preds2.argmax(axis=0) - C_test.argmax(axis=1)))
+        # result_list.append(mean_err_gp2)
+        # print(mean_err_gp2)
 
         # gp = GaussianProcess()
         # gp.fit(X_train, C_train.argmax(axis=1))
@@ -74,6 +75,7 @@ def dm_vs_gp():
 
     scores = np.array(scores)
     print(scores)
+    # save_dm_vs_gp_pickles(EC, C_test_norm, gp_preds2, gp_vars2, X_train_c, X_test_c, X_train, X_test, C_train, C_test)
     pdb.set_trace()
 
         # dm = DirichletMultinomialRegression()
