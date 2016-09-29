@@ -72,10 +72,10 @@ if __name__ == "__main__":
     config['no_coord_features']          = False # Keeping coords as features improves performance :/
     config['ensemble_testing']           = False
     config['downsampled_param_search']   = False
-    config['downsample']                 = False
+    config['downsample']                 = True
     config['dm_test']                    = False
     config['summarise_labels']           = True
-    config['load_query']                 = False
+    config['load_query']                 = True
 
     # props = data.load_squidle_data()  
     # zip_obj = zip(props['latitude'], props['longitude'])  
@@ -94,6 +94,7 @@ if __name__ == "__main__":
     multi_labels = data_transform.multi_label_counts(multi_labels_lists, zero_indexed=False)
     if config['summarise_labels'] == True:
         multi_labels = data_transform.summarised_labels(multi_labels)
+    multi_labels_norm = multi_labels/multi_labels.sum(axis=1)[:,np.newaxis]
 
     # Don't load full dataset without sufficient free memory
     if config['load_query'] and psutil.virtual_memory().available >= 2e9:
@@ -130,7 +131,8 @@ if __name__ == "__main__":
     pf = PolynomialFeatures(2)
 
     if config['downsample'] == True:
-        red_coords, red_features, red_mlabels, ml_argsort = data_transform.downsample(bath_locations, features_sn, multi_labels)
+        # red_coords, red_features, red_mlabels, ml_argsort = data_transform.downsample(bath_locations, features_sn, multi_labels, method='fixed-grid')
+        red_coords, red_features, red_mlabels, ml_argsort = data_transform.downsample(bath_locations, features_sn, multi_labels, method='cluster-rules')
         f = pf.fit_transform(red_features)
         q = pf.fit_transform(query_sn)
 

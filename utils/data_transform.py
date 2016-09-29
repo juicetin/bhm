@@ -32,9 +32,9 @@ def multi_label_counts(labels, zero_indexed=False):
 
     return multi_labels
 
-def downsample(locations, features, labels):
+def downsample(locations, features, labels, method='fixed-gried'):
     print("Downsampling data...")
-    red_coords, red_features, red_mlabels = downsample_spatial_data(locations, features, labels, method='fixed-grid')
+    red_coords, red_features, red_mlabels = downsample_spatial_data(locations, features, labels, method=method)
     ml_argsort = np.argsort(red_mlabels.sum(axis=1))
     return red_coords, red_features, red_mlabels, ml_argsort
 

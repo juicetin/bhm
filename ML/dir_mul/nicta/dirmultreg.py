@@ -18,7 +18,7 @@ def logistic(M):
 log = logging.getLogger(__name__)
 
 def dirmultreg_learn(X, C, activation='soft', reg=1, verbose=False, ftol=1e-6,
-                     maxit=1000):
+                     maxit=3000):
     """ Train a Dirichlet-Multinomial Regressor using MAP to learn the weights.
 
         Arguments:

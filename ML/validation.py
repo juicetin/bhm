@@ -3,6 +3,8 @@ from sklearn import cross_validation
 import csv
 from sklearn.metrics import f1_score
 from sklearn.metrics import accuracy_score
+from ML.dir_mul.nicta.dirmultreg import dirmultreg_learn, dirmultreg_predict
+import pdb
 
 def cross_validate_algo(features, labels, folds, algo):
     accuracies = []
@@ -51,3 +53,25 @@ def cross_validate_dm_argmax(features, labels, algo, folds=10):
 
     print("Algo: {}, f1 avg: {}, acc avg: {}".format(str(algo), np.average(f1s), np.average(accuracies)))
     return str(algo), np.average(f1s), np.average(accuracies)
+
+def cross_validate_dm(features, labels, folds=10):
+    kf = cross_validation.KFold(n=len(features), n_folds=folds, shuffle=True, random_state=None)
+    labels = labels/labels.sum(axis=1)[:,np.newaxis] # normalise
+
+    errs = []
+
+    for train_idx, test_idx in kf:
+        X_train, X_test = features[train_idx], features[test_idx]
+        y_train, y_test = labels[train_idx], labels[test_idx].argmax(axis=1)
+        
+        W = dirmultreg_learn(X_train, y_train, activation='exp')
+        y_ = dirmultreg_predict(X_test, W)[0]
+        pdb.set_trace()
+
+        all_err = y_ - labels[test_idx]
+        avg_err = np.average(np.abs(all_err))
+        errs.append(avg_err)
+
+        print(avg_err)
+
+    print("Average error was {}".format(np.average(errs)))
