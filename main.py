@@ -75,7 +75,7 @@ if __name__ == "__main__":
     config['downsample']                 = True
     config['dm_test']                    = False
     config['summarise_labels']           = True
-    config['load_query']                 = True
+    config['load_query']                 = False
 
     # props = data.load_squidle_data()  
     # zip_obj = zip(props['latitude'], props['longitude'])  
@@ -134,7 +134,10 @@ if __name__ == "__main__":
         # red_coords, red_features, red_mlabels, ml_argsort = data_transform.downsample(bath_locations, features_sn, multi_labels, method='fixed-grid')
         red_coords, red_features, red_mlabels, ml_argsort = data_transform.downsample(bath_locations, features_sn, multi_labels, method='cluster-rules')
         f = pf.fit_transform(red_features)
-        q = pf.fit_transform(query_sn)
+        try:
+            q = pf.fit_transform(query_sn)
+        except NameError:
+            print('query wasn\'t loaded yet')
 
     ######## DOWNSAMPLING PARAM SEARCH #########
     if config['downsampled_param_search'] == True:
@@ -236,3 +239,27 @@ if __name__ == "__main__":
     #########################################################################################################
 
     # benchmarks.classification_dummy_testing()
+
+    # f = features_sn
+    # l = multi_labels
+
+    f = pf.fit_transform(red_features)
+    l = red_mlabels
+
+    W = dirmultreg_learn(f, l, verbose=True, reg=1000)
+    preds = dirmultreg_predict(f, W)[0]
+
+    # dm = DirichletMultinomialRegression(reg=50)
+    # dm.fit(f, l)
+    # preds = dm.predict(f)
+
+    avg_err = np.average(np.abs(preds - l/l.sum(axis=1)[:,np.newaxis]))
+    print(avg_err)
+
+    l_norm = l/l.sum(axis=1)[:,np.newaxis]
+
+    print(np.average(preds[:,0]), np.average(l_norm[:,0]))
+    print(np.average(preds[:,1]), np.average(l_norm[:,1]))
+    print(np.average(preds[:,2]), np.average(l_norm[:,2]))
+    print(np.average(preds[:,3]), np.average(l_norm[:,3]))
+    vis.dm_pred_vs_actual(preds, l_norm, display=False)
