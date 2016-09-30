@@ -76,7 +76,7 @@ if __name__ == "__main__":
     config['downsample']                 = True
     config['dm_test']                    = False
     config['summarise_labels']           = True
-    config['load_query']                 = False
+    config['load_query']                 = True
 
     # props = data.load_squidle_data()  
     # zip_obj = zip(props['latitude'], props['longitude'])  
@@ -245,7 +245,9 @@ if __name__ == "__main__":
     # l = multi_labels
 
     # f = pf.fit_transform(red_features)
-    f = red_features
+    # f = red_features
+    f = pf.fit_transform(red_features)
+    q = pf.fit_transform(query_sn)
     l = red_mlabels
 
     cross_validate_dm(f, l)
