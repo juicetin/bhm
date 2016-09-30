@@ -75,7 +75,7 @@ if __name__ == "__main__":
     config['downsample']                 = True
     config['dm_test']                    = False
     config['summarise_labels']           = True
-    config['load_query']                 = True
+    config['load_query']                 = False
 
     # props = data.load_squidle_data()  
     # zip_obj = zip(props['latitude'], props['longitude'])  
@@ -244,23 +244,28 @@ if __name__ == "__main__":
     # l = multi_labels
 
     f = pf.fit_transform(red_features)
-    q = pf.fit_transform(query_sn)
+    # q = pf.fit_transform(query_sn)
     l = red_mlabels
 
-    W = dirmultreg_learn(f, l, verbose=True, reg=1000)
+    ###### Test on original data ######
+    W = dirmultreg_learn(f, l, verbose=True, reg=100)
     preds = dirmultreg_predict(f, W)[0]
 
-    # dm = DirichletMultinomialRegression(reg=50)
-    # dm.fit(f, l)
-    # preds = dm.predict(f)
-
     avg_err = np.average(np.abs(preds - l/l.sum(axis=1)[:,np.newaxis]))
-    print(avg_err)
+    print("avg err for direct train/predict".format(avg_err))
 
-    l_norm = l/l.sum(axis=1)[:,np.newaxis]
+    # l_norm = l/l.sum(axis=1)[:,np.newaxis]
 
-    print(np.average(preds[:,0]), np.average(l_norm[:,0]))
-    print(np.average(preds[:,1]), np.average(l_norm[:,1]))
-    print(np.average(preds[:,2]), np.average(l_norm[:,2]))
-    print(np.average(preds[:,3]), np.average(l_norm[:,3]))
-    vis.dm_pred_vs_actual(preds, l_norm, display=False)
+    # print(np.average(preds[:,0]), np.average(l_norm[:,0]))
+    # print(np.average(preds[:,1]), np.average(l_norm[:,1]))
+    # print(np.average(preds[:,2]), np.average(l_norm[:,2]))
+    # print(np.average(preds[:,3]), np.average(l_norm[:,3]))
+    # # vis.dm_pred_vs_actual(preds, l_norm, display=False)
+
+    # ####### Create full map/s #########
+    # preds = dirmultreg_predict(q, W)
+    # for i in range(preds[0].shape[1]):
+    #     vis.show_map(qp_locations, preds[0][:,i], display=False, filename='simplelabel' + str(i) + 'map')
+
+    ######## MCMC stuff ########
+    s = dm_mcmc_learn(f, l, reg=100, verbose=True)

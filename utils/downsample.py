@@ -169,7 +169,7 @@ def downsample_limited_nearest_points(coords, dendrogram, data, label_counts, cl
         3. Points grouped together in cluster must not exceed distance X
     """
     clusters = {}
-    cluster_assignments = np.full(coords.shape[0], 0)
+    cluster_assignments = np.full(coords.shape[0], 0, dtype=np.int64)
     cluster_idx = 1
     points_assigned_count = 0
 

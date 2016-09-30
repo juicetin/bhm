@@ -67,7 +67,7 @@ def dirmultreg_learn(X, C, activation='soft', reg=1, verbose=False, ftol=1e-6,
         lgam_terms = (gammaln(asum) - gammaln(acsum)).sum() \
             + (gammaln(C + alpha) - gammaln(alpha)).sum()
 
-        post = -lgam_terms + (W**2).sum() / (2 * reg)
+        post = lgam_terms - (W**2).sum() / (2 * reg)
 
         if verbose:
             # log.info("Iter. {}, Objective = {}".format(it[0], post))

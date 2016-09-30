@@ -232,23 +232,25 @@ def show_map(locations, labels, x_bins=None, y_bins=None, display=True, filename
     Z[(y_locations, x_locations)] = labels
 
     print("Setting colourbar (legend)...")
-    cmap = cm.jet
-    cmaplist = [cmap(i) for i in range(cmap.N)]
-    cmap = cmap.from_list('custom cmap', cmaplist, cmap.N)
+    # cmap = cm.jet
+    # cmaplist = [cmap(i) for i in range(cmap.N)]
+    # cmap = cmap.from_list('custom cmap', cmaplist, cmap.N)
 
     print("Bulding image...")
-    plt.imshow(Z, extent=[x_min, x_max, y_min, y_max], origin='lower', cmap=cmap, vmin=vmin, vmax=vmax)
+    # plt.imshow(Z, extent=[x_min, x_max, y_min, y_max], origin='lower', cmap=cmap, vmin=vmin, vmax=vmax)
+    plt.imshow(Z, extent=[x_min, x_max, y_min, y_max], origin='lower', vmin=vmin, vmax=vmax)
 
     # Slightly hacky - unfortunately neeeded for 0-count argmaxs of 24 labels
-    if np.unique(labels).shape[0] < 5:
-        uniq_labels = np.arange(5)
-    else:
-        uniq_labels = np.arange(25)
+    # if np.unique(labels).shape[0] < 5:
+    #     uniq_labels = np.arange(5)
+    # else:
+    #     uniq_labels = np.arange(25)
 
-    bounds = np.linspace(uniq_labels.min()+1, uniq_labels.max(), uniq_labels.shape[0])
-    norm = mpl.colors.BoundaryNorm(bounds, cmap.N)
-    # mpl.colorbar.ColorbarBase(ax, cmap=cmap, norm=norm, spacing='Proportional', boundaries=bounds, format='%li')
-    plt.colorbar(cmap=cmap, norm=norm, spacing='Proportional', boundaries=bounds, format='%li')
+    # bounds = np.linspace(uniq_labels.min()+1, uniq_labels.max(), uniq_labels.shape[0])
+    # norm = mpl.colors.BoundaryNorm(bounds, cmap.N)
+
+    # plt.colorbar(cmap=cmap, norm=norm, spacing='Proportional', boundaries=bounds, format='%li')
+    plt.colorbar(spacing='Proportional', format='%li')
 
     print("Image generated!")
     if display == True:
