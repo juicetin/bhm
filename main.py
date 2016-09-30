@@ -30,6 +30,7 @@ from sklearn.preprocessing import PolynomialFeatures
 # Import our ML algorithms
 from ML.validation import cross_validate_algo
 from ML.validation import cross_validate_dm_argmax
+from ML.validation import cross_validate_dm
 from ML.knn import kNN
 from ML.random_forests import rf
 from ML.logistic_regression import lr
@@ -243,23 +244,26 @@ if __name__ == "__main__":
     # f = features_sn
     # l = multi_labels
 
-    f = pf.fit_transform(red_features)
+    # f = pf.fit_transform(red_features)
+    f = red_features
     l = red_mlabels
 
-    W = dirmultreg_learn(f, l, verbose=True, reg=1000)
-    preds = dirmultreg_predict(f, W)[0]
+    cross_validate_dm(f, l)
 
-    # dm = DirichletMultinomialRegression(reg=50)
-    # dm.fit(f, l)
-    # preds = dm.predict(f)
+    # W = dirmultreg_learn(f, l, verbose=True, reg=1000)
+    # preds = dirmultreg_predict(f, W)[0]
 
-    avg_err = np.average(np.abs(preds - l/l.sum(axis=1)[:,np.newaxis]))
-    print(avg_err)
+    # # dm = DirichletMultinomialRegression(reg=50)
+    # # dm.fit(f, l)
+    # # preds = dm.predict(f)
 
-    l_norm = l/l.sum(axis=1)[:,np.newaxis]
+    # avg_err = np.average(np.abs(preds - l/l.sum(axis=1)[:,np.newaxis]))
+    # print(avg_err)
 
-    print(np.average(preds[:,0]), np.average(l_norm[:,0]))
-    print(np.average(preds[:,1]), np.average(l_norm[:,1]))
-    print(np.average(preds[:,2]), np.average(l_norm[:,2]))
-    print(np.average(preds[:,3]), np.average(l_norm[:,3]))
-    vis.dm_pred_vs_actual(preds, l_norm, display=False)
+    # l_norm = l/l.sum(axis=1)[:,np.newaxis]
+
+    # print(np.average(preds[:,0]), np.average(l_norm[:,0]))
+    # print(np.average(preds[:,1]), np.average(l_norm[:,1]))
+    # print(np.average(preds[:,2]), np.average(l_norm[:,2]))
+    # print(np.average(preds[:,3]), np.average(l_norm[:,3]))
+    # vis.dm_pred_vs_actual(preds, l_norm, display=False)

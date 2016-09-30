@@ -62,11 +62,10 @@ def cross_validate_dm(features, labels, folds=10):
 
     for train_idx, test_idx in kf:
         X_train, X_test = features[train_idx], features[test_idx]
-        y_train, y_test = labels[train_idx], labels[test_idx].argmax(axis=1)
+        y_train, y_test = labels[train_idx], labels[test_idx]
         
-        W = dirmultreg_learn(X_train, y_train, activation='exp')
+        W = dirmultreg_learn(X_train, y_train)
         y_ = dirmultreg_predict(X_test, W)[0]
-        pdb.set_trace()
 
         all_err = y_ - labels[test_idx]
         avg_err = np.average(np.abs(all_err))
