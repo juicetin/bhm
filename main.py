@@ -30,6 +30,7 @@ from sklearn.preprocessing import PolynomialFeatures
 # Import our ML algorithms
 from ML.validation import cross_validate_algo
 from ML.validation import cross_validate_dm_argmax
+from ML.validation import cross_validate_dm
 from ML.knn import kNN
 from ML.random_forests import rf
 from ML.logistic_regression import lr
@@ -243,6 +244,8 @@ if __name__ == "__main__":
     # f = features_sn
     # l = multi_labels
 
+    # f = pf.fit_transform(red_features)
+    # f = red_features
     f = pf.fit_transform(red_features)
     # q = pf.fit_transform(query_sn)
     l = red_mlabels
@@ -269,3 +272,22 @@ if __name__ == "__main__":
 
     ######## MCMC stuff ########
     s = dm_mcmc_learn(f, l, reg=100, verbose=True)
+    # cross_validate_dm(f, l)
+
+    # W = dirmultreg_learn(f, l, verbose=True, reg=1000)
+    # preds = dirmultreg_predict(f, W)[0]
+
+    # # dm = DirichletMultinomialRegression(reg=50)
+    # # dm.fit(f, l)
+    # # preds = dm.predict(f)
+
+    # avg_err = np.average(np.abs(preds - l/l.sum(axis=1)[:,np.newaxis]))
+    # print(avg_err)
+
+    # l_norm = l/l.sum(axis=1)[:,np.newaxis]
+
+    # print(np.average(preds[:,0]), np.average(l_norm[:,0]))
+    # print(np.average(preds[:,1]), np.average(l_norm[:,1]))
+    # print(np.average(preds[:,2]), np.average(l_norm[:,2]))
+    # print(np.average(preds[:,3]), np.average(l_norm[:,3]))
+    # vis.dm_pred_vs_actual(preds, l_norm, display=False)
