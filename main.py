@@ -244,18 +244,18 @@ if __name__ == "__main__":
     # f = features_sn
     # l = multi_labels
 
-    # f = pf.fit_transform(red_features)
     # f = red_features
     f = pf.fit_transform(red_features)
     # q = pf.fit_transform(query_sn)
     l = red_mlabels
+    l_norm = l/l.sum(axis=1)[:,np.newaxis]
 
     ###### Test on original data ######
     W = dirmultreg_learn(f, l, verbose=True, reg=100)
-    preds = dirmultreg_predict(f, W)[0]
+    # preds = dirmultreg_predict(f, W)[0]
 
-    avg_err = np.average(np.abs(preds - l/l.sum(axis=1)[:,np.newaxis]))
-    print("avg err for direct train/predict: {}".format(avg_err))
+    # avg_err = np.average(np.abs(preds - l_norm))
+    # print("avg err for direct train/predict".format(avg_err))
 
     # l_norm = l/l.sum(axis=1)[:,np.newaxis]
 
@@ -291,3 +291,15 @@ if __name__ == "__main__":
     # print(np.average(preds[:,2]), np.average(l_norm[:,2]))
     # print(np.average(preds[:,3]), np.average(l_norm[:,3]))
     # vis.dm_pred_vs_actual(preds, l_norm, display=False)
+
+    ######### Comparing dm MAP with MCMC ##############
+    dm_chains = np.load('data/dm_mcmc_pf2_alltraining.npy')
+    results = []
+    for i in range(100):
+        index = np.abs(np.int(np.random.randn()*100))
+        W = dirmultreg_learn(f, l, verbose=True, reg=100)
+        a = np.average(np.abs(dirmultreg_predict(f, W) - l_norm))
+        b = np.average(np.abs(dirmultreg_predict(f, dm_chains[-index].reshape(4, 78)) - l_norm))
+        print(a, b)
+        results.append([a,b])
+    results = np.array(results)

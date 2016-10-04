@@ -10,6 +10,7 @@ from revrand.mathfun.special import softplus, softmax
 from scipy.stats import logistic as sci_logistic
 # from revrand.optimize import minimize
 from scipy.optimize import minimize
+import pdb
 
 def logistic(M):
     return sci_logistic.cdf(M)
@@ -125,7 +126,12 @@ def dirmultreg_predict(X, W, activation='soft', counts=1):
         alpha = softplus(XW)
         EC = alpha / alpha.sum(axis=1)[:, np.newaxis]
 
+    # Variance
+    a_sum = alpha.sum(axis=1)[:,np.newaxis]
+    a_norm = alpha/a_sum
+    pred_vars = counts * a_norm * (1 - a_norm ) * ((counts+a_sum)/(1+a_sum))
+
     if not np.isscalar(counts):
-        return np.atleast_2d(counts).T * EC, alpha
+        return np.atleast_2d(counts).T * EC, alpha, pred_vars
     else:
-        return counts * EC, alpha
+        return counts * EC, alpha, pred_vars

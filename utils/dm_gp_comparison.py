@@ -33,7 +33,7 @@ def dm_vs_gp():
 
         # Dirichlet multinomial stuff
         W = dirmultreg_learn(X_train, C_train, verbose=True, reg=0.1)
-        EC, _ = dirmultreg_predict(X_test, W)
+        EC, _, _ = dirmultreg_predict(X_test, W)
 
         C_test_norm = normalise(C_test)
         mean_err_dm1 = np.average(np.abs(EC-C_test_norm))
@@ -42,7 +42,7 @@ def dm_vs_gp():
 
         # with pf2
         W = dirmultreg_learn(X_train2, C_train, verbose=True, reg=0.1)
-        EC, _ = dirmultreg_predict(X_test2, W)
+        EC, _, _ = dirmultreg_predict(X_test2, W)
         C_test_norm = normalise(C_test)
         mean_err_dm1 = np.average(np.abs(EC-C_test_norm))
         result_list.append(mean_err_dm1)

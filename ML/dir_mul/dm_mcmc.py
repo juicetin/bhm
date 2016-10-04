@@ -18,6 +18,45 @@ def logistic(M):
 # Set up logging
 log = logging.getLogger(__name__)
 
+def retrieve_mcmc_likelihoods(chain, features, labels, reg=100, activation='soft'):
+    D = features.shape[1]
+    K = labels.shape[1]
+    mcmc_lls = [posterior(chain[i], K, D, features, labels, reg, activation='soft') for i in range(chain.shape[0])]
+    return np.array(mcmc_lls)
+
+def posterior(W, K, D, X, C, reg, verbose=False, activation='soft'):
+    """
+    Calculates the log of prior times likelihood for MCMC
+    """
+
+    W = W.reshape(K, D)  # This comes out flattened
+
+    if activation == 'exp':
+        alpha = np.exp(X.dot(W.T))  # NxK matrix of alpha values
+    else:
+        alpha = softplus(X.dot(W.T))
+        alpha[alpha < 1e-300] = 1e-300  # hack to avoid instability
+
+    # Re-usable computations
+    asum = alpha.sum(axis=1)
+    acsum = (C + alpha).sum(axis=1)
+
+    # Log-Gamma terms
+    lgam_terms = (gammaln(asum) - gammaln(acsum)).sum() \
+        + (gammaln(C + alpha) - gammaln(alpha)).sum()
+
+    post = lgam_terms - (W**2).sum() / (2 * reg)
+
+    if verbose:
+        # log.info("Iter. {}, Objective = {}".format(it[0], post))
+        print("Iter. {}, Objective = {}".format(it[0], post))
+        it[0] += 1
+
+    # import sys
+    # sys.exit(0)
+    return post
+
+
 def dirmultreg_learn(X, C, activation='soft', reg=1, verbose=False, ftol=1e-6,
                      maxit=100):
     """ Train a Dirichlet-Multinomial Regressor using MAP to learn the weights.
@@ -46,44 +85,12 @@ def dirmultreg_learn(X, C, activation='soft', reg=1, verbose=False, ftol=1e-6,
     _, D = X.shape
     it = [0]
 
-    def posterior(W):
-        """
-        Calculates the log of prior times likelihood for MCMC
-        """
-
-        W = W.reshape(K, D)  # This comes out flattened
-
-        if activation == 'exp':
-            alpha = np.exp(X.dot(W.T))  # NxK matrix of alpha values
-        else:
-            alpha = softplus(X.dot(W.T))
-            alpha[alpha < 1e-300] = 1e-300  # hack to avoid instability
-
-        # Re-usable computations
-        asum = alpha.sum(axis=1)
-        acsum = (C + alpha).sum(axis=1)
-
-        # Log-Gamma terms
-        lgam_terms = (gammaln(asum) - gammaln(acsum)).sum() \
-            + (gammaln(C + alpha) - gammaln(alpha)).sum()
-
-        post = lgam_terms - (W**2).sum() / (2 * reg)
-
-        if verbose:
-            # log.info("Iter. {}, Objective = {}".format(it[0], post))
-            print("Iter. {}, Objective = {}".format(it[0], post))
-            it[0] += 1
-
-        # import sys
-        # sys.exit(0)
-        return post
-
     start_W = np.random.rand(K*D)
     # start_W = np.random.randn(K*D)
     ndim, nwalkers = start_W.shape[0], start_W.shape[0]*2
     # pos = [result["x"] + 1e-4*np.random.randn(ndim) for i in range(nwalkers)]
     pos = [np.random.rand(K*D) for i in range(nwalkers)]
-    sampler = emcee.EnsembleSampler(nwalkers, ndim, posterior, args=[])
+    sampler = emcee.EnsembleSampler(nwalkers, ndim, posterior, args=[K, D, X, C, reg])
     sampler.run_mcmc(pos, 500)
     
     samples = sampler.chain[:, 100:, :].reshape((-1, ndim))
