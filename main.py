@@ -70,7 +70,7 @@ if __name__ == "__main__":
     sys.excepthook = info
 
     config = {}
-    config['no_coord_features']          = False # Keeping coords as features improves performance :/
+    config['no_coord_features']          = True # Keeping coords as features improves performance :/
     config['ensemble_testing']           = False
     config['downsampled_param_search']   = False
     config['downsample']                 = True
@@ -255,7 +255,7 @@ if __name__ == "__main__":
     preds = dirmultreg_predict(f, W)[0]
 
     avg_err = np.average(np.abs(preds - l/l.sum(axis=1)[:,np.newaxis]))
-    print("avg err for direct train/predict".format(avg_err))
+    print("avg err for direct train/predict: {}".format(avg_err))
 
     # l_norm = l/l.sum(axis=1)[:,np.newaxis]
 
@@ -271,7 +271,7 @@ if __name__ == "__main__":
     #     vis.show_map(qp_locations, preds[0][:,i], display=False, filename='simplelabel' + str(i) + 'map')
 
     ######## MCMC stuff ########
-    s = dm_mcmc_learn(f, l, reg=100, verbose=True)
+    # s = dm_mcmc_learn(f, l, reg=100, verbose=True)
     # cross_validate_dm(f, l)
 
     # W = dirmultreg_learn(f, l, verbose=True, reg=1000)

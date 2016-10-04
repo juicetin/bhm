@@ -185,3 +185,7 @@ def load_squidle_data(path='../bhm-large-data/'):
             props[key] = np.concatenate((props[key], cur_props[key]))
 
     return props
+
+def find_matching(ll_utm, bath_locs):
+    
+    
