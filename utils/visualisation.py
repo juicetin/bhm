@@ -9,6 +9,7 @@ from matplotlib.patches import Rectangle
 import matplotlib.cm as cm
 import matplotlib as mpl
 from matplotlib import colors
+import math
 import pdb
 
 from utils.downsample import fixed_grid_blocksize
@@ -438,6 +439,9 @@ def gp_pred_vs_actual(y_distr, y_pred, sigma, display=False, filename='toy_gp_pr
         clear_plt()
 
 def standalone_toyplot_hist_legend(filename='toyplot_hist_distr_legend.pdf'):
+    """
+    Generates a standalone legend describing the histogram of the toy plots 
+    """
     fig = plt.figure()
     figlegend = plt.figure(figsize=(4,3))
     ax = fig.add_subplot(111)
@@ -447,6 +451,30 @@ def standalone_toyplot_hist_legend(filename='toyplot_hist_distr_legend.pdf'):
     y_descript = Rectangle((0, 0), 1, 1, fc="w", fill=False, edgecolor='none', linewidth=0)
     figlegend.legend([x_descript, y_descript, bar1, bar2], ('x-axis - normalised ratio of label', 'y-axis - data point number', 'Label 0', 'Label 1'), 'center')
 
-    # fig.show()
-    # figlegend.show()
     figlegend.savefig(filename, bbox_inches='tight', pad_inches = 0)
+
+def standalone_DM_colorbar_legend(filename='dm_plot_colorbar.pdf'):
+    """
+    Generates a standalone colorbar for the DM heatmaps
+    """
+    fig = plt.figure()
+    figlegend = plt.figure(figsize=(4,3))
+    ax = fig.add_subplot(111)
+    bar1 = ax.bar(range(10), np.random.randn(10), color='r')
+    bar2 = ax.bar(range(10), np.random.randn(10), color='b')
+    x_descript = Rectangle((0, 0), 1, 1, fc="w", fill=False, edgecolor='none', linewidth=0)
+    y_descript = Rectangle((0, 0), 1, 1, fc="w", fill=False, edgecolor='none', linewidth=0)
+    figlegend.legend([x_descript, y_descript, bar1, bar2], ('x-axis - normalised ratio of label', 'y-axis - data point number', 'Label 0', 'Label 1'), 'center')
+
+    figlegend.savefig(filename, bbox_inches='tight', pad_inches = 0)
+
+def plot_dm_chains(chains, filename='dm_mcmc_weights'):
+    label_count = chains.shape[1]
+    x = np.arange(1, chains.shape[0]+1)
+    rows = math.ceil(math.sqrt(chains.shape[1]))
+    # axs = generate_subplots(rows=rows, columns=rows, actual_count=label_count, title_list=None)
+    for idx in range(label_count):
+        plt.plot(x, chains[:,idx])
+        plt.savefig(filename+'_'+str(idx)+'.pdf')
+        clear_plt()
+

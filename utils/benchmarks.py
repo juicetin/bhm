@@ -65,7 +65,7 @@ def dir_mul_bench(gen_maps=False):
     x, y = np.meshgrid(ax_coords, ax_coords)
     coords = np.array([[xc, yc] for xc, yc in zip(np.concatenate(x), np.concatenate(y))])
 
-    preds_nicta, _ = dirmultreg_predict(coords, W, activation='soft')
+    preds_nicta, _, _ = dirmultreg_predict(coords, W, activation='soft')
     preds_nicta_max = np.argmax(preds_nicta, axis=1)
 
     preds_me = dm.predict(coords)
