@@ -7,6 +7,7 @@
 samples_full_labels.npy
 samples_simple_labels.npy
 data/dm_mcmc_pf2_alltraining.npy
+hons.vim
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
