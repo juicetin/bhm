@@ -67,7 +67,7 @@ if __name__ == "__main__":
     XQueryFeature = Xbasis.transform(X, lenscale=1)
 
     #Evaluate most common draw
-    EC, _ = dirmultreg_predict(XQueryFeature, W, counts=100)
+    EC, _, _ = dirmultreg_predict(XQueryFeature, W, counts=100)
     maxCat = np.argmax(EC,axis=1)
     # pl.figure()
     # pl.scatter(XQuery[:,0],XQuery[:,1],c=maxCat,s=50)

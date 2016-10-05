@@ -18,6 +18,7 @@ from sklearn.cross_validation import StratifiedKFold
 from sklearn import datasets
 from sklearn.metrics import roc_auc_score
 from sklearn import neighbors
+from sklearn.preprocessing import PolynomialFeatures
 
 # Import our ML algorithms
 from ML.validation import cross_validate_algo
@@ -33,10 +34,13 @@ from ML.gp.bcm import BCM
 from ML.gp.rbcm import rBCM
 from ML.gp.gp_mt import GPMT
 from ML.dir_mul.dirichlet_multinomial import DirichletMultinomialRegression
+from ML.dir_mul.nicta.dirmultreg import dirmultreg_learn, dirmultreg_predict
+from ML.dir_mul.dm_mcmc import dirmultreg_learn as dm_mcmc_learn
 
 import utils.visualisation as vis
 import utils.load_data as data
 import utils.gpy_benchmark
+from utils.data_transform import features_squared_only
 
 import pdb
 import code
@@ -472,3 +476,70 @@ def GP_ensemble_tests(features, labels, train_idx):
         auroc = helpers.roc_auc_score_multi(labels[test_idx], preds)
         score = helpers.score(labels[test_idx], np.argmax(preds, axis=0))
         print(auroc, score)
+
+def dm_map_vs_mcmc(features, labels_norm):
+    dm_chains = np.load('data/dm_mcmc_pf2_alltraining.npy')
+    results = []
+    for i in range(100):
+        index = np.abs(np.int(np.random.randn()*100))
+        W = dirmultreg_learn(features, labels_norm, verbose=True, reg=100)
+        a = np.average(np.abs(dirmultreg_predict(features, W) - labels_norm))
+        b = np.average(np.abs(dirmultreg_predict(features, dm_chains[-index].reshape(4, 78)) - labels_norm))
+        print(a, b)
+        results.append([a,b])
+    results = np.array(results)
+    return results
+
+def dm_test_feature_space(features_orig, labels):
+    """
+    Looks for best features space to use in terms of trade-off between time/performance
+    """
+    pf = PolynomialFeatures()
+    features_2 = pf.fit_transform(features_orig)
+    features_sq_base1 = features_squared_only(features_orig) # np.concatenate( (np.hstack((features_orig, features_orig**2)), np.ones(features_orig.shape[0])[:,np.newaxis]) , 1)
+    features_sq_only = np.hstack((features_orig, features_orig**2))
+    feature_combo_list = [features_2, features_sq_base1, features_sq_only, features_orig]
+
+    sq_err_diff = []
+    runs = 100
+
+    combos = len(feature_combo_list)
+    test_size = np.round(0.1 * features_orig.shape[0])
+    all_errs = np.zeros((runs, combos))
+    all_vars = np.zeros((runs, combos, test_size, combos))
+    indices = np.arange(features_orig.shape[0])
+    for i in range(runs):
+        _, _, _, _, train_idx, test_idx = train_test_split(features_orig, labels, indices, test_size=0.1)
+        Ws = [dirmultreg_learn(features[train_idx], labels[train_idx]) for features in feature_combo_list]
+        dm_stats = np.array([dirmultreg_predict(features[test_idx], W) for features, W in zip(feature_combo_list, Ws)])
+
+        preds = dm_stats[:,0]
+        errs = np.array([np.average(np.abs(pred - labels[test_idx])) for pred in preds])
+        all_errs[i] = errs
+
+        cur_vars = dm_stats[:,2]
+        all_vars[i] = cur_vars
+
+        print(errs)
+
+    print(np.average(np.abs(all_errs[:,0] - all_errs[:,1])))
+    return all_errs, all_vars
+
+def dm_test_norm_labels_vs_count_labels_training(features, labels, runs=10):
+    """
+    Compares training with the raw label counts compared to the normalised versions
+    """
+    pf = PolynomialFeatures()
+    features_2 = pf.fit_transform(features)
+    
+    labels_norm = labels/labels.sum(axis=1)[:,np.newaxis]
+    results = []
+    for i in range(runs):
+        W1 = dirmultreg_learn(features_2, labels)
+        W2 = dirmultreg_learn(features_2, labels_norm)
+        P1 = dirmultreg_predict(features_2, W1)[0]
+        P2 = dirmultreg_predict(features_2, W2)[0]
+        print(P1, P2)
+        results.append([P1, P2])
+    results = np.array(results)
+    return results

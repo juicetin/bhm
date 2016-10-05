@@ -70,7 +70,7 @@ if __name__ == "__main__":
     sys.excepthook = info
 
     config = {}
-    config['no_coord_features']          = False # Keeping coords as features improves performance :/
+    config['no_coord_features']          = True # NOTE don't change this!!! Keeping coords as features improves performance :/
     config['ensemble_testing']           = False
     config['downsampled_param_search']   = False
     config['downsample']                 = True
@@ -125,8 +125,10 @@ if __name__ == "__main__":
 
     # NOTE _s suffix kept here for clarity
     print("Scaling features...")
-    features_sn = (normalize(scale(features), axis=0)) # 0.8359, 0.5323 for PoGPE
+    features_sn = (normalize(scale(features), axis=1)) # 0.8359, 0.5323 for PoGPE
     # features_s = scale(features) # MARGINALLY better than normalize(scale)
+    # labels = np.array(labels)
+    labels_simple = data_transform.summarised_labels(labels)
     
     ########### DOWNSAMPLING ##########
     pf = PolynomialFeatures(2)
@@ -155,8 +157,6 @@ if __name__ == "__main__":
             errors[i-1] = labels_error
         print()
     
-    # labels = np.array(labels)
-    labels_simple = data_transform.summarised_labels(labels)
 
     if config['dm_test'] == True:
         dm = DirichletMultinomialRegression()
@@ -200,6 +200,15 @@ if __name__ == "__main__":
     train_idx = np.load('data/semi-optimal-1000-subsample.npy')
     test_idx = np.array(list(set(np.arange(features.shape[0])) - set(train_idx)))
 
+    gpyc = GPyC()
+    f = pf.fit_transform(features_sn)
+    f = features_sn
+    print(f.shape)
+    gpyc.fit(f[train_idx], labels_simple[train_idx])
+    results = gpyc.predict(f[test_idx])
+    print(np.sum(results[0].argmax(axis=0) == labels_simple[test_idx])/test_idx.shape[0])
+    # pdb.set_trace()
+    
     # from ML.gp.revrand_glm import revrand_glm, RGLM
     # rglm = RGLM(nbases=2000)
     # print("fitting glm")
@@ -244,8 +253,8 @@ if __name__ == "__main__":
     # f = features_sn
     # l = multi_labels
 
-    # f = red_features
-    f = pf.fit_transform(red_features)
+    f = red_features
+    f_pf2 = pf.fit_transform(red_features)
     # q = pf.fit_transform(query_sn)
     l = red_mlabels
     l_norm = l/l.sum(axis=1)[:,np.newaxis]
@@ -272,7 +281,7 @@ if __name__ == "__main__":
 
     ######## MCMC stuff ########
     # s = dm_mcmc_learn(f, l, reg=100, verbose=True)
-    # cross_validate_dm(f, l)
+    cross_validate_dm(f_pf2, l)
 
     # W = dirmultreg_learn(f, l, verbose=True, reg=1000)
     # preds = dirmultreg_predict(f, W)[0]
@@ -293,13 +302,7 @@ if __name__ == "__main__":
     # vis.dm_pred_vs_actual(preds, l_norm, display=False)
 
     ######### Comparing dm MAP with MCMC ##############
-    dm_chains = np.load('data/dm_mcmc_pf2_alltraining.npy')
-    results = []
-    for i in range(100):
-        index = np.abs(np.int(np.random.randn()*100))
-        W = dirmultreg_learn(f, l, verbose=True, reg=100)
-        a = np.average(np.abs(dirmultreg_predict(f, W) - l_norm))
-        b = np.average(np.abs(dirmultreg_predict(f, dm_chains[-index].reshape(4, 78)) - l_norm))
-        print(a, b)
-        results.append([a,b])
-    results = np.array(results)
+    # benchmarks.dm_map_vs_mcmc(f, l)
+
+    ######### Looking at error and variance of DM using different projections #########
+    # all_errs, all_vars = benchmarks.dm_test_feature_space(red_features, l_norm)

@@ -64,3 +64,5 @@ def summarised_labels(labels):
         # for k, v in label_map.items(): 
         #     new_labels[labels==k] = v
 
+def features_squared_only(features):
+    return np.concatenate((np.hstack((features, features**2)), np.ones(features.shape[0])[:,np.newaxis]), 1)

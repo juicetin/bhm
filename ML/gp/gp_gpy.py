@@ -25,6 +25,7 @@ class GPyC:
         all_preds = np.empty((self.models.shape[0], x.shape[0]))
         all_vars = np.empty(all_preds.shape)
         for i, m in enumerate(self.models):
+            print("On label {}".format(i))
             gp_preds, gp_vars = m.predict(x)
             all_preds[i] = gp_preds.flatten()
             all_vars[i] = gp_vars.flatten()

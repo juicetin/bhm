@@ -478,3 +478,5 @@ def plot_dm_chains(chains, filename='dm_mcmc_weights'):
         plt.savefig(filename+'_'+str(idx)+'.pdf')
         clear_plt()
 
+def plot_dm_hists(chains, filename='dm_mcmc_weight_hist'):
+    pass
