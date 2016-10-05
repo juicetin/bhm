@@ -2,6 +2,7 @@ import numpy as np
 from datetime import datetime
 import matplotlib as mpl
 
+import matplotlib as mpl
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.patches import Rectangle
@@ -457,6 +458,7 @@ def standalone_DM_colorbar_legend(filename='dm_plot_colorbar.pdf'):
     """
     Generates a standalone colorbar for the DM heatmaps
     """
+    # TODO 
     fig = plt.figure()
     figlegend = plt.figure(figsize=(4,3))
     ax = fig.add_subplot(111)
@@ -479,7 +481,22 @@ def plot_dm_chains(chains, filename='dm_mcmc_weights'):
         clear_plt()
 
 def plot_dm_hists(chains, filename='dm_mcmc_weight_hist'):
-    for i in range(chains.shape[1]):
-        n, bins, patches = plt.hist(chains[:,i], bins=50)
-        plt.savefig(filename+'_'+str(i)+'.pdf')
-        clear_plt()
+
+    label_count = chains.shape[1]
+    cols = np.round(math.sqrt(chains.shape[1]/1.71))
+    rows = np.round(chains.shape[1]/cols)
+    print(cols, rows)
+    axs = generate_subplots(rows=rows, columns=cols, actual_count=label_count, title_list=None)
+    font = {'family' : 'normal',
+            'weight' : 'normal',
+            'size'   : 7}
+    mpl.rc('font', **font)
+
+    for i, ax in enumerate(axs):
+        n, bins, patches = ax.hist(chains[:,i], bins=50)
+        # ax.savefig(filename+'_'+str(i)+'.pdf')
+        # clear_plt()
+    plt.tight_layout()
+    plt.savefig(filename+'.pdf')
+    clear_plt()
+    mpl.rcdefaults()
