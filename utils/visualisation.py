@@ -484,7 +484,7 @@ def plot_dm_hists(chains, filename='dm_mcmc_weight_hist'):
 
     label_count = chains.shape[1]
     cols = np.round(math.sqrt(chains.shape[1]/1.71))
-    rows = np.round(chains.shape[1]/cols)
+    rows = math.ceil(chains.shape[1]/cols)
     print(cols, rows)
     axs = generate_subplots(rows=rows, columns=cols, actual_count=label_count, title_list=None)
     font = {'family' : 'normal',
