@@ -479,4 +479,5 @@ def plot_dm_chains(chains, filename='dm_mcmc_weights'):
         clear_plt()
 
 def plot_dm_hists(chains, filename='dm_mcmc_weight_hist'):
-    pass
+    n, bins, patches = plt.hist(chains[:,0], 30)
+    plt.savefig(filename+'.pdf')
