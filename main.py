@@ -2,10 +2,12 @@
 # Account for headless server/no display backend import matplotlib as mpl import psutil import os
 import os
 import matplotlib as mpl
+import psutil
 if "DISPLAY" not in os.environ: # or os.environ['DISPLAY'] == ':0':
     mpl.use('SVG')
 mpl.use('SVG')
 
+import importlib
 import numpy as np
 import copy
 import sys
@@ -75,7 +77,7 @@ if __name__ == "__main__":
     config['downsample']                 = True
     config['dm_test']                    = False
     config['summarise_labels']           = True
-    config['load_query']                 = False
+    config['load_query']                 = True
 
     # props = data.load_squidle_data()  
     # zip_obj = zip(props['latitude'], props['longitude'])  
@@ -199,13 +201,13 @@ if __name__ == "__main__":
     train_idx = np.load('data/semi-optimal-1000-subsample.npy')
     test_idx = np.array(list(set(np.arange(features.shape[0])) - set(train_idx)))
 
-    gpyc = GPyC()
-    f = pf.fit_transform(features_sn)
-    f = features_sn
-    print(f.shape)
-    gpyc.fit(f[train_idx], labels_simple[train_idx])
-    results = gpyc.predict(f[test_idx])
-    print(np.sum(results[0].argmax(axis=0) == labels_simple[test_idx])/test_idx.shape[0])
+    # gpyc = GPyC()
+    # f = pf.fit_transform(features_sn)
+    # f = features_sn
+    # print(f.shape)
+    # gpyc.fit(f[train_idx], labels_simple[train_idx])
+    # results = gpyc.predict(f[test_idx])
+    # print(np.sum(results[0].argmax(axis=0) == labels_simple[test_idx])/test_idx.shape[0])
     # pdb.set_trace()
     
     # from ML.gp.revrand_glm import revrand_glm, RGLM
@@ -254,13 +256,16 @@ if __name__ == "__main__":
 
     f = red_features
     f_pf2 = pf.fit_transform(red_features)
+    f_sq1 = data_transform.features_squared_only(red_features)
     # q = pf.fit_transform(query_sn)
+    q_sq2 = data_transform.features_squared_only(query_sn)
     l = red_mlabels
     l_norm = l/l.sum(axis=1)[:,np.newaxis]
 
     ###### Test on original data ######
-    W = dirmultreg_learn(f, l, verbose=True, reg=100)
+    W = dirmultreg_learn(f_sq1, l, verbose=True, reg=100)
     # preds = dirmultreg_predict(f, W)[0]
+    query_preds = dirmultreg_predict(q_sq2, W)
 
     # avg_err = np.average(np.abs(preds - l_norm))
     # print("avg err for direct train/predict".format(avg_err))
