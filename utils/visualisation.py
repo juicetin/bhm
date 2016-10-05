@@ -479,5 +479,7 @@ def plot_dm_chains(chains, filename='dm_mcmc_weights'):
         clear_plt()
 
 def plot_dm_hists(chains, filename='dm_mcmc_weight_hist'):
-    n, bins, patches = plt.hist(chains[:,0], 30)
-    plt.savefig(filename+'.pdf')
+    for i in range(chains.shape[1]):
+        n, bins, patches = plt.hist(chains[:,i], bins=50)
+        plt.savefig(filename+'_'+str(i)+'.pdf')
+        clear_plt()

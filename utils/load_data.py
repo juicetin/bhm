@@ -186,6 +186,4 @@ def load_squidle_data(path='../bhm-large-data/'):
 
     return props
 
-def find_matching(ll_utm, bath_locs):
-    
-    
+# def find_matching(ll_utm, bath_locs): 

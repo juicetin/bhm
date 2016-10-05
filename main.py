@@ -1,5 +1,7 @@
 #!/bin/python3
 # Account for headless server/no display backend import matplotlib as mpl import psutil import os
+import os
+import matplotlib as mpl
 if "DISPLAY" not in os.environ: # or os.environ['DISPLAY'] == ':0':
     mpl.use('SVG')
 mpl.use('SVG')
