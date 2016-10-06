@@ -298,7 +298,7 @@ def clear_plt():
     plt.cla()
     plt.clf()
 
-def plot_coords(locations, filename='tmp.pdf', display=True):
+def plot_coords(locations, filename='tmp.pdf', display=True, lims=None):
     """
     Plots a given set of x,y coordinates.
     Locations are given as a list of (x,y) tuples
@@ -306,6 +306,9 @@ def plot_coords(locations, filename='tmp.pdf', display=True):
     x = locations[:,0]
     y = locations[:,1]
     plt.scatter(x, y)
+    if lims != None:
+        plt.xlim(lims['x_min'], lims['x_max'])
+        plt.ylim(lims['y_min'], lims['y_max'])
     if display == False:
         plt.savefig(filename)
     else:
