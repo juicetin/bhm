@@ -11,7 +11,7 @@ logger.setLevel(logging.DEBUG)
 
 # TODO
 # bump up nbases
-# check what nbases
+# check what nbaseg
 # lengthscale 10 is quite high -lower?
 # try diff polynomial fns
 def revrand_glm(nbases=50, lenscale=1., regulariser=1, maxiter=5, batch_size=10, num_features=11):
