@@ -78,7 +78,7 @@ if __name__ == "__main__":
     config['downsample']                 = True
     config['dm_test']                    = False
     config['summarise_labels']           = True
-    config['load_query']                 = True
+    config['load_query']                 = False
 
     # props = data.load_squidle_data()  
     # zip_obj = zip(props['latitude'], props['longitude'])  
@@ -171,7 +171,10 @@ if __name__ == "__main__":
 
         # f = pf.fit_transform(features_sn)
         f = features_sn
-        q = query_sn
+
+        if config['load_query'] == True:
+            q = query_sn
+            q_sq2 = data_transform.features_squared_only(query_sn)
 
         # res3 = benchmarks.dm_vs_det_stats(preds_dm, preds_gp)
 
@@ -259,15 +262,14 @@ if __name__ == "__main__":
     f_pf2 = pf.fit_transform(red_features)
     f_sq1 = data_transform.features_squared_only(red_features)
     # q = pf.fit_transform(query_sn)
-    q_sq2 = data_transform.features_squared_only(query_sn)
     l = red_mlabels
     l_norm = l/l.sum(axis=1)[:,np.newaxis]
 
     ###### Test on original data ######
     # preds = dirmultreg_predict(f, W)[0]
     W = dirmultreg_learn(f_sq1, l, verbose=True, reg=100)
-    query_preds = dirmultreg_predict(q_sq2, W)
-    q_preds = query_preds[0]
+    # query_preds = dirmultreg_predict(q_sq2, W)
+    # q_preds = query_preds[0]
 
     # avg_err = np.average(np.abs(preds - l_norm))
     # print("avg err for direct train/predict".format(avg_err))
