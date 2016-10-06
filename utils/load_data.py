@@ -187,3 +187,8 @@ def load_squidle_data(path='../bhm-large-data/'):
     return props
 
 # def find_matching(ll_utm, bath_locs): 
+
+def sample_equal_multi_labels(labels):
+    np.sum(multi_labels, axis=0).min()
+    np.bincount(multi_labels.argmax(axis=1)).min()
+    

@@ -543,3 +543,9 @@ def dm_test_norm_labels_vs_count_labels_training(features, labels, runs=10):
         results.append([P1, P2])
     results = np.array(results)
     return results
+
+def dm_performance(f, l, reg=100):
+    W = dirmultreg_learn(f, l, verbose=True, reg=reg)
+    preds = dirmultreg_predict(f, W)
+    avg_err = np.average(np.abs(preds[0] - l/l.sum(axis=1)[:,np.newaxis]))
+    return avg_err

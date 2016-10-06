@@ -53,6 +53,7 @@ import utils.load_data as data
 import utils.data_transform as data_transform
 import utils.benchmarks as benchmarks
 import utils.gpy_benchmark as gpy_benchmarks
+from utils import thesis_experiments
 
 def info(type, value, tb):
     """
@@ -263,9 +264,10 @@ if __name__ == "__main__":
     l_norm = l/l.sum(axis=1)[:,np.newaxis]
 
     ###### Test on original data ######
-    W = dirmultreg_learn(f_sq1, l, verbose=True, reg=100)
     # preds = dirmultreg_predict(f, W)[0]
+    W = dirmultreg_learn(f_sq1, l, verbose=True, reg=100)
     query_preds = dirmultreg_predict(q_sq2, W)
+    q_preds = query_preds[0]
 
     # avg_err = np.average(np.abs(preds - l_norm))
     # print("avg err for direct train/predict".format(avg_err))
@@ -285,7 +287,7 @@ if __name__ == "__main__":
 
     ######## MCMC stuff ########
     # s = dm_mcmc_learn(f, l, reg=100, verbose=True)
-    cross_validate_dm(f_pf2, l)
+    # cross_validate_dm(f_pf2, l)
 
     # W = dirmultreg_learn(f, l, verbose=True, reg=1000)
     # preds = dirmultreg_predict(f, W)[0]
