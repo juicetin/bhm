@@ -169,7 +169,9 @@ def latlong_to_utm(lat, longs):
     return np.array([utm.from_latlon(x, y)[:2] for x, y in zip(lat, longs)])
 
 def load_squidle_data(path='../bhm-large-data/'):
-    csvs = ['images-scottreef2011-2016-09-16.csv']
+    csvs = ['images-scottreef2011-2016-09-16.csv', 
+            'images-scottreef2009-2016-09-16.csv',
+            'images-scottreef2015-2016-09-16.csv']
     keys = ['image__id', 'date_time', 'depth', 'web_location', 'latitude',
                    'longitude']
 
@@ -189,5 +191,8 @@ def load_squidle_data(path='../bhm-large-data/'):
 # def find_matching(ll_utm, bath_locs): 
 
 def sample_equal_multi_labels(labels):
+    """
+    TODO
+    """
     np.sum(multi_labels, axis=0).min()
     np.bincount(multi_labels.argmax(axis=1)).min()

@@ -3,12 +3,10 @@ import pdb
 from utils import visualisation as vis
 from ML.dir_mul.nicta.dirmultreg import dirmultreg_learn, dirmultreg_predict
 
-def find_even_split_areas(query_preds, bounds=[0.4, 0.6], split_labels=[1,2]):
+def find_even_split_areas(q_preds, q_vars, bounds=[0.4, 0.6], split_labels=[1,2]):
     """
     Finds areas which contain certain mixes of labels with a minimum threshold of equality
     """
-    q_preds = query_preds[0]
-    q_vars = query_preds[2]
     even_split_idxs = np.where((q_preds[:,split_labels[0]] > bounds[0]) & (q_preds[:,split_labels[0]] < bounds[1]) & (q_preds[:,split_labels[1]] > bounds[0]) & (q_preds[:,split_labels[1]] < bounds[1]))
     even_splits_preds = q_preds[even_split_idxs]
     even_splits_vars = q_vars[even_split_idxs]
@@ -55,3 +53,14 @@ def plot_training_data_per_label(locations, labels, gen_images=False):
         label_coord_map[c] = cur_label_locations
 
     return label_coord_map
+
+def dm_vs_gp_even_split_vars(dm_results, gp_results):
+    """
+    Compares the predictions/variance of a DM vs GP in areas where they believe there are even splits
+    """
+    dm_preds, dm_vars = dm_results
+    gp_preds, gp_vars = gp_results
+
+    # Check vars in GP compared to DM for even splits
+    dm_evensplit_preds, dm_evensplit_vars = find_even_split_areas(dm_preds, dm_vars)
+    gp_evensplit_preds, gp_evensplit_vars = find_even_split_areas(gp_preds, gp_vars)
