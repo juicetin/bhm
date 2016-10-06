@@ -162,11 +162,11 @@ def utm_to_latlong(bath_locations):
     ZONE_LETTER = 'S'
     return np.array([utm.to_latlon(x, y, ZONE_NUMBER, northern=False) for x, y in bath_locations])
 
-def latlong_to_utm(lat_longs):
+def latlong_to_utm(lat, longs):
     """
     latlong
     """
-    return np.array([utm.from_latlon(x, y)[:2] for x, y in lat_longs])
+    return np.array([utm.from_latlon(x, y)[:2] for x, y in zip(lat, longs)])
 
 def load_squidle_data(path='../bhm-large-data/'):
     csvs = ['images-scottreef2011-2016-09-16.csv']
@@ -191,4 +191,3 @@ def load_squidle_data(path='../bhm-large-data/'):
 def sample_equal_multi_labels(labels):
     np.sum(multi_labels, axis=0).min()
     np.bincount(multi_labels.argmax(axis=1)).min()
-    
