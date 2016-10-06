@@ -90,7 +90,8 @@ def dirmultreg_learn(X, C, activation='soft', reg=1, verbose=False, ftol=1e-6,
     ndim, nwalkers = start_W.shape[0], start_W.shape[0]*2
     # pos = [result["x"] + 1e-4*np.random.randn(ndim) for i in range(nwalkers)]
     pos = [np.random.rand(K*D) for i in range(nwalkers)]
-    sampler = emcee.EnsembleSampler(nwalkers, ndim, posterior, args=[K, D, X, C, reg])
+    # sampler = emcee.EnsembleSampler(nwalkers, ndim, posterior, args=[K, D, X, C, reg])
+    sampler = emcee.MHSampler([[1,0],[0,1]], ndim, posterior, args=[K, D, X, C, reg])
     sampler.run_mcmc(pos, 500)
     
     samples = sampler.chain[:, 100:, :].reshape((-1, ndim))
