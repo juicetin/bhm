@@ -39,14 +39,19 @@ def f_max_var_rank(f, v):
     rank = np.argwhere(v == f_max_var)[0][0]
     return rank
 
-def plot_training_data_per_label(locations, labels):
+def plot_training_data_per_label(locations, labels, gen_images=False):
     """
     Plots all points per label on separate maps to visualise where they are/be able to semi-manually find images of a certain label
     """
     uniq_labels = np.unique(labels)
     file_base = 'training_points_'+str(uniq_labels.shape[0])+'labels_'
+    label_coord_map = {}
     for c in uniq_labels:
         cur_label_idx = np.where(labels == c)
         cur_label_locations = locations[cur_label_idx]
         cur_labels = labels[cur_label_idx]
-        vis.show_map(cur_label_locations, cur_labels, display=False, filename=file_base+str(c))
+        if gen_images == True:
+            vis.show_map(cur_label_locations, cur_labels, display=False, filename=file_base+str(c))
+        label_coord_map[c] = cur_label_locations
+
+    return label_coord_map
