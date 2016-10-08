@@ -18,8 +18,8 @@ from utils.downsample import fixed_grid_blocksize
 def plot_gp_stats(points, display=False, filename='gp_stats.pdf'):
     length = points.shape[1]
     colors = ['b', 'r', 'g', 'c']
-    for row in points:
-        plt.scatter(np.arange(length), row)
+    for row, c in zip(points, colors):
+        plt.scatter(np.arange(length), row, color=c)
 
     if display == False:
         plt.savefig(filename)
@@ -100,14 +100,18 @@ def add_scatter_plot(ax, x, y):
     colors = np.ones_like(x)
     ax.scatter(x, y, c=colors, marker='o')
 
-def generate_subplots(rows=1, columns=1, actual_count=1, title_list=None):
-    fig = plt.figure()
-    axs = [fig.add_subplot(rows, columns, i) for i in range(1, actual_count+1)]
+def generate_subplots(rows=1, columns=1, actual_count=1, title_list=None, with_fig=False):
+    # axs = [fig.add_subplot(rows, columns, i) for i in range(1, actual_count+1)]
+    fig, axs = plt.subplots(nrows=rows, ncols=columns, sharex=True, sharey=True)
+
     if title_list != None:
         for title, ax in zip(title_list, axs):
             ax.set_title(title)
             # ax.set_xlim(-2, 3)
             # ax.set_ylim(-2, 2)
+
+    if with_fig == True:
+        return axs, fig
 
     return axs
 
@@ -217,20 +221,13 @@ def plot_classes(X, Y, Y_pred):
 
         plt.show()
 
-def show_map(locations, labels, x_bins=None, y_bins=None, display=True, filename='map', vmin=None, vmax=None):
+def show_map(locations, labels, x_bins=None, y_bins=None, display=True, filename='map', vmin=None, vmax=None, ax=None):
     """
     Given the x, y coord locations and corresponding labels, plot this on imshow (null points
     will be shown as blank in the background).
     """
 
     if (x_bins == None and y_bins == None):
-        # TODO built xbins and ybins
-        # ax_coords = np.arange(-7, 7.2, 0.2)
-        # x, y = np.meshgrid(ax_coords, ax_coords)
-
-        # x_bins = np.concatenate((np.unique(locations[:,0]), ax_coords))
-        # y_bins = np.concatenate((np.unique(locations[:,1]), ax_coords))
-
         x_bins = np.unique(locations[:,0])
         y_bins = np.unique(locations[:,1])
 
@@ -250,10 +247,14 @@ def show_map(locations, labels, x_bins=None, y_bins=None, display=True, filename
     X, Y = np.meshgrid(x_bins, y_bins)
     Z = np.zeros((X.shape[0], X.shape[1]))
 
+    print("Assigning labels...")
     Z[:] = None
     x_locations = [x_bin_coord_map[x] for x, y in locations]
     y_locations = [y_bin_coord_map[y] for y, y in locations]
     Z[(y_locations, x_locations)] = labels
+
+    cur_fig = plt if ax == None else ax
+    in_ax = False if ax == None else True
 
     print("Setting colourbar (legend)...")
     # cmap = cm.jet
@@ -262,7 +263,7 @@ def show_map(locations, labels, x_bins=None, y_bins=None, display=True, filename
 
     print("Bulding image...")
     # plt.imshow(Z, extent=[x_min, x_max, y_min, y_max], origin='lower', cmap=cmap, vmin=vmin, vmax=vmax)
-    plt.imshow(Z, extent=[x_min, x_max, y_min, y_max], origin='lower', vmin=vmin, vmax=vmax)
+    cur_fig.imshow(Z, extent=[x_min, x_max, y_min, y_max], origin='lower', vmin=vmin, vmax=vmax)
 
     # Slightly hacky - unfortunately neeeded for 0-count argmaxs of 24 labels
     # if np.unique(labels).shape[0] < 5:
@@ -274,13 +275,33 @@ def show_map(locations, labels, x_bins=None, y_bins=None, display=True, filename
     # norm = mpl.colors.BoundaryNorm(bounds, cmap.N)
 
     # plt.colorbar(cmap=cmap, norm=norm, spacing='Proportional', boundaries=bounds, format='%li')
-    plt.colorbar(spacing='Proportional', format='%li')
+    if in_ax == False:
+        plt.colorbar(spacing='Proportional', format='%li')
+
+    # Setting axis labels
+    xlabel = 'UTM x-coordinate, zone 51S'
+    ylabel = 'UTM y-coordinate, zone 51S'
+    axis_fontsize = 10
+    if in_ax == True:
+        pass
+        # print('Setting axis labels for subfig...')
+        # cur_fig.set_xlabel(xlabel, fontsize=axis_fontsize)
+        # cur_fig.set_ylabel(ylabel, fontsize=axis_fontsize)
+    else:
+        print('Setting axis labels...')
+        cur_fig.xlabel(xlabel, fontsize=axis_fontsize)
+        cur_fig.ylabel(ylabel, fontsize=axis_fontsize)
+
+    ax.tick_params(axis='both', which='both', labelsize=8)
 
     print("Image generated!")
-    if display == True:
-        plt.show()
+    if in_ax == True:
+        print('HEREEE')
+        return
+    elif display == True:
+        cur_fig.show()
     else:
-        plt.savefig(filename + '.pdf')
+        cur_fig.savefig(filename + '.pdf')
 
     plt.cla()
     plt.clf()
@@ -532,3 +553,25 @@ def plot_dm_hists(chains, filename='dm_mcmc_weight_hist'):
     plt.savefig(filename+'.pdf')
     clear_plt()
     mpl.rcdefaults()
+
+def plot_dm_per_label_maps(q_locations, q_preds, filename='dm_simplelabel_heatmap'):
+    """
+    Plots heatmap for each label in data
+    """
+
+    axs, fig = generate_subplots(rows=2, columns=2, actual_count=4, title_list=None, with_fig=True)
+    xlabel = 'UTM x-coordinates, zone 51S'
+    ylabel = 'UTM y-coordinates, zone 51S'
+    fig.text(0.5, 0, xlabel, ha='center')
+    fig.text(0, 0.5, ylabel, va='center', rotation='vertical')
+
+    for i, ax in enumerate(axs.flatten()):
+        show_map(q_locations, q_preds[:,i], ax=ax)
+        ax.set_title('label {}'.format(i))
+
+    plt.tight_layout()
+    plt.savefig(filename+'.pdf')
+    clear_plt()
+
+    # for i in range(q_preds.shape[1]):
+    #     vis.show_map(q_locations, q_preds[:,i], display=False, filename=filename+' '+str(i))

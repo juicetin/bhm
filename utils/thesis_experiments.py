@@ -92,6 +92,7 @@ def chain_stats(chains, features, labels):
         dm_stats = dirmultreg_predict(features, weights.reshape(chains.shape[1], chains.shape[2]))
         dm_errs[i] = np.average(np.abs(dm_stats[0] - labels))
         dm_vars[i] = np.average(dm_stats[2])
+    bar.finish()
     
     err_min, err_min_idx = dm_errs.min(), dm_errs.argmin()
     vars_min, vars_min_idx = dm_vars.min(), dm_vars.argmin()
