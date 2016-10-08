@@ -79,7 +79,7 @@ if __name__ == "__main__":
     config['downsampled_param_search']   = False
     config['downsample']                 = True
     config['dm_test']                    = False
-    config['summarise_labels']           = False
+    config['summarise_labels']           = True
     config['load_query']                 = True
 
     # props = data.load_squidle_data()  
