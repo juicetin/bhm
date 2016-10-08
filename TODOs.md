@@ -4,3 +4,6 @@
 * get (almost) equally balanced 
 * get a low average variance over even ('even' differs) splits - overall trend : lower variance, more even areas
     + lower variance -> 'better' results
+* calculate r-hat statistic
+* fix MCMC weight histograms to auto-split onto the appropriate number of pages
+* fix all graphs (axes, colorbars, labels, titles, etc.) and figures
