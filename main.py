@@ -47,6 +47,8 @@ from ML.dir_mul.dirichlet_multinomial import DirichletMultinomialRegression
 from ML.dir_mul.nicta.dirmultreg import dirmultreg_learn, dirmultreg_predict
 from ML.dir_mul.dm_mcmc import dirmultreg_learn as dm_mcmc_learn
 
+from ML.dir_mul import dm_mcmc
+
 import utils
 import utils.visualisation as vis
 import utils.load_data as data
@@ -77,8 +79,8 @@ if __name__ == "__main__":
     config['downsampled_param_search']   = False
     config['downsample']                 = True
     config['dm_test']                    = False
-    config['summarise_labels']           = True
-    config['load_query']                 = False
+    config['summarise_labels']           = False
+    config['load_query']                 = True
 
     # props = data.load_squidle_data()  
     # zip_obj = zip(props['latitude'], props['longitude'])  
@@ -125,6 +127,8 @@ if __name__ == "__main__":
         except NameError:
             print("query points weren't loaded into memory")
 
+    f_pf2 = data_transform.features_squared_only(features)
+
     # NOTE _s suffix kept here for clarity
     print("Scaling features...")
     features_sn = (normalize(scale(features), axis=1)) # 0.8359, 0.5323 for PoGPE
@@ -139,10 +143,6 @@ if __name__ == "__main__":
         # red_coords, red_features, red_mlabels, ml_argsort = data_transform.downsample(bath_locations, features_sn, multi_labels, method='fixed-grid')
         red_coords, red_features, red_mlabels, ml_argsort = data_transform.downsample(bath_locations, features_sn, multi_labels, method='cluster-rules')
         f = pf.fit_transform(red_features)
-        try:
-            q = pf.fit_transform(query_sn)
-        except NameError:
-            print('query wasn\'t loaded yet')
 
     ######## DOWNSAMPLING PARAM SEARCH #########
     if config['downsampled_param_search'] == True:
@@ -172,9 +172,9 @@ if __name__ == "__main__":
         # f = pf.fit_transform(features_sn)
         f = features_sn
 
-        if config['load_query'] == True:
-            q = query_sn
-            q_sq2 = data_transform.features_squared_only(query_sn)
+    if config['load_query'] == True:
+        q = query_sn
+        q_sq2 = data_transform.features_squared_only(query_sn)
 
         # res3 = benchmarks.dm_vs_det_stats(preds_dm, preds_gp)
 
@@ -259,7 +259,7 @@ if __name__ == "__main__":
     # l = multi_labels
 
     f = red_features
-    f_pf2 = pf.fit_transform(red_features)
+    fr_pf2 = pf.fit_transform(red_features)
     f_sq1 = data_transform.features_squared_only(red_features)
     # q = pf.fit_transform(query_sn)
     l = red_mlabels
@@ -267,9 +267,11 @@ if __name__ == "__main__":
 
     ###### Test on original data ######
     # preds = dirmultreg_predict(f, W)[0]
-    W = dirmultreg_learn(f_sq1, l, verbose=True, reg=100)
-    # query_preds = dirmultreg_predict(q_sq2, W)
-    # q_preds = query_preds[0]
+    # W = dirmultreg_learn(f_sq1, l, verbose=True, reg=100)
+
+    # if config['load_query'] == True:
+    #     query_preds = dirmultreg_predict(q_sq2, W)
+    #     q_preds = query_preds[0]
 
     # avg_err = np.average(np.abs(preds - l_norm))
     # print("avg err for direct train/predict".format(avg_err))
@@ -289,7 +291,7 @@ if __name__ == "__main__":
 
     ######## MCMC stuff ########
     # s = dm_mcmc_learn(f, l, reg=100, verbose=True)
-    # cross_validate_dm(f_pf2, l)
+    # cross_validate_dm(fr_pf2, l)
 
     # W = dirmultreg_learn(f, l, verbose=True, reg=1000)
     # preds = dirmultreg_predict(f, W)[0]
@@ -314,3 +316,5 @@ if __name__ == "__main__":
 
     ######### Looking at error and variance of DM using different projections #########
     # all_errs, all_vars = benchmarks.dm_test_feature_space(red_features, l_norm)
+
+    # chains = dm_mcmc.dirmultreg_learn(f_sq1, l_norm)
