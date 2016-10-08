@@ -15,7 +15,29 @@ import pdb
 
 from utils.downsample import fixed_grid_blocksize
 
-def plot(X, Y, x, y, y_pred, sigma):
+def plot_gp_stats(points, display=False, filename='gp_stats.pdf'):
+    length = points.shape[1]
+    colors = ['b', 'r', 'g', 'c']
+    for row in points:
+        plt.scatter(np.arange(length), row)
+
+    if display == False:
+        plt.savefig(filename)
+    else:
+        plt.display()
+
+    clear_plt()
+
+def scatter_array(points, display=False, filename='scatterplot.pdf'):
+    plt.scatter(np.arange(points.shape[0]), points)
+    if display == False:
+        plt.savefig(filename)
+    else:
+        plt.display()
+
+    clear_plt()
+
+def plot_gp_with_variance(X, Y, x, y, y_pred, sigma):
 
     # Plot function, prediction, and 95% confidence interval based on MSE
     confidence = 1.9600
@@ -474,32 +496,39 @@ def standalone_DM_colorbar_legend(filename='dm_plot_colorbar.pdf'):
     figlegend.savefig(filename, bbox_inches='tight', pad_inches = 0)
 
 def plot_dm_chains(chains, filename='dm_mcmc_weights'):
-    label_count = chains.shape[1]
+    weight_count = chains.shape[1]
     x = np.arange(1, chains.shape[0]+1)
     rows = math.ceil(math.sqrt(chains.shape[1]))
-    # axs = generate_subplots(rows=rows, columns=rows, actual_count=label_count, title_list=None)
-    for idx in range(label_count):
+    # axs = generate_subplots(rows=rows, columns=rows, actual_count=weight_count, title_list=None)
+    for idx in range(weight_count):
         plt.plot(x, chains[:,idx])
         plt.savefig(filename+'_'+str(idx)+'.pdf')
         clear_plt()
 
 def plot_dm_hists(chains, filename='dm_mcmc_weight_hist'):
+    """
+    Plots histograms of each MCMC weight to visualise their distribution
+    """
 
-    label_count = chains.shape[1]
-    cols = np.round(math.sqrt(chains.shape[1]/1.71))
+    # Determine layout of graphs on page
+    weight_count = chains.shape[1]
+    cols = np.round(math.sqrt(chains.shape[1]/2.51))
     rows = math.ceil(chains.shape[1]/cols)
     print(cols, rows)
-    axs = generate_subplots(rows=rows, columns=cols, actual_count=label_count, title_list=None)
+
+    # Generate necessary axes
+    axs = generate_subplots(rows=rows, columns=cols, actual_count=weight_count, title_list=None)
     font = {'family' : 'normal',
             'weight' : 'normal',
             'size'   : 7}
     mpl.rc('font', **font)
 
+    # Plot all graphs
     for i, ax in enumerate(axs):
         n, bins, patches = ax.hist(chains[:,i], bins=50)
-        # ax.savefig(filename+'_'+str(i)+'.pdf')
-        # clear_plt()
-    plt.tight_layout()
+
+    # Save graphs
+    # plt.tight_layout()
     plt.savefig(filename+'.pdf')
     clear_plt()
     mpl.rcdefaults()
