@@ -2,11 +2,9 @@
 *.npz
 *.*.sw*
 **/*.pyc
+**/*.npy
 !bathAndDomLabel_lowres.npz
 !multiple_labels_training_data.npz
-samples_full_labels.npy
-samples_simple_labels.npy
-data/dm_mcmc_pf2_alltraining.npy
 hons.vim
 
 # Byte-compiled / optimized / DLL files
