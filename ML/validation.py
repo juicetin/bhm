@@ -31,7 +31,7 @@ def cross_validate_algo(features, labels, folds, algo):
         # print("f1: {}, acc: {}".format(np.average(this_f1), this_accuracy))
     # print("Algo: {}, f1 avg: {}, acc avg: {}".format(str(algo), np.average(f1s), np.average(accuracies)))
     algo_str = str(algo).split('(')[0]
-    return '{} & {} & {} & {} \\'.format(algo_str, np.average(f1s), np.average(accuracies), str(np.unique(labels).shape[0]) + ' labels')
+    return '{} & {} & {} & {} \\\\\n'.format(algo_str, np.average(f1s), np.average(accuracies), str(np.unique(labels).shape[0]) + ' labels')
     # return str(algo), np.average(f1s), np.average(accuracies)
 
 def cross_validate_dm_argmax(features, labels, algo, folds=10):
