@@ -15,6 +15,24 @@ import pdb
 
 from utils.downsample import fixed_grid_blocksize
 
+def plot_dm_stats(points, display=False, filename='dm_stats.pdf'):
+    axes = points.shape[1]
+    length = points.shape[0]
+    colors = ['b', 'r', 'g', 'c']
+    for col, c in zip(range(axes), colors):
+        print('Scattering points for axis {}/{}...'.format(col+1, axes))
+        plt.scatter(np.arange(length), points[:,col], color=c)
+
+    print('Image generated, ', end='', flush=True)
+    if display == False:
+        print('saving...')
+        plt.savefig(filename)
+    else:
+        print('displaying...')
+        plt.display()
+
+    clear_plt()
+
 def plot_gp_stats(points, display=False, filename='gp_stats.pdf'):
     length = points.shape[1]
     colors = ['b', 'r', 'g', 'c']
@@ -119,7 +137,6 @@ def generate_subplots(rows=1, columns=1, actual_count=1, title_list=None, with_f
         ret.append(fig)
 
     if with_big_ax == True:
-        print('here')
         ret.append(big_ax)
 
     return ret 
@@ -567,11 +584,11 @@ def plot_dm_per_label_maps(q_locations, q_preds, filename='dm_simplelabel_heatma
     """
     Plots heatmap for each label in data
     """
+    dims = q_preds.shape[1]
 
-    axs, fig, big_ax = generate_subplots(rows=2, columns=2, actual_count=4, title_list=None, with_fig=True, with_big_ax=True)
+    axs, fig, big_ax = generate_subplots(rows=dims/2, columns=dims/2, actual_count=dims, title_list=None, with_fig=True, with_big_ax=True)
     xlabel = 'UTM x-coordinates, zone 51S'
     ylabel = 'UTM y-coordinates, zone 51S'
-    big_ax = plt.subplot(111)
     big_ax.spines['top'].set_color('none')
     big_ax.spines['bottom'].set_color('none')
     big_ax.spines['left'].set_color('none')
@@ -586,12 +603,11 @@ def plot_dm_per_label_maps(q_locations, q_preds, filename='dm_simplelabel_heatma
     # plt.xlabel(xlabel)
     # plt.ylabel(ylabel)
 
-    pdb.set_trace()
-    for i, ax in enumerate(axs.flatten()):
+    for i, ax in enumerate(axs):
         show_map(q_locations, q_preds[:,i], ax=ax)
         ax.set_title('label {}'.format(i))
 
-    plt.tight_layout()
+    # plt.tight_layout()
     plt.savefig(filename+'.pdf')
     clear_plt()
 
