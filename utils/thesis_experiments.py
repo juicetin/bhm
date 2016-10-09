@@ -4,6 +4,12 @@ from utils import visualisation as vis
 from ML.dir_mul.nicta.dirmultreg import dirmultreg_learn, dirmultreg_predict
 from ML.gp.gp_gpy import GPyC
 
+from ML.validation import cross_validate_algo
+from sklearn.linear_model import LogisticRegression
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.svm import SVC
+
 import progressbar
 
 def find_even_split_areas(q_preds, q_vars, bounds=[0.4, 0.6], split_labels=[1,2]):
@@ -21,13 +27,6 @@ def find_even_split_areas(q_preds, q_vars, bounds=[0.4, 0.6], split_labels=[1,2]
     print('Average variance in condition-satisfied splits was: {}'.format(avg_var))
     print('There were {} matches'.format(even_splits_preds.shape[0]))
     return even_splits_preds, even_splits_vars, even_split_idxs
-
-def plot_dm_per_label_maps(q_locations, q_preds, filename='dm_simplelabel_heatmap'):
-    """
-    Plots heatmap for each label in data
-    """
-    for i in range(q_preds.shape[1]):
-        vis.show_map(q_locations, q_preds[:,i], display=False, filename=filename+' '+str(i))
 
 def check_overlaps(f, l, q, reg=100):
     W = dirmultreg_learn(f, l, verbose=True, reg=reg)
@@ -110,3 +109,7 @@ def dm_vs_gp_matching(dm_preds, dm_vars, gp_preds, gp_vars, even_split_idxs):
 
     dm_vars[even_split_idxs]
     gp_vars[even_split_idxs]
+
+
+def det_scores():
+    pass

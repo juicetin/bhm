@@ -247,7 +247,7 @@ def plot_classes(X, Y, Y_pred):
 
         plt.show()
 
-def show_map(locations, labels, x_bins=None, y_bins=None, display=True, filename='map', vmin=None, vmax=None, ax=None):
+def show_map(locations, labels, x_bins=None, y_bins=None, display=False, filename='map', vmin=None, vmax=None, ax=None):
     """
     Given the x, y coord locations and corresponding labels, plot this on imshow (null points
     will be shown as blank in the background).
@@ -580,13 +580,11 @@ def plot_dm_hists(chains, filename='dm_mcmc_weight_hist'):
     clear_plt()
     mpl.rcdefaults()
 
-def plot_dm_per_label_maps(q_locations, q_preds, filename='dm_simplelabel_heatmap'):
+def plot_dm_per_label_maps(q_locations, q_preds, filename='dm_simplelabel_heatmap', across=2, down=2, offset=0):
     """
     Plots heatmap for each label in data
     """
-    dims = q_preds.shape[1]
-
-    axs, fig, big_ax = generate_subplots(rows=dims/2, columns=dims/2, actual_count=dims, title_list=None, with_fig=True, with_big_ax=True)
+    axs, fig, big_ax = generate_subplots(rows=down, columns=across, actual_count=dims, title_list=None, with_fig=True, with_big_ax=True)
     xlabel = 'UTM x-coordinates, zone 51S'
     ylabel = 'UTM y-coordinates, zone 51S'
     big_ax.spines['top'].set_color('none')
@@ -605,7 +603,7 @@ def plot_dm_per_label_maps(q_locations, q_preds, filename='dm_simplelabel_heatma
 
     for i, ax in enumerate(axs):
         show_map(q_locations, q_preds[:,i], ax=ax)
-        ax.set_title('label {}'.format(i))
+        ax.set_title('label {}'.format(offset+i))
 
     # plt.tight_layout()
     plt.savefig(filename+'.pdf')
@@ -613,3 +611,28 @@ def plot_dm_per_label_maps(q_locations, q_preds, filename='dm_simplelabel_heatma
 
     # for i in range(q_preds.shape[1]):
     #     vis.show_map(q_locations, q_preds[:,i], display=False, filename=filename+' '+str(i))
+
+def plot_dm_per_label_maps_multi(q_locations, q_preds, filename='dm_alllabels_heatmap'):
+    """
+    Creates multiple multi-heatmap images for the 24-label case
+    """
+    plot_dm_per_label_maps(q_locations, qp_preds[:,:13], filename=filename+'_1-12', across=2, down=4, offset=1)
+    plot_dm_per_label_maps(q_locations, qp_preds[:,13:], filename=filename+'_13-24', across=2, down=4, offset=13)
+    clear_plt()
+
+def standalone_dm_colorbar(filename='dm_standalone_colorbar.pdf'):
+    """
+    Standalone colorbar for DM regressor
+    """
+    fig = plt.figure(figsize=(8, 1))
+    # fig.subplots_adjust(left=0, right=0.2, bottom=0, top=0.2)
+    ax = fig.add_axes([0.05, 0.50, 0.9, 0.15])
+    cmap = cm.jet
+    norm = mpl.colors.Normalize(vmin=0, vmax=1)
+    cb1 = mpl.colorbar.ColorbarBase(ax, cmap=cmap, norm=norm, orientation='horizontal')
+    ax.set_title('Dirichlet Multinomial Regression Colour Bar')
+    plt.savefig(filename)
+    clear_plt()
+
+def standalone_label_colorbar(labels=24, filename='label_standalone_colorbar.pdf'):
+    pass

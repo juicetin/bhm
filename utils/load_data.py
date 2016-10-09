@@ -27,6 +27,13 @@ def load_multi_label_data():
     features = multi_label_data['features']    
     return locations, features, labels
 
+def load_reduced_data():
+    red_mlabels4 = np.load('data/red_mlabels4.npy')
+    red_mlabels24 = np.load('data/red_mlabels24.npy')
+    red_features = np.load('data/red_features.npy')
+    red_coords = np.load('data/red_coords.npy')
+    return red_features, red_mlabels4, red_mlabels24, red_coords
+
 def load_test_data():
     querypoints_lowres = np.load('data/queryPoints_lowres_v2_.npz')
     qp_locations = querypoints_lowres['locations']
