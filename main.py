@@ -318,3 +318,25 @@ if __name__ == "__main__":
     # all_errs, all_vars = benchmarks.dm_test_feature_space(red_features, l_norm)
 
     # chains = dm_mcmc.dirmultreg_learn(f_sq1, l_norm)
+
+    dmmc4_errs = np.load('data/dmmc4_errs.npy')
+    dmmc4_vars = np.load('data/dmmc4_vars.npy')
+    dm4chains = np.load('data/dm_mcmc_30000_4l.npy') #13362
+    if dmmc4_errs.argmin() != dmmc4_vars.argmin():
+        raise ValueError('dmmc4 error and variance argmin should match!')
+    W = dm4chains[dmmc4_errs.argmin()]
+    dm_q_preds = dirmultreg_predict(q_sq2, W)
+    cmp_axes = [1,3]
+    dm_es_preds, dm_es_vars, dm_es_idxs = thesis_experiments.find_even_split_areas(dm_q_preds[0], dm_q_preds[2], bounds=[0.2, 0.4], split_labels=cmp_axes)
+
+    dm_es_preds_padded = np.empty(dm_q_preds[0].shape)
+    dm_es_preds_padded[:] = None
+    dm_es_preds_padded[dm_es_idxs[0]] = dm_es_preds
+
+    gp_q_preds = np.load('data/gp_query_preds.npy')
+    gp_q_vars = np.load('data/gp_query_vars.npy')
+
+    gp_dmes_preds = gp_q_preds.T[dm_es_idxs[0]]
+    gp_dmes_vars = gp_q_vars.T[dm_es_idxs[0]]
+
+    vis.plot_dm_per_label_maps(qp_locations, dm_es_preds_padded[:,cmp_axes]) 
