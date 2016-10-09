@@ -6,6 +6,7 @@
 !bathAndDomLabel_lowres.npz
 !multiple_labels_training_data.npz
 hons.vim
+.session.vim
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
