@@ -111,5 +111,11 @@ def dm_vs_gp_matching(dm_preds, dm_vars, gp_preds, gp_vars, even_split_idxs):
     gp_vars[even_split_idxs]
 
 
-def det_scores():
-    pass
+def det_scores(features, labels_sets):
+    algos = [LogisticRegression(), SVC(), KNeighborsClassifier(), RandomForestClassifier()]
+    results = ""
+    for algo in algos:
+        print('Now calculating {}'.format(str(algo).split('(')[0]))
+        results += cross_validate_algo(features, labels, 10, algo)
+
+    return results
