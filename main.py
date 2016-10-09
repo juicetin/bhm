@@ -7,7 +7,7 @@ if "DISPLAY" not in os.environ: # or os.environ['DISPLAY'] == ':0':
     mpl.use('SVG')
 mpl.use('SVG')
 
-import importlib
+from importlib import reload
 import numpy as np
 import copy
 import sys
@@ -20,6 +20,7 @@ from ML.gp.gp_gpy import GPyC
 from sklearn.preprocessing import normalize
 from sklearn.preprocessing import scale
 from sklearn.linear_model import LogisticRegression
+from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import SVC
 from sklearn.cross_validation import train_test_split
@@ -74,12 +75,12 @@ if __name__ == "__main__":
     sys.excepthook = info
 
     config = {}
-    config['no_coord_features']          = True # NOTE don't change this!!! Keeping coords as features improves performance :/
+    config['no_coord_features']          = False # NOTE no longer need this, load preprocessed directly. don't change this!!! Keeping coords as features improves performance :/
     config['ensemble_testing']           = False
     config['downsampled_param_search']   = False
-    config['downsample']                 = True
+    config['downsample']                 = False # No need for this, loading from disk-cached versions now
     config['dm_test']                    = False
-    config['summarise_labels']           = True
+    config['summarise_labels']           = False
     config['load_query']                 = True
 
     # props = data.load_squidle_data()  
@@ -94,12 +95,15 @@ if __name__ == "__main__":
 
     ######## LOAD DATA ########
     print("Loading data from npzs...")
-    labels, labelcounts, bath_locations, features = data.load_training_data()
-    multi_locations, multi_features, multi_labels_lists = data.load_multi_label_data()
-    multi_labels = data_transform.multi_label_counts(multi_labels_lists, zero_indexed=False)
+    # labels, labelcounts, bath_locations, features = data.load_training_data()
+    _, _, bath_locations, _ = data.load_training_data()
+    # multi_locations, multi_features, multi_labels_lists = data.load_multi_label_data()
+    # multi_labels = data_transform.multi_label_counts(multi_labels_lists, zero_indexed=False)
     if config['summarise_labels'] == True:
         multi_labels = data_transform.summarised_labels(multi_labels)
-    multi_labels_norm = multi_labels/multi_labels.sum(axis=1)[:,np.newaxis]
+    # multi_labels_norm = multi_labels/multi_labels.sum(axis=1)[:,np.newaxis]
+    
+    red_features, red_mlabels4, red_mlabels24, red_coords = data.load_reduced_data()
 
     # Don't load full dataset without sufficient free memory
     if config['load_query'] and psutil.virtual_memory().available >= 2e9:
@@ -113,8 +117,8 @@ if __name__ == "__main__":
         query_sn = scale(normalize(query))
 
     ######### FEATURES ##########
-    print("Loading features...")
-    features = np.array(features)
+    # print("Loading features...")
+    # features = np.array(features)
 
     # Remove long/lat coordinates
     if config['no_coord_features']:
@@ -127,17 +131,17 @@ if __name__ == "__main__":
         except NameError:
             print("query points weren't loaded into memory")
 
-    f_pf2 = data_transform.features_squared_only(features)
+    # f_pf2 = data_transform.features_squared_only(features)
 
     # NOTE _s suffix kept here for clarity
-    print("Scaling features...")
-    features_sn = (normalize(scale(features), axis=1)) # 0.8359, 0.5323 for PoGPE
-    # features_s = scale(features) # MARGINALLY better than normalize(scale)
-    # labels = np.array(labels)
-    labels_simple = data_transform.summarised_labels(labels)
+    # print("Scaling features...")
+    # features_sn = (normalize(scale(features), axis=1)) # 0.8359, 0.5323 for PoGPE
+    # # features_s = scale(features) # MARGINALLY better than normalize(scale)
+    # # labels = np.array(labels)
+    # labels_simple = data_transform.summarised_labels(labels)
     
     ########### DOWNSAMPLING ##########
-    pf = PolynomialFeatures(2)
+    # pf = PolynomialFeatures(2)
 
     if config['downsample'] == True:
         # red_coords, red_features, red_mlabels, ml_argsort = data_transform.downsample(bath_locations, features_sn, multi_labels, method='fixed-grid')
@@ -173,8 +177,9 @@ if __name__ == "__main__":
         f = features_sn
 
     if config['load_query'] == True:
-        q = query_sn
-        q_sq2 = data_transform.features_squared_only(query_sn)
+        q_sq2 = np.load('data/q_sq2.npy')
+        # q = query_sn
+        # q_sq2 = data_transform.features_squared_only(query_sn)
 
         # res3 = benchmarks.dm_vs_det_stats(preds_dm, preds_gp)
 
@@ -203,45 +208,11 @@ if __name__ == "__main__":
     # size = 100
     # train_idx = data.mini_batch_idxs(labels_simple, size, 'even')
     train_idx = np.load('data/semi-optimal-1000-subsample.npy')
-    test_idx = np.array(list(set(np.arange(features.shape[0])) - set(train_idx)))
-
-    # gpyc = GPyC()
-    # f = pf.fit_transform(features_sn)
-    # f = features_sn
-    # print(f.shape)
-    # gpyc.fit(f[train_idx], labels_simple[train_idx])
-    # results = gpyc.predict(f[test_idx])
-    # print(np.sum(results[0].argmax(axis=0) == labels_simple[test_idx])/test_idx.shape[0])
-    # pdb.set_trace()
-    
-    # from ML.gp.revrand_glm import revrand_glm, RGLM
-    # rglm = RGLM(nbases=2000)
-    # print("fitting glm")
-    # # f = pf.fit_transform(features_sn[train_idx])
-    # rglm.fit(f[train_idx], labels_simple[train_idx])
-    # print("predicting glm")
-    # q = pf.fit_transform(f[test_idx])
-    # pr = rglm.predict(f[test_idx])
-
-    # res = cross_validate_dm_argmax(f, red_mlabels, DirichletMultinomialRegression())
-    # vis.histogram(freqs, title='Full Multi-labels Histogram', filename='hist_full_multi_labels.pdf', offset=1)
-
-    # vis.clear_plt()
-
-    # freqs = np.concatenate((np.bincount(labels)[1:], [0]))
-    # vis.histogram(freqs, title='Full Labels Histogram', filename='hist_full_labels.pdf', offset=1)
-
-    # vis.clear_plt()
-
-    # freqs = np.concatenate((np.bincount(labels_simple), [0]))
-    # vis.histogram(freqs, title='Simplified Labels Histogram', filename='hist_simple_labels.pdf')
-
-    # foo = np.concatenate((np.bincount(data.summarised_labels(np.concatenate(multi_labels_lists))), [0]))
-    # vis.histogram(foo, title='Simplified Multi-labels Histogram', filename='hist_simple_multi_labels.pdf') 
+    test_idx = np.array(list(set(np.arange(red_features.shape[0])) - set(train_idx)))
 
     ########################################### Product of Experts ###########################################
     if config['ensemble_testing'] == True:
-        benchmarks.GP_ensemble_tests(features_sn, labels_simple, train_idx)
+        benchmarks.GP_ensemble_tests(red_features, labels_simple, train_idx)
 
     #########################################################################################################
 
@@ -253,90 +224,39 @@ if __name__ == "__main__":
     # vis.show_map(bath_locations, labels, x_bins_training, y_bins_training, vmin=1, vmax=24)
     #########################################################################################################
 
-    # benchmarks.classification_dummy_testing()
-
-    # f = features_sn
-    # l = multi_labels
-
-    f = red_features
-    fr_pf2 = pf.fit_transform(red_features)
     f_sq1 = data_transform.features_squared_only(red_features)
-    # q = pf.fit_transform(query_sn)
-    l = red_mlabels
+    l = red_mlabels4
     l_norm = l/l.sum(axis=1)[:,np.newaxis]
-
-    ###### Test on original data ######
-    # preds = dirmultreg_predict(f, W)[0]
-    # W = dirmultreg_learn(f_sq1, l, verbose=True, reg=100)
-
-    # if config['load_query'] == True:
-    #     query_preds = dirmultreg_predict(q_sq2, W)
-    #     q_preds = query_preds[0]
-
-    # avg_err = np.average(np.abs(preds - l_norm))
-    # print("avg err for direct train/predict".format(avg_err))
-
-    # l_norm = l/l.sum(axis=1)[:,np.newaxis]
-
-    # print(np.average(preds[:,0]), np.average(l_norm[:,0]))
-    # print(np.average(preds[:,1]), np.average(l_norm[:,1]))
-    # print(np.average(preds[:,2]), np.average(l_norm[:,2]))
-    # print(np.average(preds[:,3]), np.average(l_norm[:,3]))
-    # # vis.dm_pred_vs_actual(preds, l_norm, display=False)
-
-    # ####### Create full map/s #########
-    # preds = dirmultreg_predict(q, W)
-    # for i in range(preds[0].shape[1]):
-    #     vis.show_map(qp_locations, preds[0][:,i], display=False, filename='simplelabel' + str(i) + 'map')
-
-    ######## MCMC stuff ########
-    # s = dm_mcmc_learn(f, l, reg=100, verbose=True)
-    # cross_validate_dm(fr_pf2, l)
-
-    # W = dirmultreg_learn(f, l, verbose=True, reg=1000)
-    # preds = dirmultreg_predict(f, W)[0]
-
-    # # dm = DirichletMultinomialRegression(reg=50)
-    # # dm.fit(f, l)
-    # # preds = dm.predict(f)
-
-    # avg_err = np.average(np.abs(preds - l/l.sum(axis=1)[:,np.newaxis]))
-    # print(avg_err)
-
-    # l_norm = l/l.sum(axis=1)[:,np.newaxis]
-
-    # print(np.average(preds[:,0]), np.average(l_norm[:,0]))
-    # print(np.average(preds[:,1]), np.average(l_norm[:,1]))
-    # print(np.average(preds[:,2]), np.average(l_norm[:,2]))
-    # print(np.average(preds[:,3]), np.average(l_norm[:,3]))
-    # vis.dm_pred_vs_actual(preds, l_norm, display=False)
-
-    ######### Comparing dm MAP with MCMC ##############
-    # benchmarks.dm_map_vs_mcmc(f, l)
 
     ######### Looking at error and variance of DM using different projections #########
     # all_errs, all_vars = benchmarks.dm_test_feature_space(red_features, l_norm)
 
     # chains = dm_mcmc.dirmultreg_learn(f_sq1, l_norm)
 
-    dmmc4_errs = np.load('data/dmmc4_errs.npy')
-    dmmc4_vars = np.load('data/dmmc4_vars.npy')
-    dm4chains = np.load('data/dm_mcmc_30000_4l.npy') #13362
-    if dmmc4_errs.argmin() != dmmc4_vars.argmin():
-        raise ValueError('dmmc4 error and variance argmin should match!')
-    W = dm4chains[dmmc4_errs.argmin()]
-    dm_q_preds = dirmultreg_predict(q_sq2, W)
-    cmp_axes = [1,3]
-    dm_es_preds, dm_es_vars, dm_es_idxs = thesis_experiments.find_even_split_areas(dm_q_preds[0], dm_q_preds[2], bounds=[0.2, 0.4], split_labels=cmp_axes)
+    # # Load dm mc 4-label chain stats - vars, errs
+    # dmmc4_errs = np.load('data/dmmc4_errs.npy')
+    # dmmc4_vars = np.load('data/dmmc4_vars.npy')
+    # dm4chains = np.load('data/dm_mcmc_30000_4l.npy') #13362
 
-    dm_es_preds_padded = np.empty(dm_q_preds[0].shape)
-    dm_es_preds_padded[:] = None
-    dm_es_preds_padded[dm_es_idxs[0]] = dm_es_preds
+    # # Get 'common split' areas
+    # if dmmc4_errs.argmin() != dmmc4_vars.argmin():
+    #     raise ValueError('dmmc4 error and variance argmin should match!')
+    # W = dm4chains[dmmc4_errs.argmin()]
+    # dm_q_preds = dirmultreg_predict(q_sq2, W)
+    # cmp_axes = [1,3]
+    # dm_es_preds, dm_es_vars, dm_es_idxs = thesis_experiments.find_even_split_areas(dm_q_preds[0], dm_q_preds[2], bounds=[0.2, 0.4], split_labels=cmp_axes)
 
-    gp_q_preds = np.load('data/gp_query_preds.npy')
-    gp_q_vars = np.load('data/gp_query_vars.npy')
+    # # Generate padded predictions to fill original map area
+    # dm_es_preds_padded = np.empty(dm_q_preds[0].shape)
+    # dm_es_preds_padded[:] = None
+    # dm_es_preds_padded[dm_es_idxs[0]] = dm_es_preds
 
-    gp_dmes_preds = gp_q_preds.T[dm_es_idxs[0]]
-    gp_dmes_vars = gp_q_vars.T[dm_es_idxs[0]]
+    # # Load GP stats
+    # gp_q_preds = np.load('data/gp_query_preds.npy')
+    # gp_q_vars = np.load('data/gp_query_vars.npy')
 
-    vis.plot_dm_per_label_maps(qp_locations, dm_es_preds_padded[:,cmp_axes]) 
+    # # Create GP stats in areas of DM even split coords
+    # gp_dmes_preds = gp_q_preds.T[dm_es_idxs[0]]
+    # gp_dmes_vars = gp_q_vars.T[dm_es_idxs[0]]
+
+    # vis.plot_dm_per_label_maps(qp_locations, dm_es_preds_padded[:,cmp_axes]) 
