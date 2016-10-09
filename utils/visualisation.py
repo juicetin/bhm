@@ -42,7 +42,6 @@ def plot_gp_with_variance(X, Y, x, y, y_pred, sigma):
     # Plot function, prediction, and 95% confidence interval based on MSE
     confidence = 1.9600
     fig = plt.figure(figsize=(12,8))
-    print('got here')
 
     # plt.plot(x, y, 'r:', label=u'$f(x) = x\, \sin(x)$')
 
@@ -100,9 +99,12 @@ def add_scatter_plot(ax, x, y):
     colors = np.ones_like(x)
     ax.scatter(x, y, c=colors, marker='o')
 
-def generate_subplots(rows=1, columns=1, actual_count=1, title_list=None, with_fig=False):
-    # axs = [fig.add_subplot(rows, columns, i) for i in range(1, actual_count+1)]
-    fig, axs = plt.subplots(nrows=rows, ncols=columns, sharex=True, sharey=True)
+def generate_subplots(rows=1, columns=1, actual_count=1, title_list=None, with_fig=False, with_big_ax=False):
+    fig = plt.figure()
+    if with_big_ax == True:
+        big_ax = fig.add_subplot(111)
+    axs = [fig.add_subplot(rows, columns, i) for i in range(1, actual_count+1)]
+    # fig, axs = plt.subplots(nrows=rows, ncols=columns, sharex=True, sharey=True)
 
     if title_list != None:
         for title, ax in zip(title_list, axs):
@@ -110,10 +112,17 @@ def generate_subplots(rows=1, columns=1, actual_count=1, title_list=None, with_f
             # ax.set_xlim(-2, 3)
             # ax.set_ylim(-2, 2)
 
-    if with_fig == True:
-        return axs, fig
+    ret = axs
 
-    return axs
+    if with_fig == True:
+        ret = [ret]
+        ret.append(fig)
+
+    if with_big_ax == True:
+        print('here')
+        ret.append(big_ax)
+
+    return ret 
 
 def plot_confidence(x, y_pred, sigma, title=None):
     # Plot function, prediction, and 95% confidence interval based on MSE
@@ -283,6 +292,7 @@ def show_map(locations, labels, x_bins=None, y_bins=None, display=True, filename
     ylabel = 'UTM y-coordinate, zone 51S'
     axis_fontsize = 10
     if in_ax == True:
+        ax.tick_params(axis='both', which='both', labelsize=8)
         pass
         # print('Setting axis labels for subfig...')
         # cur_fig.set_xlabel(xlabel, fontsize=axis_fontsize)
@@ -292,7 +302,6 @@ def show_map(locations, labels, x_bins=None, y_bins=None, display=True, filename
         cur_fig.xlabel(xlabel, fontsize=axis_fontsize)
         cur_fig.ylabel(ylabel, fontsize=axis_fontsize)
 
-    ax.tick_params(axis='both', which='both', labelsize=8)
 
     print("Image generated!")
     if in_ax == True:
@@ -559,12 +568,25 @@ def plot_dm_per_label_maps(q_locations, q_preds, filename='dm_simplelabel_heatma
     Plots heatmap for each label in data
     """
 
-    axs, fig = generate_subplots(rows=2, columns=2, actual_count=4, title_list=None, with_fig=True)
+    axs, fig, big_ax = generate_subplots(rows=2, columns=2, actual_count=4, title_list=None, with_fig=True, with_big_ax=True)
     xlabel = 'UTM x-coordinates, zone 51S'
     ylabel = 'UTM y-coordinates, zone 51S'
-    fig.text(0.5, 0, xlabel, ha='center')
-    fig.text(0, 0.5, ylabel, va='center', rotation='vertical')
+    big_ax = plt.subplot(111)
+    big_ax.spines['top'].set_color('none')
+    big_ax.spines['bottom'].set_color('none')
+    big_ax.spines['left'].set_color('none')
+    big_ax.spines['right'].set_color('none')
+    big_ax.tick_params(labelcolor='w', top='off', bottom='off', left='off', right='off')
+    big_ax.set_xlabel(xlabel)
+    big_ax.set_ylabel(ylabel)
 
+    # fig.text(0.5, 0, xlabel, ha='center')
+    # fig.text(0, 0.5, ylabel, va='center', rotation='vertical')
+    # plt.tick_params(labelcolor='none', top='off', bottom='off', left='off', right='off')
+    # plt.xlabel(xlabel)
+    # plt.ylabel(ylabel)
+
+    pdb.set_trace()
     for i, ax in enumerate(axs.flatten()):
         show_map(q_locations, q_preds[:,i], ax=ax)
         ax.set_title('label {}'.format(i))
