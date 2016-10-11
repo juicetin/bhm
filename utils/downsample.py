@@ -61,11 +61,29 @@ def fixed_grid_blocksize(coords, reduction_factor):
 
     return x_min, y_min, x_max, y_max, x_step, y_step, reduced_x_coords, reduced_y_coords
 
-def downsample_counts():
-    pass
+def downsample_counts(*, key, coord_bins, features, labels, grid_dist_cmp):
+    """
+    Helper function for downsample_by_fixed_grid to downsample by summing counts per overlay rid
+    """
+    if key not in coord_bins:
+        # Create bin if doesn't exist yet
+        coord_bins[key] = [features, labels, grid_dist_cmp, 1]     # 3rd element - keep track of number of original points in grid
+    else:
+        # Otherwise aggregate labels/update features if necessary
+        # TODO take closest coordinate to centre of low-res grid instead of first seen
+        _, _, prev_smallest_grid_dist_cmp, _ = coord_bins[key]
+        coord_bins[key][1] += labels
+        coord_bins[key][3] += 1            # 3rd element - keep track of number of original points in grid
 
-def downsample_single_labels():
-    pass
+def downsample_single_labels(*, key, coord_bins, features, labels, grid_dist_cmp):
+    """
+    Helper function for downsample_by_fixed_grid to downsample by taking the label of the first label seen in overlay grid
+    """
+    if key not in coord_bins:
+        coord_bins[key] = [features, labels, grid_dist_cmp, 1]     # 3rd element - keep track of number of original points in grid
+
+    # Otherwise, do nothing, as we only take first label
+    # Possible TODO - keep a list of labels and pick from them randomly at the end
 
 def downsample_by_fixed_grid(coords, data, label_counts, reduction_factor=2):
     """
@@ -78,34 +96,45 @@ def downsample_by_fixed_grid(coords, data, label_counts, reduction_factor=2):
 
     orig_stats = label_stats(label_counts)
 
+    # Decide which downsample helper to use
+    if len(label_counts.shape) == 2:
+        downsample_helper = downsample_counts
+    elif len(label_counts.shape) == 1:
+        downsample_helper = downsample_single_labels
+
     # Creates all bins with fixed overlaid low-res grid size
     # At the moment - takes the first seen coordinate in a grid to be the definitive one
     coord_bins = {}
     for (x_point, y_point), features, labels in zip(coords, data, label_counts):
 
         cur_grid_key = find_nearest_grid(x_point, x_step, x_min, y_point, y_step, y_min)
-        grid_dist_cmp = np.sqrt((x_point-cur_grid_key[0])**2 + (y_point-cur_grid_key[1])**2)
+        grid_dist_cmp = np.sqrt((x_point-cur_grid_key[0])**2 + (y_point-cur_grid_key[1])**2) # Stores distance from cur grid's coords
 
-        ########## Sums up label counts for each downsampled overlaid grid ##########
-        # Create bin if doesn't exist yet
-        if cur_grid_key not in coord_bins:
-            coord_bins[cur_grid_key] = [features, labels, grid_dist_cmp, 1]
-        # Otherwise aggregate labels/update features if necessary
-        else:
-        # TODO take closest coordinate to centre of low-res grid instead of first seen
-            _, _, prev_smallest_grid_dist_cmp, _ = coord_bins[cur_grid_key]
-            coord_bins[cur_grid_key][1] += labels
-            coord_bins[cur_grid_key][3] += 1
+        # Calls either downsample_counts or downsample_single_labels depending on labels passed in
+        downsample_helper(key=cur_grid_key, coord_bins=coord_bins, labels=labels, grid_dist_cmp = grid_dist_cmp)
 
-        ########## TODO Take first label seen in downsampled grid as 'the one' ##########
-        # just create a separate function for it or make it modular?
+        # ########## Sums up label counts for each downsampled overlaid grid ##########
+        # # Create bin if doesn't exist yet
+        # if cur_grid_key not in coord_bins:
+        #     coord_bins[cur_grid_key] = [features, labels, grid_dist_cmp, 1]     # 3rd element - keep track of number of original points in grid
+        # # Otherwise aggregate labels/update features if necessary
+        # else:
+        # # TODO take closest coordinate to centre of low-res grid instead of first seen
+        #     _, _, prev_smallest_grid_dist_cmp, _ = coord_bins[cur_grid_key]
+        #     coord_bins[cur_grid_key][1] += labels
+        #     coord_bins[cur_grid_key][3] += 1            # 3rd element - keep track of number of original points in grid
+
+        # ########## TODO Take first label seen in downsampled grid as 'the one' ##########
+        # # just create a separate function for it or make it modular?
 
     # Extract reduced features and multi-labels
-    reduced_coords = np.array(list(coord_bins.keys()))
-    reduced_features_and_labels= np.array(list(coord_bins.values()))
-    grid_bins = reduced_features_and_labels[:,3].astype(int)
-    reduced_features = np.concatenate(reduced_features_and_labels[:,0]).reshape(reduced_coords.shape[0], data.shape[1])
-    reduced_mlabels = np.concatenate(reduced_features_and_labels[:,1]).reshape(reduced_coords.shape[0], label_counts.shape[1])
+    reduced_coords = np.array(list(coord_bins.keys()))                      # Get coord list from coord dict keys
+    reduced_features_and_labels= np.array(list(coord_bins.values()))        # Get all values from coord keys
+    grid_bins = reduced_features_and_labels[:,3].astype(int)                # 
+    reduced_features = np.concatenate(reduced_features_and_labels[:,0]) \   # Get reduced features
+            .reshape(reduced_coords.shape[0], data.shape[1])
+    reduced_mlabels = np.concatenate(reduced_features_and_labels[:,1]) \    # Get reduced labels
+            .reshape(reduced_coords.shape[0], label_counts.shape[1])
 
     reduced_stats = label_stats(reduced_mlabels)
 
