@@ -131,9 +131,9 @@ def downsample_by_fixed_grid(coords, data, label_counts, reduction_factor=2):
     reduced_coords = np.array(list(coord_bins.keys()))                      # Get coord list from coord dict keys
     reduced_features_and_labels= np.array(list(coord_bins.values()))        # Get all values from coord keys
     grid_bins = reduced_features_and_labels[:,3].astype(int)                # 
-    reduced_features = np.concatenate(reduced_features_and_labels[:,0]) \   # Get reduced features
+    reduced_features = np.concatenate(reduced_features_and_labels[:,0]) \
             .reshape(reduced_coords.shape[0], data.shape[1])
-    reduced_mlabels = np.concatenate(reduced_features_and_labels[:,1]) \    # Get reduced labels
+    reduced_mlabels = np.concatenate(reduced_features_and_labels[:,1]) \
             .reshape(reduced_coords.shape[0], label_counts.shape[1])
 
     reduced_stats = label_stats(reduced_mlabels)

@@ -7,6 +7,9 @@ if "DISPLAY" not in os.environ: # or os.environ['DISPLAY'] == ':0':
     mpl.use('SVG')
 mpl.use('SVG')
 
+from os.path import join, dirname
+from dotenv import load_dotenv, find_dotenv
+
 from importlib import reload
 import numpy as np
 import copy
@@ -74,14 +77,25 @@ def info(type, value, tb):
 if __name__ == "__main__":
     sys.excepthook = info
 
+    # Load environment variables
+    load_dotenv(find_dotenv())
+
     config = {}
-    config['no_coord_features']          = False # NOTE no longer need this, load preprocessed directly. don't change this!!! Keeping coords as features improves performance :/
-    config['ensemble_testing']           = False
-    config['downsampled_param_search']   = False
-    config['downsample']                 = False # No need for this, loading from disk-cached versions now
-    config['dm_test']                    = False
-    config['summarise_labels']           = False
-    config['load_query']                 = True
+    # config['no_coord_features']          = False # NOTE no longer need this, load preprocessed directly. don't change this!!! Keeping coords as features improves performance :/
+    # config['ensemble_testing']           = False
+    # config['downsampled_param_search']   = False
+    # config['downsample']                 = False # No need for this, loading from disk-cached versions now
+    # config['dm_test']                    = False
+    # config['summarise_labels']           = False
+    # config['load_query']                 = True
+
+    config['no_coord_features']          = os.environ.get('no_coord_features') 
+    config['ensemble_testing']           = os.environ.get('ensemble_testing') 
+    config['downsampled_param_search']   = os.environ.get('downsampled_param_search') 
+    config['downsample']                 = os.environ.get('downsample') 
+    config['dm_test']                    = os.environ.get('dm_test') 
+    config['summarise_labels']           = os.environ.get('summarise_labels') 
+    config['load_query']                 = os.environ.get('load_query') 
 
     # props = data.load_squidle_data()  
     # zip_obj = zip(props['latitude'], props['longitude'])  
