@@ -3,6 +3,7 @@ import math
 import numpy as np
 from scipy.cluster import hierarchy
 import pdb
+label_map={1:0,2:0,3:1,4:3,5:1,6:3,7:3,8:3,9:3,10:1,11:3,12:3,13:2,14:2,15:2,16:1,17:1,18:0,19:1,20:0,21:0,22:1,23:0,24:0}
 
 def label_stats(multi_labels):
     non_0s = np.apply_along_axis(lambda x: np.sum(x!=0), 1, multi_labels)
@@ -81,6 +82,16 @@ def downsample_single_labels(*, key, coord_bins, features, labels, grid_dist_cmp
     """
     if key not in coord_bins:
         coord_bins[key] = [features, labels, grid_dist_cmp, 1]     # 3rd element - keep track of number of original points in grid
+    else:
+        _, cur_label, _, _ = coord_bins[key]
+        rand = np.random.rand()
+        if cur_label == 3:
+            if rand >= 0.05:
+                coord_bins[key] = [features, labels, grid_dist_cmp, 1]
+        else:
+            if rand < 0.05:
+                coord_bins[key] = [features, labels, grid_dist_cmp, 1]
+        # Key already contains coordinates
 
     # Otherwise, do nothing, as we only take first label
     # Possible TODO - keep a list of labels and pick from them randomly at the end
@@ -94,7 +105,7 @@ def downsample_by_fixed_grid(coords, data, label_counts, reduction_factor=2):
     x_min, y_min, x_max, y_max, x_step, y_step, reduced_x_coords, reduced_y_coords = fixed_grid_blocksize(coords, reduction_factor)
     x_mesh, y_mesh = np.meshgrid(reduced_x_coords, reduced_y_coords)
 
-    orig_stats = label_stats(label_counts)
+    # orig_stats = label_stats(label_counts)
 
     # Decide which downsample helper to use
     if len(label_counts.shape) == 2:
@@ -111,7 +122,7 @@ def downsample_by_fixed_grid(coords, data, label_counts, reduction_factor=2):
         grid_dist_cmp = np.sqrt((x_point-cur_grid_key[0])**2 + (y_point-cur_grid_key[1])**2) # Stores distance from cur grid's coords
 
         # Calls either downsample_counts or downsample_single_labels depending on labels passed in
-        downsample_helper(key=cur_grid_key, coord_bins=coord_bins, labels=labels, grid_dist_cmp = grid_dist_cmp)
+        downsample_helper(key=cur_grid_key, coord_bins=coord_bins, features=features, labels=labels, grid_dist_cmp = grid_dist_cmp)
 
         # ########## Sums up label counts for each downsampled overlaid grid ##########
         # # Create bin if doesn't exist yet
@@ -133,10 +144,13 @@ def downsample_by_fixed_grid(coords, data, label_counts, reduction_factor=2):
     grid_bins = reduced_features_and_labels[:,3].astype(int)                # 
     reduced_features = np.concatenate(reduced_features_and_labels[:,0]) \
             .reshape(reduced_coords.shape[0], data.shape[1])
-    reduced_mlabels = np.concatenate(reduced_features_and_labels[:,1]) \
+    if len(reduced_features_and_labels[:,1].shape) == 2:
+        reduced_mlabels = np.concatenate(reduced_features_and_labels[:,1]) \
             .reshape(reduced_coords.shape[0], label_counts.shape[1])
+    else:
+        reduced_mlabels = np.array(reduced_features_and_labels[:,1], dtype=np.int64)
 
-    reduced_stats = label_stats(reduced_mlabels)
+    # reduced_stats = label_stats(reduced_mlabels)
 
     print("=============== SUMMARY STATS ===============")
     print("Min points contained in one bin: {}\nMax points contained in one bin: {}\nAverage points contained in grid bins: {}\n"\
@@ -229,7 +243,11 @@ def downsample_limited_nearest_points(coords, dendrogram, data, label_counts, cl
     reduced_data_dict_vals = np.array(list(reduced_data.values()))
     reduced_coords      = np.concatenate(reduced_data_dict_vals[:,0]).reshape(reduced_data_dict_vals.shape[0], 2)
     reduced_features    = np.concatenate(reduced_data_dict_vals[:,1]).reshape(reduced_data_dict_vals.shape[0], data.shape[1])
-    reduced_mlabels     = np.concatenate(reduced_data_dict_vals[:,2]).reshape(reduced_data_dict_vals.shape[0], label_counts.shape[1])
+    if len(reduced_data_dict_vals[:,2].shape) == 2:
+        reduced_mlabels = np.concatenate(reduced_data_dict_vals[:,2]).reshape(reduced_data_dict_vals.shape[0], label_counts.shape[1])
+    else:
+        reduced_mlabels = reduced_data_dict_vals[:,2]
+
     return reduced_coords, reduced_features, reduced_mlabels
 
 def cluster_cond_check(dend_row, clust_dist, clust_size):
