@@ -61,26 +61,18 @@ def fixed_grid_blocksize(coords, reduction_factor):
 
     return x_min, y_min, x_max, y_max, x_step, y_step, reduced_x_coords, reduced_y_coords
 
+def downsample_counts():
+    pass
+
+def downsample_single_labels():
+    pass
+
 def downsample_by_fixed_grid(coords, data, label_counts, reduction_factor=2):
     """
     Downsamples by allocating each point into the evenly distributed fixed side grids
     'overlaid' over the original 2-dimensional space
     """
-    # # Decide on number of points in reduced low-res space
-    # reduced_point_count = int(coords.shape[0]/reduction_factor) # default red_factor - 4
-
-    # # Calculate number of x/y blocks
-    # # Assumes x is longer than y!
-    # xy_ratio = (y_max-y_min)/(x_max-x_min)
-    # x_block_cnt = np.sqrt(reduced_point_count/xy_ratio)
-    # y_block_cnt = reduced_point_count/x_block_cnt
-
-    # # Build coordinates in low-res space
-    # # TODO x_step and y_step as long floats too troublesome - round up to nearest integer
-    # x_step = 21 # math.ceil((x_max-x_min)/x_block_cnt)
-    # reduced_x_coords = np.arange(x_min, x_max+x_step, x_step)
-    # y_step = 21 # math.ceil((y_max-y_min)/y_block_cnt)
-    # reduced_y_coords = np.arange(y_min, y_max+y_step, y_step)
+    # Build coordinates in low-res space
     x_min, y_min, x_max, y_max, x_step, y_step, reduced_x_coords, reduced_y_coords = fixed_grid_blocksize(coords, reduction_factor)
     x_mesh, y_mesh = np.meshgrid(reduced_x_coords, reduced_y_coords)
 
@@ -94,15 +86,19 @@ def downsample_by_fixed_grid(coords, data, label_counts, reduction_factor=2):
         cur_grid_key = find_nearest_grid(x_point, x_step, x_min, y_point, y_step, y_min)
         grid_dist_cmp = np.sqrt((x_point-cur_grid_key[0])**2 + (y_point-cur_grid_key[1])**2)
 
+        ########## Sums up label counts for each downsampled overlaid grid ##########
         # Create bin if doesn't exist yet
         if cur_grid_key not in coord_bins:
             coord_bins[cur_grid_key] = [features, labels, grid_dist_cmp, 1]
         # Otherwise aggregate labels/update features if necessary
-    else:
+        else:
         # TODO take closest coordinate to centre of low-res grid instead of first seen
             _, _, prev_smallest_grid_dist_cmp, _ = coord_bins[cur_grid_key]
             coord_bins[cur_grid_key][1] += labels
             coord_bins[cur_grid_key][3] += 1
+
+        ########## TODO Take first label seen in downsampled grid as 'the one' ##########
+        # just create a separate function for it or make it modular?
 
     # Extract reduced features and multi-labels
     reduced_coords = np.array(list(coord_bins.keys()))

@@ -4,13 +4,27 @@ from utils import visualisation as vis
 from ML.dir_mul.nicta.dirmultreg import dirmultreg_learn, dirmultreg_predict
 from ML.gp.gp_gpy import GPyC
 
-from ML.validation import cross_validate_algo
+from ML import validation
 from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import SVC
 
+from utils import visualisation as vis
+
 import progressbar
+import itertools
+
+# def search_even_split_areas(q_preds, q_vars):
+#     """
+#     Wrapper for find_even_split_areas to search many parameters for the largest matching areas
+#     """
+#     labels = np.arange(qp_preds.shape[1])
+#     for label_pair in itertools.combinations(labels, 2):
+#         for cur_bounds in ?:
+#             _, split_vars, split_idxs = find_even_split_areas(q_preds, q_vars, bounds=cur_bounds, split_labels=label_pair)
+#             print('Average variance in area: {}, number of points: {}'.format(np.average(split_vars), split_idxs.shape[0]))
+#             del(split_vars); del(split_idxs)
 
 def find_even_split_areas(q_preds, q_vars, bounds=[0.4, 0.6], split_labels=[1,2]):
     """
@@ -114,8 +128,31 @@ def dm_vs_gp_matching(dm_preds, dm_vars, gp_preds, gp_vars, even_split_idxs):
 def det_scores(features, labels_sets):
     algos = [LogisticRegression(), SVC(), KNeighborsClassifier(), RandomForestClassifier()]
     results = ""
-    for algo in algos:
-        print('Now calculating {}'.format(str(algo).split('(')[0]))
-        results += cross_validate_algo(features, labels, 10, algo)
-
+    for label_set in labels_sets:
+        for algo in algos:
+            print('Now calculating {}'.format(str(algo).split('(')[0]))
+            results += validation.cross_validate_algo(features, label_set, 10, algo)
     return results
+
+def check_dm_err_var_rankings(dm_mc_errs, dm_mc_vars):
+    errs_argsort = dm_mc_errs.argsort()
+    vars_argsort = dm_mc_vars.argsort()
+
+    for i, idx in enumerate(vars_argsort):
+        print('{}-smallest variance corresponds to the {}-smallest error - index {}'.format(i, np.where(errs_argsort == idx)[0][0], idx))
+
+def det_maps(features, labels, query_features):
+    print('Making det predictions')
+    labels_argmax = labels.argmax(axis=1)
+    print('SVC predictions...')
+    svc_preds = SVC().fit(features, labels_argmax).predict(query_features)
+    print('Logistic Regression predictions...')
+    lr_preds = LogisticRegression().fit(features, labels_argmax).predict(query_features)
+    print('kNN predictions')
+    knn_preds = KNeighborsClassifier().fit(features, labels_argmax).predict(query_features)
+    print('Random Forest predictions...')
+    rf_preds = RandomForestClassifier().fit(features, labels_argmax).predict(query_features)
+    
+    det4_preds = np.column_stack((svc_preds, lr_preds, knn_preds, rf_preds))
+
+    vis.plot_multi_maps(red_coords, det4_preds, filename='det_preds', title_list=['SVM', 'Logistic Regression', 'kNN', 'Random Forest'])

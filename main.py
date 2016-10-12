@@ -107,14 +107,18 @@ if __name__ == "__main__":
 
     # Don't load full dataset without sufficient free memory
     if config['load_query'] and psutil.virtual_memory().available >= 2e9:
-        qp_locations, validQueryID, x_bins, query, y_bins = data.load_test_data()
+        print('Loading query data')
+        qp_locations, query_sn = data.load_fixed_query_data()
 
-        print("Filter down to non-nan queries and locations...")
-        valid_query_idxs = np.where( (~np.isnan(query).any(axis=1) & np.isfinite(query).all(axis=1)) )[0]
-        query = query[valid_query_idxs]
-        qp_locations = qp_locations[valid_query_idxs]
-        infinite_idx = np.where(~np.isfinite(query).all(axis=1))[0]
-        query_sn = scale(normalize(query))
+        # qp_locations, validQueryID, x_bins, query, y_bins = data.load_test_data()
+
+        # print("Filter down to non-nan queries and locations...")
+        # # valid_query_idxs = np.where( (~np.isnan(query).any(axis=1) & np.isfinite(query).all(axis=1)) )[0]
+        # valid_query_idxs = np.load('data/valid_query_idxs.npy')
+        # query = query[valid_query_idxs]
+        # qp_locations = qp_locations[valid_query_idxs]
+        # # infinite_idx = np.where(~np.isfinite(query).all(axis=1))[0]
+        # query_sn = scale(normalize(query))
 
     ######### FEATURES ##########
     # print("Loading features...")
@@ -125,9 +129,6 @@ if __name__ == "__main__":
         features = features[:,2:]
         try:
             query_sn = query_sn[:,2:]
-        except NameError:
-            print("query points weren't loaded into memory")
-
         except NameError:
             print("query points weren't loaded into memory")
 
@@ -203,7 +204,7 @@ if __name__ == "__main__":
 
     # vis.show_map(bath_locations, labels, display=False, vmin=1, vmax=24, filename='original_map_plot')
 
-    preds_gp = np.load('data/plain_gp_simplelabels_querypreds.npy')
+    preds_gp = np.load('data/plain_gp_simplelabels_querypreds.npy', mmap_mode='r')
 
     # size = 100
     # train_idx = data.mini_batch_idxs(labels_simple, size, 'even')
@@ -224,19 +225,28 @@ if __name__ == "__main__":
     # vis.show_map(bath_locations, labels, x_bins_training, y_bins_training, vmin=1, vmax=24)
     #########################################################################################################
 
-    f_sq1 = data_transform.features_squared_only(red_features)
-    l = red_mlabels4
-    l_norm = l/l.sum(axis=1)[:,np.newaxis]
+    f_sq2 = data_transform.features_squared_only(red_features)
+    l4 = red_mlabels4
+    l4_norm = l4/l4.sum(axis=1)[:,np.newaxis]
+
+    l24 = red_mlabels24
+    l24_norm = l24/l24.sum(axis=1)[:,np.newaxis]
 
     ######### Looking at error and variance of DM using different projections #########
     # all_errs, all_vars = benchmarks.dm_test_feature_space(red_features, l_norm)
 
-    # chains = dm_mcmc.dirmultreg_learn(f_sq1, l_norm)
+    # chains = dm_mcmc.dirmultreg_learn(f_sq2, l_norm)
 
     # # Load dm mc 4-label chain stats - vars, errs
     # dmmc4_errs = np.load('data/dmmc4_errs.npy')
     # dmmc4_vars = np.load('data/dmmc4_vars.npy')
-    # dm4chains = np.load('data/dm_mcmc_30000_4l.npy') #13362
+    # dm4chains = np.load('data/dm_mcmc_30000_4l.npy', mmap_mode='r') #13362
+    W4 = np.load('data/W4.npy')
+
+    # dm_mc_errs24 = np.load('data/dm_mc_errs24.npy', mmap_mode='r')
+    # dm_mc_vars24 = np.load('data/dm_mc_vars24.npy', mmap_mode='r')
+
+    dm4_preds = dirmultreg_predict(q_sq2, W4)
 
     # # Get 'common split' areas
     # if dmmc4_errs.argmin() != dmmc4_vars.argmin():
@@ -260,3 +270,8 @@ if __name__ == "__main__":
     # gp_dmes_vars = gp_q_vars.T[dm_es_idxs[0]]
 
     # vis.plot_dm_per_label_maps(qp_locations, dm_es_preds_padded[:,cmp_axes]) 
+
+    # thesis_experiments.det_maps(f_sq2, red_mlabels4, q_sq2)
+
+    W24 = np.load('data/W_2m_1444288.npy')
+    dm24_preds = dirmultreg_predict(q_sq2, W24)

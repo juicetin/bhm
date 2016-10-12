@@ -18,6 +18,7 @@ class GPyC:
             m = GPy.models.GPRegression(X, labels, kernel=K.copy())
             self.models.append(m)
         self.models = np.array(self.models)
+        return self
 
     def predict(self, x, parallel=False):
         """
@@ -44,7 +45,8 @@ class GPyC:
                 all_preds[i] = gp_preds.flatten()
                 all_vars[i]  = gp_vars.flatten()
 
-        return all_preds, all_vars
+        # The transpose here is to match the output of the Dirichlet Multinomial stuff
+        return all_preds.T, all_vars.T
 
     def predict_parallel(self, x):
         """
