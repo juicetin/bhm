@@ -8,3 +8,11 @@ data/multiple_labels_training_data.npz filter=lfs diff=lfs merge=lfs -text
 data/queryPoints_lowres_v2_.npz filter=lfs diff=lfs merge=lfs -text
 data/semi-optimal-1000-subsample.npy filter=lfs diff=lfs merge=lfs -text
 data/semi-optimal-500-subsample.npy filter=lfs diff=lfs merge=lfs -text
+data/dmmc4_1.5m_errs.npy filter=lfs diff=lfs merge=lfs -text
+data/dmmc4_1.5m_vars.npy filter=lfs diff=lfs merge=lfs -text
+data/red_coords.npy filter=lfs diff=lfs merge=lfs -text
+data/red_features.npy filter=lfs diff=lfs merge=lfs -text
+data/red_mlabels24.npy filter=lfs diff=lfs merge=lfs -text
+data/red_mlabels24_single.npy filter=lfs diff=lfs merge=lfs -text
+data/red_mlabels4.npy filter=lfs diff=lfs merge=lfs -text
+data/red_mlabels4_single.npy filter=lfs diff=lfs merge=lfs -text

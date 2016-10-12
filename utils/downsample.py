@@ -85,7 +85,8 @@ def downsample_single_labels(*, key, coord_bins, features, labels, grid_dist_cmp
     else:
         _, cur_label, _, _ = coord_bins[key]
         rand = np.random.rand()
-        if cur_label == 3:
+        # if cur_label == 3:
+        if label_map[cur_label] == 3:
             if rand >= 0.05:
                 coord_bins[key] = [features, labels, grid_dist_cmp, 1]
         else:
