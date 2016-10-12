@@ -41,8 +41,12 @@ def load_test_data():
     x_bins = querypoints_lowres['x_bins']
     query = querypoints_lowres['query']
     y_bins = querypoints_lowres['y_bins']
-
     return (qp_locations, validQueryID, x_bins, query, y_bins)
+
+def load_fixed_query_data():
+    query_sn = np.load('data/query_sn.npy')
+    qp_locations = np.load('data/qp_locations.npy')
+    return qp_locations, query_sn
 
 def mini_batch_idxs(labels, point_count, split_type):
 

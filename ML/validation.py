@@ -4,6 +4,7 @@ import csv
 from sklearn.metrics import f1_score
 from sklearn.metrics import accuracy_score
 from ML.dir_mul.nicta.dirmultreg import dirmultreg_learn, dirmultreg_predict
+from ML.gp.gp_gpy import GPyC
 import pdb
 
 def cross_validate_algo(features, labels, folds, algo):
@@ -22,6 +23,10 @@ def cross_validate_algo(features, labels, folds, algo):
         y_ = algo.fit(X_train, y_train).predict(X_test)
         # y_ = lr.fit(features[train_index], labels[train_index]).predict(features[test_index])
 
+        # Account for when dealing with GP (TODO any probablistic-type outputs)
+        if type(algo) == GPyC:
+            y_ = y_[0].argmax(axis=1)
+
         # Get scores
         this_accuracy = accuracy_score(y_test, y_)
         accuracies.append(this_accuracy)
@@ -31,8 +36,10 @@ def cross_validate_algo(features, labels, folds, algo):
         # print("f1: {}, acc: {}".format(np.average(this_f1), this_accuracy))
     # print("Algo: {}, f1 avg: {}, acc avg: {}".format(str(algo), np.average(f1s), np.average(accuracies)))
     algo_str = str(algo).split('(')[0]
-    return '{} & {} & {} & {} \\\\\n'.format(algo_str, np.average(f1s), np.average(accuracies), str(np.unique(labels).shape[0]) + ' labels')
-    # return str(algo), np.average(f1s), np.average(accuracies)
+    f1_avg = np.around(np.average(f1s), decimals=5)
+    acc_avg = np.around(np.average(accuracies), decimals=5)
+    algo_name = str(np.unique(labels).shape[0])
+    return '{} & {} & {} & {} \\\\\n'.format(algo_str, f1_avg, acc_avg, algo_name + ' labels')
 
 def cross_validate_dm_argmax(features, labels, algo, folds=10):
     accuracies = []

@@ -458,6 +458,14 @@ def plot_multilabel_distribution(labels, title='Multi-label distribution', filen
 
     clear_plt()
 
+def plot_map(locations, labels, filename='map.pdf'):
+    colours = ['b', 'g', 'r', 'c']
+    for i, c in enumerate(colours):
+        cur_idxs = np.where(labels == i)[0]
+        plt.scatter(locations[:,0][cur_idxs], locations[:,1][cur_idxs], color=c)
+    plt.savefig(filename)
+    clear_plt()
+
 def dm_pred_vs_actual(preds, actuals, title='DM predictions vs actuals', filename='dm_pred_plot', display=False):
     """
     Plots all the DM predictions vs actual for the distribution of labels at each point
@@ -580,10 +588,11 @@ def plot_dm_hists(chains, filename='dm_mcmc_weight_hist'):
     clear_plt()
     mpl.rcdefaults()
 
-def plot_dm_per_label_maps(q_locations, q_preds, filename='dm_simplelabel_heatmap', across=2, down=2, offset=0):
+def plot_multi_maps(q_locations, q_preds, filename='dm_simplelabel_heatmap', across=2, down=2, offset=None, title_list=None):
     """
     Plots heatmap for each label in data
     """
+    dims = q_preds.shape[1]
     axs, fig, big_ax = generate_subplots(rows=down, columns=across, actual_count=dims, title_list=None, with_fig=True, with_big_ax=True)
     xlabel = 'UTM x-coordinates, zone 51S'
     ylabel = 'UTM y-coordinates, zone 51S'
@@ -603,9 +612,14 @@ def plot_dm_per_label_maps(q_locations, q_preds, filename='dm_simplelabel_heatma
 
     for i, ax in enumerate(axs):
         show_map(q_locations, q_preds[:,i], ax=ax)
-        ax.set_title('label {}'.format(offset+i))
+        if offset != None:
+            ax.set_title('label {}'.format(offset+i))
+        elif title_list != None:
+            ax.set_title(title_list[i])
+        else:
+            raise ValueError('plot_multi_maps function needs either an offset or title list!')
 
-    # plt.tight_layout()
+    plt.tight_layout()
     plt.savefig(filename+'.pdf')
     clear_plt()
 
@@ -616,8 +630,17 @@ def plot_dm_per_label_maps_multi(q_locations, q_preds, filename='dm_alllabels_he
     """
     Creates multiple multi-heatmap images for the 24-label case
     """
-    plot_dm_per_label_maps(q_locations, qp_preds[:,:13], filename=filename+'_1-12', across=2, down=4, offset=1)
-    plot_dm_per_label_maps(q_locations, qp_preds[:,13:], filename=filename+'_13-24', across=2, down=4, offset=13)
+    label_map={1:0,2:0,3:1,4:3,5:1,6:3,7:3,8:3,9:3,10:1,11:3,12:3,13:2,14:2,15:2,16:1,17:1,18:0,19:1,20:0,21:0,22:1,23:0,24:0}
+
+    title_set1 = ['label {} ({})'.format(i, label_map[i+1]) for i in range(0,6)]
+    title_set2 = ['label {} ({})'.format(i, label_map[i+1]) for i in range(6,12)] 
+    title_set3 = ['label {} ({})'.format(i, label_map[i+1]) for i in range(12,18)] 
+    title_set4 = ['label {} ({})'.format(i, label_map[i+1]) for i in range(18,24)] 
+
+    plot_multi_maps(q_locations, q_preds[:,:6], filename=filename+'_1-6', across=2, down=3, title_list=title_set1)
+    plot_multi_maps(q_locations, q_preds[:,6:12], filename=filename+'_7-12', across=2, down=3, title_list=title_set2)
+    plot_multi_maps(q_locations, q_preds[:,12:18], filename=filename+'_13-18', across=2, down=3, title_list=title_set3)
+    plot_multi_maps(q_locations, q_preds[:,18:], filename=filename+'_19-24', across=2, down=3, title_list=title_set4)
     clear_plt()
 
 def standalone_dm_colorbar(filename='dm_standalone_colorbar.pdf'):
