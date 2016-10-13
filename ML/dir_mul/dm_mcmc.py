@@ -8,7 +8,6 @@ from scipy.special import psi, gammaln
 from revrand.mathfun.special import softplus, softmax
 from scipy.stats import logistic as sci_logistic
 from scipy.optimize import minimize
-import emcee
 from ML.dir_mul.nicta.dirmultreg import dirmultreg_learn as dirmultreg_learn_def
 
 import pymc
