@@ -1,9 +1,9 @@
 # My custom ignores
 *.npz
+!**/bathAndDomLabel_lowres.npz
 *.*.sw*
 **/*.pyc
 # **/*.npy
-!data/bathAndDomLabel_lowres.npz
 !multiple_labels_training_data.npz
 hons.vim
 .session.vim
