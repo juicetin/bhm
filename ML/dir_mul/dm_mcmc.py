@@ -112,8 +112,9 @@ def dirmultreg_learn(X, C, activation='soft', reg=1, verbose=False, iters=30000)
     # return np.reshape(optres.x, (K, D))
     # return samples
 
-    return model.trace('mean')[:]
-
+    print('Call (result) model.trace(\'mean\')[:] to get all trace values')
+    # return model.trace('mean')[:] # returning model to allow further sampling
+    return model
 
 def dirmultreg_predict(X, W, activation='soft', counts=1):
     """ Predict Multinomial counts from a Dirichlet Multinomial regressor.
