@@ -164,7 +164,7 @@ def multi_dm_mcmc_chains(features, labels):
 
     nprocs = mp.cpu_count() - 1
     jobs = range(nprocs)
-    args = [(features, labels, activation='soft', reg=100, verbose=False, iters=2000000) for i in jobs]
+    args = [(features, labels, 'soft', 100, False, 2000000) for i in jobs]
     pool = Pool(processes=nprocs)
     print("Distributing MCMC sampling across {} processes...".format(nprocs))
     parallel_mcmc_chains_models = pool.starmap(dirmultreg_learn, args)
