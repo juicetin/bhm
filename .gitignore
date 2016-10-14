@@ -2,7 +2,7 @@
 *.npz
 *.*.sw*
 **/*.pyc
-**/*.npy
+# **/*.npy
 !bathAndDomLabel_lowres.npz
 !multiple_labels_training_data.npz
 hons.vim
