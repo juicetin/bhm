@@ -24,7 +24,62 @@ log = logging.getLogger(__name__)
 #     mcmc_lls = [posterior(chain[i], K, D, features, labels, reg, activation='soft') for i in range(chain.shape[0])]
 #     return np.array(mcmc_lls)
 
+def continue_mcmc(X, C, activation='soft', reg=1, iters=30000, thread=None):
+    if thread == None:
+        raise ValueError('thread needs to be assigned to know which MCMC db to use!')
+    if activation != 'exp' and activation != 'soft':
+        raise Exception("Invalid activation function name!")
 
+    N, K = C.shape
+    if N != X.shape[0]:
+        raise ValueError("C and X have to have the same number of rows!")
+
+    _, D = X.shape
+
+    # pymc
+    W = dirmultreg_learn_def(X, C)
+    mean = pymc.Uniform('mean', value=W, lower=-1e5, upper=1e5)
+
+    @pymc.stochastic(observed=True)
+    def posterior(value=X, mean=mean, reg=1, verbose=False, activation='soft'):
+        W=mean
+        """
+        Calculates the log of prior times likelihood for MCMC
+        """
+    
+        W = W.reshape(K, D)  # This comes out flattened
+    
+        if activation == 'exp':
+            alpha = np.exp(value.dot(W.T))  # NxK matrix of alpha values
+        else:
+            alpha = softplus(value.dot(W.T))
+            alpha[alpha < 1e-300] = 1e-300  # hack to avoid instability
+    
+        # Re-usable computations
+        asum = alpha.sum(axis=1)
+        acsum = (C + alpha).sum(axis=1)
+    
+        # Log-Gamma terms
+        lgam_terms = (gammaln(asum) - gammaln(acsum)).sum() \
+            + (gammaln(C + alpha) - gammaln(alpha)).sum()
+    
+        post = lgam_terms - (W**2).sum() / (2 * reg)
+    
+        if verbose:
+            # log.info("Iter. {}, Objective = {}".format(it[0], post))
+            # print("Iter. {}, Objective = {}".format(it[0], post))
+            print("Objective = {}".format(post))
+    
+        # import sys
+        # sys.exit(0)
+        return post
+
+    db = pymc.database.pickle.load('mcmc_db/dm_mcmc_{}.pickle'.format(thread))
+    model = pymc.MCMC([mean, posterior], db=db)
+    model.sample(iters)
+    model.db.close()
+
+    return model.trace('mean', chain=None)[:]
 
 def dirmultreg_learn(X, C, activation='soft', reg=1, verbose=False, iters=30000, thread=None):
     """ Train a Dirichlet-Multinomial Regressor using MAP to learn the weights.
@@ -116,10 +171,10 @@ def dirmultreg_learn(X, C, activation='soft', reg=1, verbose=False, iters=30000,
     # return np.reshape(optres.x, (K, D))
     # return samples
 
-    print('Call (result) model.trace(\'mean\')[:] to get all trace values')
-    return model # returning model to allow further sampling
+    # print('Call (result) model.trace(\'mean\')[:] to get all trace values')
+    # return model # returning model to allow further sampling
 
-    # return model.trace('mean')[:] 
+    return model.trace('mean', chain=None)[:] 
 
 def dirmultreg_predict(X, W, activation='soft', counts=1):
     """ Predict Multinomial counts from a Dirichlet Multinomial regressor.

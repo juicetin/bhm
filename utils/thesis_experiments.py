@@ -165,9 +165,19 @@ def multi_dm_mcmc_chains(features, labels, iters=2000000):
 
     nprocs = mp.cpu_count() - 1
     jobs = range(nprocs)
-    args = [(features, labels, 'soft', 100, False, iters) for i in jobs]
+    args = [(features, labels, 'soft', 100, False, iters, i) for i in jobs]
     pool = Pool(processes=nprocs)
     print("Distributing MCMC sampling across {} processes...".format(nprocs))
     parallel_mcmc_chains_models = pool.starmap(dm_mcmc.dirmultreg_learn, args)
+
+    return np.array(parallel_mcmc_chains_models)
+
+def multi_dm_mcmc_chains_continue(features, labels, iters=100000):
+    nprocs = mp.cpu_count() - 1
+    jobs = range(nprocs)
+    args = [(features, labels, 'soft', 100, False, iters, i) for i in jobs]
+    pool = Pool(processes=nprocs)
+    print("Distributing MCMC sampling across {} processes...".format(nprocs))
+    parallel_mcmc_chains_models = pool.starmap(dm_mcmc.continue_mcmc, args)
 
     return np.array(parallel_mcmc_chains_models)
