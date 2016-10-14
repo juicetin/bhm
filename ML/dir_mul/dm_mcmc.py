@@ -79,7 +79,7 @@ def continue_mcmc(X, C, activation='soft', reg=1, verbose=False, iters=30000, th
     model.sample(iters)
     model.db.close()
 
-    return model.trace('mean', chain=None)[:]
+    # return model.trace('mean', chain=None)[:]
 
 def dirmultreg_learn(X, C, activation='soft', reg=1, verbose=False, iters=30000, thread=None):
     """ Train a Dirichlet-Multinomial Regressor using MAP to learn the weights.
