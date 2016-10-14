@@ -4,7 +4,7 @@ import pdb
 from datetime import datetime
 
 from collections import OrderedDict
-from progress.bar import Bar
+from progressbar import Bar
 
 import multiprocessing as mp
 from multiprocessing import Pool
