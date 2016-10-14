@@ -126,11 +126,11 @@ def dm_vs_gp_matching(dm_preds, dm_vars, gp_preds, gp_vars, even_split_idxs):
 
 
 def det_scores(features, labels_sets):
-    algos = [LogisticRegression(), SVC(), KNeighborsClassifier(), RandomForestClassifier()]
+    algos = [LogisticRegression, SVC, KNeighborsClassifier, RandomForestClassifier]
     results = ""
     for label_set in labels_sets:
         for algo in algos:
-            print('Now calculating {}'.format(str(algo).split('(')[0]))
+            print('Now calculating {}'.format( str(algo).split('.')[-1][:-2] ))
             results += validation.cross_validate_algo(features, label_set, 10, algo)
     return results
 
@@ -141,18 +141,17 @@ def check_dm_err_var_rankings(dm_mc_errs, dm_mc_vars):
     for i, idx in enumerate(vars_argsort):
         print('{}-smallest variance corresponds to the {}-smallest error - index {}'.format(i, np.where(errs_argsort == idx)[0][0], idx))
 
-def det_maps(features, labels, query_features):
+def det_maps(features, labels, query_features, qp_locations):
     print('Making det predictions')
-    labels_argmax = labels.argmax(axis=1)
     print('SVC predictions...')
-    svc_preds = SVC().fit(features, labels_argmax).predict(query_features)
+    svc_preds = SVC().fit(features, labels).predict(query_features)
     print('Logistic Regression predictions...')
-    lr_preds = LogisticRegression().fit(features, labels_argmax).predict(query_features)
+    lr_preds = LogisticRegression().fit(features, labels).predict(query_features)
     print('kNN predictions')
-    knn_preds = KNeighborsClassifier().fit(features, labels_argmax).predict(query_features)
+    knn_preds = KNeighborsClassifier().fit(features, labels).predict(query_features)
     print('Random Forest predictions...')
-    rf_preds = RandomForestClassifier().fit(features, labels_argmax).predict(query_features)
+    rf_preds = RandomForestClassifier().fit(features, labels).predict(query_features)
     
     det4_preds = np.column_stack((svc_preds, lr_preds, knn_preds, rf_preds))
 
-    vis.plot_multi_maps(red_coords, det4_preds, filename='det_preds', title_list=['SVM', 'Logistic Regression', 'kNN', 'Random Forest'])
+    vis.plot_multi_maps(qp_locations, det4_preds, filename='det_preds', title_list=['SVM', 'Logistic Regression', 'kNN', 'Random Forest'])

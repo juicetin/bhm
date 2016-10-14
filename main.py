@@ -50,16 +50,19 @@ from ML.gp.gp_mt import GPMT
 from ML.dir_mul.dirichlet_multinomial import DirichletMultinomialRegression
 from ML.dir_mul.nicta.dirmultreg import dirmultreg_learn, dirmultreg_predict
 from ML.dir_mul.dm_mcmc import dirmultreg_learn as dm_mcmc_learn
+from ML import validation as val
 
 from ML.dir_mul import dm_mcmc
 
 import utils
-import utils.visualisation as vis
-import utils.load_data as data
-import utils.data_transform as data_transform
+from utils import visualisation as vis
+from utils import load_data as data
+from utils import data_transform as data_transform
 import utils.benchmarks as benchmarks
 import utils.gpy_benchmark as gpy_benchmarks
+from utils import downsample
 from utils import thesis_experiments
+
 
 def info(type, value, tb):
     """
@@ -89,13 +92,13 @@ if __name__ == "__main__":
     # config['summarise_labels']           = False
     # config['load_query']                 = True
 
-    config['no_coord_features']          = os.environ.get('no_coord_features') 
-    config['ensemble_testing']           = os.environ.get('ensemble_testing') 
-    config['downsampled_param_search']   = os.environ.get('downsampled_param_search') 
-    config['downsample']                 = os.environ.get('downsample') 
-    config['dm_test']                    = os.environ.get('dm_test') 
-    config['summarise_labels']           = os.environ.get('summarise_labels') 
-    config['load_query']                 = os.environ.get('load_query') 
+    config['no_coord_features']          = int(os.environ.get('no_coord_features'))
+    config['ensemble_testing']           = int(os.environ.get('ensemble_testing'))
+    config['downsampled_param_search']   = int(os.environ.get('downsampled_param_search'))
+    config['downsample']                 = int(os.environ.get('downsample'))
+    config['dm_test']                    = int(os.environ.get('dm_test'))
+    config['summarise_labels']           = int(os.environ.get('summarise_labels'))
+    config['load_query']                 = int(os.environ.get('load_query'))
 
     # props = data.load_squidle_data()  
     # zip_obj = zip(props['latitude'], props['longitude'])  
@@ -109,7 +112,7 @@ if __name__ == "__main__":
 
     ######## LOAD DATA ########
     print("Loading data from npzs...")
-    # labels, labelcounts, bath_locations, features = data.load_training_data()
+    labels, labelcounts, bath_locations, features = data.load_training_data()
     _, _, bath_locations, _ = data.load_training_data()
     # multi_locations, multi_features, multi_labels_lists = data.load_multi_label_data()
     # multi_labels = data_transform.multi_label_counts(multi_labels_lists, zero_indexed=False)
@@ -117,10 +120,19 @@ if __name__ == "__main__":
         multi_labels = data_transform.summarised_labels(multi_labels)
     # multi_labels_norm = multi_labels/multi_labels.sum(axis=1)[:,np.newaxis]
     
-    red_features, red_mlabels4, red_mlabels24, red_coords = data.load_reduced_data()
+    red_features, red_mlabels4, red_mlabels24, red_coords, red_scoords, \
+        red_sfeatures, red_slabels4, red_slabels24 = data.load_reduced_data()
+
+    f_sq2 = data_transform.features_squared_only(red_features)
+    l4 = red_mlabels4
+    l4_norm = l4/l4.sum(axis=1)[:,np.newaxis]
+    l24 = red_mlabels24
+    l24_norm = l24/l24.sum(axis=1)[:,np.newaxis]
+    W4 = np.load('data/W4.npy')
+    W24 = np.load('data/W_2m_1444288.npy')
 
     # Don't load full dataset without sufficient free memory
-    if config['load_query'] and psutil.virtual_memory().available >= 2e9:
+    if config['load_query'] == True and psutil.virtual_memory().available >= 2e9:
         print('Loading query data')
         qp_locations, query_sn = data.load_fixed_query_data()
 
@@ -139,7 +151,7 @@ if __name__ == "__main__":
     # features = np.array(features)
 
     # Remove long/lat coordinates
-    if config['no_coord_features']:
+    if config['no_coord_features'] == True:
         features = features[:,2:]
         try:
             query_sn = query_sn[:,2:]
@@ -195,8 +207,11 @@ if __name__ == "__main__":
         q_sq2 = np.load('data/q_sq2.npy')
         # q = query_sn
         # q_sq2 = data_transform.features_squared_only(query_sn)
-
         # res3 = benchmarks.dm_vs_det_stats(preds_dm, preds_gp)
+
+
+    # dm4_preds = dirmultreg_predict(q_sq2, W4)
+    # dm24_preds = dirmultreg_predict(q_sq2, W24)
 
     ######## PLOT LR/RF ########
     # f = pf.fit_transform(features_sn)
@@ -239,12 +254,6 @@ if __name__ == "__main__":
     # vis.show_map(bath_locations, labels, x_bins_training, y_bins_training, vmin=1, vmax=24)
     #########################################################################################################
 
-    f_sq2 = data_transform.features_squared_only(red_features)
-    l4 = red_mlabels4
-    l4_norm = l4/l4.sum(axis=1)[:,np.newaxis]
-
-    l24 = red_mlabels24
-    l24_norm = l24/l24.sum(axis=1)[:,np.newaxis]
 
     ######### Looking at error and variance of DM using different projections #########
     # all_errs, all_vars = benchmarks.dm_test_feature_space(red_features, l_norm)
@@ -255,12 +264,10 @@ if __name__ == "__main__":
     # dmmc4_errs = np.load('data/dmmc4_errs.npy')
     # dmmc4_vars = np.load('data/dmmc4_vars.npy')
     # dm4chains = np.load('data/dm_mcmc_30000_4l.npy', mmap_mode='r') #13362
-    W4 = np.load('data/W4.npy')
 
     # dm_mc_errs24 = np.load('data/dm_mc_errs24.npy', mmap_mode='r')
     # dm_mc_vars24 = np.load('data/dm_mc_vars24.npy', mmap_mode='r')
 
-    dm4_preds = dirmultreg_predict(q_sq2, W4)
 
     # # Get 'common split' areas
     # if dmmc4_errs.argmin() != dmmc4_vars.argmin():
@@ -287,5 +294,3 @@ if __name__ == "__main__":
 
     # thesis_experiments.det_maps(f_sq2, red_mlabels4, q_sq2)
 
-    W24 = np.load('data/W_2m_1444288.npy')
-    dm24_preds = dirmultreg_predict(q_sq2, W24)
