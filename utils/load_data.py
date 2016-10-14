@@ -32,7 +32,13 @@ def load_reduced_data():
     red_mlabels24 = np.load('data/red_mlabels24.npy')
     red_features = np.load('data/red_features.npy')
     red_coords = np.load('data/red_coords.npy')
-    return red_features, red_mlabels4, red_mlabels24, red_coords
+
+    red_scoords = np.load('data/red_coords_singlelabel.npy')
+    red_sfeatures = np.load('data/red_features_singlelabel.npy')
+    red_slabels4 = np.load('data/red_labels4_single.npy')
+    red_slabels24 = np.load('data/red_labels24_single.npy')
+
+    return red_features, red_mlabels4, red_mlabels24, red_coords, red_scoords, red_sfeatures, red_slabels4, red_slabels24
 
 def load_test_data():
     querypoints_lowres = np.load('data/queryPoints_lowres_v2_.npz')
