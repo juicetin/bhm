@@ -1,7 +1,8 @@
 import numpy as np
 import pdb
 from utils import visualisation as vis
-from ML.dir_mul.nicta.dirmultreg import dirmultreg_learn, dirmultreg_predict
+# from ML.dir_mul.nicta.dirmultreg import dirmultreg_learn, dirmultreg_predict
+from ML.dir_mul import dm_mcmc
 from ML.gp.gp_gpy import GPyC
 
 from ML import validation
@@ -11,6 +12,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import SVC
 
 import multiprocessing as mp
+from multiprocessing import Pool
 
 from utils import visualisation as vis
 
@@ -158,14 +160,14 @@ def det_maps(features, labels, query_features, qp_locations):
 
     vis.plot_multi_maps(qp_locations, det4_preds, filename='det_preds', title_list=['SVM', 'Logistic Regression', 'kNN', 'Random Forest'])
 
-def multi_dm_mcmc_chains(features, labels):
+def multi_dm_mcmc_chains(features, labels, iters=2000000):
     # dirmultreg_learn(features, labels, activation='soft', reg=100, verbose=False, iters=2000000)
 
     nprocs = mp.cpu_count() - 1
     jobs = range(nprocs)
-    args = [(features, labels, 'soft', 100, False, 2000000) for i in jobs]
+    args = [(features, labels, 'soft', 100, False, iters) for i in jobs]
     pool = Pool(processes=nprocs)
     print("Distributing MCMC sampling across {} processes...".format(nprocs))
-    parallel_mcmc_chains_models = pool.starmap(dirmultreg_learn, args)
+    parallel_mcmc_chains_models = pool.starmap(dm_mcmc.dirmultreg_learn, args)
 
-    return parallel_mcmc_chains_models
+    return np.array(parallel_mcmc_chains_models)

@@ -26,7 +26,7 @@ log = logging.getLogger(__name__)
 
 
 
-def dirmultreg_learn(X, C, activation='soft', reg=1, verbose=False, iters=30000):
+def dirmultreg_learn(X, C, activation='soft', reg=1, verbose=False, iters=30000, thread=None):
     """ Train a Dirichlet-Multinomial Regressor using MAP to learn the weights.
 
         Arguments:
@@ -99,8 +99,13 @@ def dirmultreg_learn(X, C, activation='soft', reg=1, verbose=False, iters=30000)
         # sys.exit(0)
         return post
 
-    model = pymc.MCMC([mean, posterior])
-    model.sample(iter=iters)
+    if thread != None:
+        dbname='mcmc_db/dm_mcmc_{}.pickle'.format(thread)
+        model = pymc.MCMC([mean, posterior], db='pickle', dbname=dbname)
+        model.sample(iter=iters)
+        model.db.close()
+    else:
+        model = pymc.MCMC([mean, posterior])
 
     if verbose:
         log.info("Success: {}, final objective = {}."
@@ -112,8 +117,9 @@ def dirmultreg_learn(X, C, activation='soft', reg=1, verbose=False, iters=30000)
     # return samples
 
     print('Call (result) model.trace(\'mean\')[:] to get all trace values')
-    # return model.trace('mean')[:] # returning model to allow further sampling
-    return model
+    return model # returning model to allow further sampling
+
+    # return model.trace('mean')[:] 
 
 def dirmultreg_predict(X, W, activation='soft', counts=1):
     """ Predict Multinomial counts from a Dirichlet Multinomial regressor.
