@@ -179,5 +179,4 @@ def multi_dm_mcmc_chains_continue(features, labels, iters=100000):
     pool = Pool(processes=nprocs)
     print("Distributing MCMC sampling across {} processes...".format(nprocs))
     parallel_mcmc_chains_models = pool.starmap(dm_mcmc.continue_mcmc, args)
-
-    return np.array(parallel_mcmc_chains_models)
+    # return np.array(parallel_mcmc_chains_models)
