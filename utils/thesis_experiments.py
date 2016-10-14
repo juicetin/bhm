@@ -10,6 +10,8 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import SVC
 
+import multiprocessing as mp
+
 from utils import visualisation as vis
 
 import progressbar
@@ -155,3 +157,15 @@ def det_maps(features, labels, query_features, qp_locations):
     det4_preds = np.column_stack((svc_preds, lr_preds, knn_preds, rf_preds))
 
     vis.plot_multi_maps(qp_locations, det4_preds, filename='det_preds', title_list=['SVM', 'Logistic Regression', 'kNN', 'Random Forest'])
+
+def multi_dm_mcmc_chains(features, labels):
+    # dirmultreg_learn(features, labels, activation='soft', reg=100, verbose=False, iters=2000000)
+
+    nprocs = mp.cpu_count() - 1
+    jobs = range(nprocs)
+    args = [(features, labels, 'soft', 100, False, 2000000) for i in jobs]
+    pool = Pool(processes=nprocs)
+    print("Distributing MCMC sampling across {} processes...".format(nprocs))
+    parallel_mcmc_chains_models = pool.starmap(dirmultreg_learn, args)
+
+    return parallel_mcmc_chains_models
