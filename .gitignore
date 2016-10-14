@@ -3,6 +3,7 @@
 !**/bathAndDomLabel_lowres.npz
 *.*.sw*
 **/*.pyc
+**/*.pickle
 # **/*.npy
 !multiple_labels_training_data.npz
 hons.vim
