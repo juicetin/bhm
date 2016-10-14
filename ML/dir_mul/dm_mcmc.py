@@ -24,7 +24,7 @@ log = logging.getLogger(__name__)
 #     mcmc_lls = [posterior(chain[i], K, D, features, labels, reg, activation='soft') for i in range(chain.shape[0])]
 #     return np.array(mcmc_lls)
 
-def continue_mcmc(X, C, activation='soft', reg=1, iters=30000, thread=None):
+def continue_mcmc(X, C, activation='soft', reg=1, verbose=False, iters=30000, thread=None):
     if thread == None:
         raise ValueError('thread needs to be assigned to know which MCMC db to use!')
     if activation != 'exp' and activation != 'soft':
