@@ -12,6 +12,7 @@ def cross_validate_algo(features, labels, folds, algo, verbose=False):
     f1s = []
     kf = cross_validation.KFold(n=len(features), n_folds=folds, shuffle=True, random_state=None)
     count = 1
+    algo_str = str(algo()).split('(')[0]
     for train_index, test_index in kf:
         # print("Calculating part {} of {}".format(count, folds))
         count += 1
@@ -41,7 +42,6 @@ def cross_validate_algo(features, labels, folds, algo, verbose=False):
 
         # print("f1: {}, acc: {}".format(np.average(this_f1), this_accuracy))
     # print("Algo: {}, f1 avg: {}, acc avg: {}".format(str(algo), np.average(f1s), np.average(accuracies)))
-    algo_str = str(clf).split('(')[0]
     f1_avg = np.around(np.average(f1s), decimals=5)
     acc_avg = np.around(np.average(accuracies), decimals=5)
     algo_name = str(np.unique(labels).shape[0])
