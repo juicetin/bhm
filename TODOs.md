@@ -7,3 +7,5 @@
 * calculate r-hat statistic
 * fix MCMC weight histograms to auto-split onto the appropriate number of pages
 * fix all graphs (axes, colorbars, labels, titles, etc.) and figures
+
+* redo GP predictions - hyperparameters should NOT all be 1
