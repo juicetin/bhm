@@ -13,6 +13,7 @@ from sklearn.svm import SVC
 
 import multiprocessing as mp
 from multiprocessing import Pool
+import itertools
 
 from utils import visualisation as vis
 
@@ -137,6 +138,19 @@ def det_scores(features, labels_sets):
         for algo in algos:
             print('Now calculating {}'.format( str(algo).split('.')[-1][:-2] ))
             results += validation.cross_validate_algo(features, label_set, 10, algo)
+    return results
+
+def dm_scores(feature_sets, label_sets):
+    """
+    Prints a latex table of results of possible combinations between a list of 
+    features and list of DM multi-labels
+    """
+
+    results ="Features & Root Mean Squared Error \\\\\\hline\n"
+    for i, (features, labels) in enumerate(itertools.product(feature_sets, label_sets)):
+        print('Now calculating label set: {}'.format(i))
+        results += validation.cross_validate_dm(features, labels, 10)
+
     return results
 
 def check_dm_err_var_rankings(dm_mc_errs, dm_mc_vars):
