@@ -5,6 +5,7 @@ from sklearn.metrics import f1_score
 from sklearn.metrics import accuracy_score
 from ML.dir_mul.nicta.dirmultreg import dirmultreg_learn, dirmultreg_predict
 from ML.gp.gp_gpy import GPyC
+from ML.gp.gp_multi_gpy import GPyMultiOutput
 import pdb
 
 def cross_validate_algo(features, labels, folds, algo, verbose=False):
@@ -83,6 +84,47 @@ def cross_validate_dm(features, labels, folds=10):
         y_ = dirmultreg_predict(X_test, W)[0]
 
         all_err = y_ - labels[test_idx]
+        avg_err = np.average(np.abs(all_err))
+        errs.append(avg_err)
+
+        print(avg_err)
+
+    # print("Average error was {}".format(np.average(errs)))
+    if features.shape[1] == 9 or features.shape[1] == 19:
+        coords_str = 'using coordinates'
+    else:
+        coords_str = 'not using coordinates'
+
+    orig_f = 'Original Features'
+    quad_f = 'Quadratic projection'
+    sq_f = 'Squared features with 1 bias'
+    coords = 'using coordinates'
+    no_coords = 'not using coordinates'
+    coords_str_map = {
+        9: '{}, {}'.format(orig_f, no_coords),
+        11: '{}, {}'.format(orig_f, coords),
+        19: '{}, {}'.format(sq_f, no_coords),
+        23: '{}, {}'.format(sq_f, coords),
+        55: '{}, {}'.format(quad_f, no_coords),
+        78: '{}, {}'.format(quad_f, coords)
+    }
+
+    return '{} & {} \\\\\n'.format(coords_str_map[features.shape[1]], avg_err)
+
+def cross_validate_gp_multi(features, labels, folds=10):
+    kf = cross_validation.KFold(n=len(features), n_folds=folds, shuffle=True, random_state=None)
+    errs = []
+
+    for train_idx, test_idx in kf:
+        X_train, X_test = features[train_idx], features[test_idx]
+        y_train, y_test = labels[train_idx], labels[test_idx]
+
+        gp = GPyMultiOutput()
+        gp.fit(X_train, y_train)
+
+        y_ = gp.predict(X_test)[0].T
+
+        all_err = y_ - y_test
         avg_err = np.average(np.abs(all_err))
         errs.append(avg_err)
 
