@@ -18,6 +18,7 @@ from utils import visualisation as vis
 
 import progressbar
 import itertools
+import pymc
 
 # def search_even_split_areas(q_preds, q_vars):
 #     """
@@ -180,3 +181,43 @@ def multi_dm_mcmc_chains_continue(features, labels, iters=100000):
     print("Distributing MCMC sampling across {} processes...".format(nprocs))
     parallel_mcmc_chains_models = pool.starmap(dm_mcmc.continue_mcmc, args)
     # return np.array(parallel_mcmc_chains_models)
+
+def save_dm_mcmc(*, l):
+    chain_sizes = {4:int(9e6), 24:int(9.5e5)}
+    size_strs = {4:'9m', 24:'950k'}
+
+    nprocs = mp.cpu_count() - 1
+    for i in range(nprocs):
+        print('Saving chain from {}...'.format('mcmc_db/dm{}_mcmc_{}.pickle'.format(l, i)))
+        db = pymc.database.pickle.load('mcmc_db/dm{}_mcmc_{}.pickle'.format(l, i))
+        np.save('mcmc_db/dm{}_mcmc_{}'.format(l, i), db.trace('mean', chain=None)[:][:chain_sizes[l]])
+        del(db)
+
+    # db0 = pymc.database.pickle.load('mcmc_db/dm{}_mcmc_{}.pickle'.format(l, 0))
+    # db1 = pymc.database.pickle.load('mcmc_db/dm{}_mcmc_{}.pickle'.format(l, 1))
+    # db2 = pymc.database.pickle.load('mcmc_db/dm{}_mcmc_{}.pickle'.format(l, 2))
+
+    # chains.append(db.trace('mean', chain=None)[:][:chain_sizes[l]])
+
+def plot_dm_hists_per_chain_4l():
+    print('Loading memory mapped data...')
+    dm4_0 = np.load('mcmc_db/dm4_mcmc_9m_0.npy', mmap_mode='r').reshape(9000000, 4*19)
+    dm4_1 = np.load('mcmc_db/dm4_mcmc_9m_1.npy', mmap_mode='r').reshape(9000000, 4*19)
+    dm4_2 = np.load('mcmc_db/dm4_mcmc_9m_2.npy', mmap_mode='r').reshape(9000000, 4*19)
+
+    print('Plotting hists of 0...')
+    vis.plot_dm_hists(dm4_0[4500000::10], filename='dm4_9m_0_mcmc_weight_hist')
+    print('Plotting hists of 1...')
+    vis.plot_dm_hists(dm4_1[4500000::10], filename='dm4_9m_1_mcmc_weight_hist')
+    print('Plotting hists of 2...')
+    vis.plot_dm_hists(dm4_2[4500000::10], filename='dm4_9m_2_mcmc_weight_hist')
+
+def plot_dm_hists_per_chain_24l():
+    print('Loading memory mapped data...')
+    dm24_0 = np.load('mcmc_db/dm24_mcmc_950k_0.npy', mmap_mode='r').reshape(950000, 24*19)
+    dm24_1 = np.load('mcmc_db/dm24_mcmc_950k_1.npy', mmap_mode='r').reshape(950000, 24*19)
+
+    print('Plotting hists of 0...')
+    vis.plot_dm_hists(dm24_0, filename='dm24_950k_0_mcmc_weight_hist')
+    print('Plotting hists of 1...')
+    vis.plot_dm_hists(dm24_1, filename='dm24_950k_1_mcmc_weight_hist')

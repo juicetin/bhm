@@ -9,6 +9,7 @@ from revrand.mathfun.special import softplus, softmax
 from scipy.stats import logistic as sci_logistic
 from scipy.optimize import minimize
 from ML.dir_mul.nicta.dirmultreg import dirmultreg_learn as dirmultreg_learn_def
+import pdb
 
 import pymc
 
@@ -74,7 +75,7 @@ def continue_mcmc(X, C, activation='soft', reg=1, verbose=False, iters=30000, th
         # sys.exit(0)
         return post
 
-    db = pymc.database.pickle.load('mcmc_db/dm_mcmc_{}.pickle'.format(thread))
+    db = pymc.database.pickle.load('mcmc_db/dm{}_mcmc_{}.pickle'.format(C.shape[1], thread))
     model = pymc.MCMC([mean, posterior], db=db)
     model.sample(iters)
     model.db.close()
@@ -118,6 +119,8 @@ def dirmultreg_learn(X, C, activation='soft', reg=1, verbose=False, iters=30000,
 
     # pymc
     W = dirmultreg_learn_def(X, C)
+    np.random.seed(None)
+    W = np.random.rand(W.shape[0], W.shape[1])
     mean = pymc.Uniform('mean', value=W, lower=-1e5, upper=1e5)
 
     @pymc.stochastic(observed=True)
@@ -155,12 +158,13 @@ def dirmultreg_learn(X, C, activation='soft', reg=1, verbose=False, iters=30000,
         return post
 
     if thread != None:
-        dbname='mcmc_db/dm_mcmc_{}.pickle'.format(thread)
+        dbname='mcmc_db/dm{}_mcmc_{}.pickle'.format(C.shape[1], thread)
         model = pymc.MCMC([mean, posterior], db='pickle', dbname=dbname)
         model.sample(iter=iters)
         model.db.close()
     else:
         model = pymc.MCMC([mean, posterior])
+        model.sample(iter=iters)
 
     if verbose:
         log.info("Success: {}, final objective = {}."
@@ -174,7 +178,7 @@ def dirmultreg_learn(X, C, activation='soft', reg=1, verbose=False, iters=30000,
     # print('Call (result) model.trace(\'mean\')[:] to get all trace values')
     # return model # returning model to allow further sampling
 
-    return model.trace('mean', chain=None)[:] 
+    # return model.trace('mean', chain=None)[:] 
 
 def dirmultreg_predict(X, W, activation='soft', counts=1):
     """ Predict Multinomial counts from a Dirichlet Multinomial regressor.

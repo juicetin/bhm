@@ -10,6 +10,9 @@ from scipy.misc import logsumexp # originally yavanna
 
 import utils.visualisation as vis
 
+import pymc
+import multiprocessing as mp
+
 # Load all the data
 def load_training_data():
     bath_and_dom_lowres = np.load('data/bathAndDomLabel_lowres.npz')
@@ -213,3 +216,13 @@ def sample_equal_multi_labels(labels):
     """
     np.sum(multi_labels, axis=0).min()
     np.bincount(multi_labels.argmax(axis=1)).min()
+
+def load_mmap_mcmc(*, l):
+    nprocs = mp.cpu_count() - 1
+    res = []
+    for i in range(nprocs):
+        # db = pymc.database.pickle.load('mcmc_db/dm{}_mcmc_{}.pickle'.format(l, i))
+        res.append(np.load('mcmc_db/dm{}_mcmc_{}.npy'.format(l, i), mmap_mode='r'))
+        # del(db)
+
+    return res
