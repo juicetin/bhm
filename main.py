@@ -19,6 +19,7 @@ from datetime import datetime
 import pdb
 import GPy
 from ML.gp.gp_gpy import GPyC
+import ML.gp.gp_multi_gpy as gpm
 
 from sklearn.preprocessing import normalize
 from sklearn.preprocessing import scale
