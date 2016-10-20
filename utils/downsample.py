@@ -162,7 +162,7 @@ def downsample_by_fixed_grid(coords, data, label_counts, reduction_factor=2):
     # hclusters = hierarchy.linkage(coords, 'ward')
     # code.interact(local=locals())
 
-    return reduced_coords, reduced_features, reduced_mlabels
+    return reduced_coords, reduced_features, reduced_mlabels, red_idxs
 
 def find_child_nodes_in_dendrogram(dendrogram, dend_idx, orig_size):
     """

@@ -16,6 +16,11 @@ from multiprocessing import Pool
 import itertools
 
 from utils import visualisation as vis
+from utils import data_transform
+from ML.dir_mul.nicta.dirmultreg import dirmultreg_learn, dirmultreg_predict
+
+from sklearn.preprocessing import normalize
+from sklearn.preprocessing import scale
 
 import progressbar
 import itertools
@@ -235,3 +240,18 @@ def plot_dm_hists_per_chain_24l():
     vis.plot_dm_hists(dm24_0, filename='dm24_950k_0_mcmc_weight_hist')
     print('Plotting hists of 1...')
     vis.plot_dm_hists(dm24_1, filename='dm24_950k_1_mcmc_weight_hist')
+
+def test_dm_data(features, labels):
+    f_sq2 = data_transform.features_squared_only(features)
+
+    f = scale(normalize(f_sq2))
+    W = dirmultreg_learn(f, labels)
+    p = dirmultreg_predict(f, W)
+    avg_err = np.average(np.abs(p[0] - labels))
+    print('scale(normalize()): {}'.format(avg_err))
+
+    f = scale(normalize(f_sq2), axis=1)
+    W = dirmultreg_learn(f, labels)
+    p = dirmultreg_predict(f, W)
+    avg_err = np.average(np.abs(p[0] - labels))
+    print('scale(normalize(), axis=1): {}'.format(avg_err))
