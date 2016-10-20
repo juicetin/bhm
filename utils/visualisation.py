@@ -283,13 +283,13 @@ def show_map(locations, labels, x_bins=None, y_bins=None, display=False, filenam
     in_ax = False if ax == None else True
 
     print("Setting colourbar (legend)...")
-    # cmap = cm.jet
+    cmap = cm.jet
     # cmaplist = [cmap(i) for i in range(cmap.N)]
     # cmap = cmap.from_list('custom cmap', cmaplist, cmap.N)
 
     print("Bulding image...")
     # plt.imshow(Z, extent=[x_min, x_max, y_min, y_max], origin='lower', cmap=cmap, vmin=vmin, vmax=vmax)
-    cur_fig.imshow(Z, extent=[x_min, x_max, y_min, y_max], origin='lower', vmin=vmin, vmax=vmax)
+    cur_fig.imshow(Z, extent=[x_min, x_max, y_min, y_max], origin='lower', vmin=vmin, vmax=vmax, cmap=cmap)
 
     # Slightly hacky - unfortunately neeeded for 0-count argmaxs of 24 labels
     # if np.unique(labels).shape[0] < 5:
@@ -310,7 +310,6 @@ def show_map(locations, labels, x_bins=None, y_bins=None, display=False, filenam
     axis_fontsize = 10
     if in_ax == True:
         ax.tick_params(axis='both', which='both', labelsize=8)
-        pass
         # print('Setting axis labels for subfig...')
         # cur_fig.set_xlabel(xlabel, fontsize=axis_fontsize)
         # cur_fig.set_ylabel(ylabel, fontsize=axis_fontsize)
@@ -318,7 +317,6 @@ def show_map(locations, labels, x_bins=None, y_bins=None, display=False, filenam
         print('Setting axis labels...')
         cur_fig.xlabel(xlabel, fontsize=axis_fontsize)
         cur_fig.ylabel(ylabel, fontsize=axis_fontsize)
-
 
     print("Image generated!")
     if in_ax == True:
