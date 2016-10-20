@@ -24,8 +24,10 @@ import ML.gp.gp_multi_gpy as gpm
 from sklearn.preprocessing import normalize
 from sklearn.preprocessing import scale
 from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import LinearRegression
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestRegressor
 from sklearn.svm import SVC
 from sklearn.cross_validation import train_test_split
 from sklearn import datasets
@@ -40,6 +42,7 @@ from ML.validation import cross_validate_dm
 from ML.knn import kNN
 from ML.random_forests import rf
 from ML.logistic_regression import lr
+from ML import pseudo_multioutput
 
 from ML import helpers
 from ML.gp.gp import GaussianProcess
