@@ -18,7 +18,10 @@ class GPyMultiOutput:
         """
         Fit the GPy-wrapper classifier 
         """
-        K = GPy.kern.Matern32(X.shape[1])
+        var = np.random.rand()
+        l_scales = np.random.rand(X.shape[1])
+        print(var, l_scales)
+        K = GPy.kern.RBF(input_dim=X.shape[1], variance=var, lengthscale=l_scales, ARD=True)
         self.output_count = C.shape[1]
         self.models = []
         bar = ProgressBar(maxval=C.shape[1])
@@ -72,7 +75,6 @@ class GPyMultiOutput:
         nprocs = mp.cpu_count() - 1
         jobs = partition_indexes(x.shape[0], nprocs)
         args = [(x[start:end]) for start, end in jobs]
-        pdb.set_trace()
         pool = Pool(processes=nprocs)
         print("Distributing predictions across {} processes...".format(nprocs))
         predict_results = pool.starmap(self.predict, args)
