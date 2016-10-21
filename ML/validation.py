@@ -6,14 +6,18 @@ from sklearn.metrics import accuracy_score
 from ML.dir_mul.nicta.dirmultreg import dirmultreg_learn, dirmultreg_predict
 from ML.gp.gp_gpy import GPyC
 from ML.gp.gp_multi_gpy import GPyMultiOutput
+from ML import pseudo_multioutput
 import pdb
+
+def algo_module_to_str(algo):
+    return str(algo()).split('(')[0]
 
 def cross_validate_algo(features, labels, folds, algo, verbose=False):
     accuracies = []
     f1s = []
     kf = cross_validation.KFold(n=len(features), n_folds=folds, shuffle=True, random_state=None)
     count = 1
-    algo_str = str(algo()).split('(')[0]
+    algo_str = algo_module_to_str(algo)
     for train_index, test_index in kf:
         # print("Calculating part {} of {}".format(count, folds))
         count += 1
@@ -69,6 +73,18 @@ def cross_validate_dm_argmax(features, labels, algo, folds=10):
 
     print("Algo: {}, f1 avg: {}, acc avg: {}".format(str(algo), np.average(f1s), np.average(accuracies)))
     return str(algo), np.average(f1s), np.average(accuracies)
+
+def cross_validate_algo_multioutput(features, labels, algo, folds=10):
+    kf = cross_validation.KFold(n=len(features), n_folds=folds, shuffle=True, random_state=None)
+    errs = []
+    for train_idx, test_idx in kf:
+        X_train, X_test = features[train_idx], features[test_idx]
+        y_train, y_test = labels[train_idx], labels[test_idx]
+
+        y_ = pseudo_multioutput.predict(X_train, X_test, y_train, algo)
+        errs.append(np.average(np.abs(y_test - y_)))
+
+    return '{} & {} \\\\\n'.format(algo_module_to_str(algo), np.average(errs))
 
 def cross_validate_dm(features, labels, folds=10):
     kf = cross_validation.KFold(n=len(features), n_folds=folds, shuffle=True, random_state=None)

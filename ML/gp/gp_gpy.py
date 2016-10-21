@@ -15,7 +15,9 @@ class GPyC:
         self.models = []
         for c in uniq_C:
             labels = np.array([1 if c == label else 0 for label in C])[:,np.newaxis]
+            print('Optimising for label {}...'.format(c))
             m = GPy.models.GPRegression(X, labels, kernel=K.copy())
+            m.optimize()
             self.models.append(m)
         self.models = np.array(self.models)
         return self
