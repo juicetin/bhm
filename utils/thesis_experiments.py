@@ -1,7 +1,7 @@
 import numpy as np
 import pdb
 from utils import visualisation as vis
-# from ML.dir_mul.nicta.dirmultreg import dirmultreg_learn, dirmultreg_predict
+from utils import load_data 
 from ML.dir_mul import dm_mcmc
 from ML.gp.gp_gpy import GPyC
 from ML.gp import gp_multi_gpy as gpym
@@ -25,6 +25,7 @@ from utils import visualisation as vis
 from utils import data_transform
 from ML.dir_mul.nicta.dirmultreg import dirmultreg_learn, dirmultreg_predict
 from ML import pseudo_multioutput
+from utils import downsample
 
 from sklearn.preprocessing import normalize
 from sklearn.preprocessing import scale
@@ -297,6 +298,14 @@ def plot_map_with_variance_threshold(locations, predictions, variances, var_thre
     vis.plot_multi_maps(locations[idxs], predictions[idxs], offset=0, 
             filename='{}l-preds-{}var_limit'.format(predictions.shape[1], var_threshold))
 
+def dm_maps_from_chains(*, chains, coords, features):
+    if chains.shape[1] == 4:
+        plot_map_func = vis.plot_multi_maps
+    for i, chain in enumerate(chains[100000::10]):
+        print('creating {}-th map'.format(i))
+        preds = dirmultreg_predict(features, chain)[0]
+        plot_map_func(coords, preds, filename='dm{}_images/dm_heatmap_{}'.format(preds.shape[1], i), offset=0)
+
 def calc_all_det_preds(features, l4, l24, query):
     algos = [LogisticRegression, SVC, KNeighborsClassifier, RandomForestClassifier]
     preds = []
@@ -372,3 +381,9 @@ def calc_gp_multi_preds(features, l4, l24, query):
     gp_preds = gp.predict(query)
     np.save('data/gp24_mp', gp_preds)
     del(gp)
+
+def downsample_queries(qp_locs, queries):
+    qp_red_coords, qp_red_features, _, qp_red_idxs = downsample.downsample_spatial_data(qp_locs, queries, np.ones(queries.shape[0]), 'fixed-grid')
+    np.save('data/qp_red_coords'   ,qp_red_coords)
+    np.save('data/qp_red_features' ,qp_red_features)
+    np.save('data/qp_red_idxs'     ,qp_red_idxs)
