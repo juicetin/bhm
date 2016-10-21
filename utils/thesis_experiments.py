@@ -380,4 +380,3 @@ def calc_gp_multi_preds(features, l4, l24, query):
     gp_preds = gp.predict(query)
     np.save('data/gp24_mp', gp_preds)
     del(gp)
->>>>>>> 8524bf1be86572ca409d38e8c237433875983432
