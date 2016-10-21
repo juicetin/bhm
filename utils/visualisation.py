@@ -247,7 +247,7 @@ def plot_classes(X, Y, Y_pred):
 
         plt.show()
 
-def show_map(locations, labels, x_bins=None, y_bins=None, display=False, filename='map', vmin=None, vmax=None, ax=None):
+def show_map(locations, labels, x_bins=None, y_bins=None, display=False, filename='map', vmin=None, vmax=None, ax=None, hide_y=False):
     """
     Given the x, y coord locations and corresponding labels, plot this on imshow (null points
     will be shown as blank in the background).
@@ -310,6 +310,7 @@ def show_map(locations, labels, x_bins=None, y_bins=None, display=False, filenam
     axis_fontsize = 10
     if in_ax == True:
         ax.tick_params(axis='both', which='both', labelsize=8)
+        ax.yaxis.tick_right()
         # print('Setting axis labels for subfig...')
         # cur_fig.set_xlabel(xlabel, fontsize=axis_fontsize)
         # cur_fig.set_ylabel(ylabel, fontsize=axis_fontsize)
@@ -317,6 +318,9 @@ def show_map(locations, labels, x_bins=None, y_bins=None, display=False, filenam
         print('Setting axis labels...')
         cur_fig.xlabel(xlabel, fontsize=axis_fontsize)
         cur_fig.ylabel(ylabel, fontsize=axis_fontsize)
+
+    if hide_y == True:
+        ax.get_yaxis().set_visible(False)
 
     print("Image generated!")
     if in_ax == True:
@@ -609,7 +613,8 @@ def plot_multi_maps(q_locations, q_preds, filename='dm_simplelabel_heatmap', acr
     # plt.ylabel(ylabel)
 
     for i, ax in enumerate(axs):
-        show_map(q_locations, q_preds[:,i], ax=ax)
+        hide_y_labels = True if i%2 == 0 else False
+        show_map(q_locations, q_preds[:,i], ax=ax, hide_y = hide_y_labels)
         if offset != None:
             ax.set_title('label {}'.format(offset+i))
         elif title_list != None:
@@ -643,7 +648,7 @@ def plot_dm_per_label_maps_multi(q_locations, q_preds, filename='dm_alllabels_he
 
 def standalone_multioutput_colorbar(filename='dm_standalone_colorbar.pdf', title='Dirichlet Multinomial Regression Colour Bar'):
     """
-    Standalone colorbar for DM regressor
+    Standalone colorbar for multi-output distributions (scale from 0 to 1)
     """
     fig = plt.figure(figsize=(8, 1))
     # fig.subplots_adjust(left=0, right=0.2, bottom=0, top=0.2)
@@ -655,5 +660,20 @@ def standalone_multioutput_colorbar(filename='dm_standalone_colorbar.pdf', title
     plt.savefig(filename)
     clear_plt()
 
-def standalone_label_colorbar(labels=24, filename='label_standalone_colorbar.pdf'):
-    pass
+def standalone_label_colorbar(label_count=24, filename='label_standalone_colorbar.pdf', title='Label Colourbar'):
+    """
+    Standalone colorbar for discrete labels
+    """
+    fig = plt.figure(figsize=(8, 1))
+    ax = fig.add_axes([0.05, 0.50, 0.9, 0.15])
+
+    cmap = cm.jet
+    cmaplist = [cmap(i) for i in range(cmap.N)]
+    cmap = cmap.from_list('custom cmap', cmaplist, cmap.N)
+    bounds = np.linspace(1, label_count, label_count)
+    norm = mpl.colors.BoundaryNorm(bounds, cmap.N)
+    cb1 = mpl.colorbar.ColorbarBase(ax, cmap=cmap, norm=norm, spacing='Proportional', format='%li', orientation='horizontal')
+    ax.set_title(title)
+    plt.savefig(filename)
+
+    clear_plt()

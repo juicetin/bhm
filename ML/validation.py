@@ -84,7 +84,14 @@ def cross_validate_algo_multioutput(features, labels, algo, folds=10):
         y_ = pseudo_multioutput.predict(X_train, X_test, y_train, algo)
         errs.append(np.average(np.abs(y_test - y_)))
 
-    return '{} & {} \\\\\n'.format(algo_module_to_str(algo), np.average(errs))
+    return '{} & {} & {} & {} & {} & {}\\\\\n'.format(
+            algo_module_to_str(algo), 
+            np.round(np.average(errs), 4),
+            labels.shape[1],
+            np.round(np.average(y_.sum(axis=1)), 4),
+            np.round(np.average(y_.sum(axis=1).min()), 4),
+            np.round(np.average(y_.sum(axis=1).max()), 4)
+            )
 
 def cross_validate_dm(features, labels, folds=10):
     kf = cross_validation.KFold(n=len(features), n_folds=folds, shuffle=True, random_state=None)
