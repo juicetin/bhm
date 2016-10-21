@@ -10,6 +10,11 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import SVC
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.linear_model import LinearRegression
+from sklearn.neighbors import KNeighborsRegressor
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.svm import SVR
 
 import multiprocessing as mp
 from multiprocessing import Pool
@@ -135,15 +140,38 @@ def dm_vs_gp_matching(dm_preds, dm_vars, gp_preds, gp_vars, even_split_idxs):
     dm_vars[even_split_idxs]
     gp_vars[even_split_idxs]
 
+def algo_module_to_str(algo):
+    return str(algo).split('.')[-1][:-2]
 
 def det_scores(features, labels_sets):
     algos = [LogisticRegression, SVC, KNeighborsClassifier, RandomForestClassifier]
     results = ""
     for label_set in labels_sets:
         for algo in algos:
-            print('Now calculating {}'.format( str(algo).split('.')[-1][:-2] ))
+            print('Now calculating {}'.format(algo_module_to_str(algo)))
             results += validation.cross_validate_algo(features, label_set, 10, algo)
     return results
+
+def det_multi_scores(features, label_sets):
+    algos = [LinearRegression, SVR, KNeighborsRegressor, RandomForestRegressor]
+    results = ""
+    for label_set in label_sets:
+        for algo in algos:
+            print('Now calculating {} for {}-labels'.format(algo_module_to_str(algo), label_set.shape[1]))
+            results += validation.cross_validate_algo_multioutput(features, label_set, algo, folds=10)
+    return results
+
+def dm_scores_all_sets(features, label_sets):
+    feature_sets = [
+        features,
+        features[:,2:],
+        data_transform.features_squared_only(features),
+        data_transform.features_squared_only(features[:,2:]),
+        PolynomialFeatures().fit_transform(features),
+        PolynomialFeatures().fit_transform(features[:,2:])
+    ]
+
+    return dm_scores(feature_sets, label_sets)
 
 def dm_scores(feature_sets, label_sets):
     """
