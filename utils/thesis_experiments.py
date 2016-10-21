@@ -1,6 +1,7 @@
 import numpy as np
 import pdb
 from utils import visualisation as vis
+from utils import load_data 
 # from ML.dir_mul.nicta.dirmultreg import dirmultreg_learn, dirmultreg_predict
 from ML.dir_mul import dm_mcmc
 from ML.gp.gp_gpy import GPyC
@@ -13,6 +14,7 @@ from sklearn.svm import SVC
 
 import multiprocessing as mp
 from multiprocessing import Pool
+from pymc.diagnostics import gelman_rubin
 import itertools
 
 from utils import visualisation as vis
@@ -190,7 +192,7 @@ def multi_dm_mcmc_chains(features, labels, iters=2000000):
     print("Distributing MCMC sampling across {} processes...".format(nprocs))
     parallel_mcmc_chains_models = pool.starmap(dm_mcmc.dirmultreg_learn, args)
 
-    return np.array(parallel_mcmc_chains_models)
+    # return np.array(parallel_mcmc_chains_models)
 
 def multi_dm_mcmc_chains_continue(features, labels, iters=100000):
     nprocs = mp.cpu_count() - 1
@@ -200,6 +202,18 @@ def multi_dm_mcmc_chains_continue(features, labels, iters=100000):
     print("Distributing MCMC sampling across {} processes...".format(nprocs))
     parallel_mcmc_chains_models = pool.starmap(dm_mcmc.continue_mcmc, args)
     # return np.array(parallel_mcmc_chains_models)
+    return pool
+
+def close_pool(pool):
+    pool.close()
+    pool.terminate()
+    pool.join()
+
+def multi_dm_mcmc_chains_continue_by_smalliters_inf(features, labels, iters=30000):
+    while True:
+        pool = multi_dm_mcmc_chains_continue(features, labels, iters=iters)
+        close_pool(pool)
+        print('pool closed! next iteration of {} iters...'.format(iters))
 
 def save_dm_mcmc(*, l):
     chain_sizes = {4:int(9e6), 24:int(9.5e5)}
@@ -255,3 +269,9 @@ def test_dm_data(features, labels):
     p = dirmultreg_predict(f, W)
     avg_err = np.average(np.abs(p[0] - labels))
     print('scale(normalize(), axis=1): {}'.format(avg_err))
+
+def save_then_check_cur_rhat_score(*, l):
+    chains = load_data.load_mmap_mcmc(l=l)
+    rhat = gelman_rubin(chains)
+    print(np.array(rhat))
+    print(np.average(rhat))
