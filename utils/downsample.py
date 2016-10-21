@@ -55,9 +55,9 @@ def fixed_grid_blocksize(coords, reduction_factor):
 
     # Build coordinates in low-res space
     # TODO x_step and y_step as long floats too troublesome - round up to nearest integer
-    x_step = 23 # math.ceil((x_max-x_min)/x_block_cnt)
+    x_step = 14 # math.ceil((x_max-x_min)/x_block_cnt)
     reduced_x_coords = np.arange(x_min, x_max+x_step, x_step)
-    y_step = 23 # math.ceil((y_max-y_min)/y_block_cnt)
+    y_step = 14 # math.ceil((y_max-y_min)/y_block_cnt)
     reduced_y_coords = np.arange(y_min, y_max+y_step, y_step)
 
     return x_min, y_min, x_max, y_max, x_step, y_step, reduced_x_coords, reduced_y_coords

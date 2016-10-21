@@ -43,6 +43,14 @@ def load_reduced_data():
 
     return red_features, red_mlabels4, red_mlabels24, red_coords, red_scoords, red_sfeatures, red_slabels4, red_slabels24
 
+def load_reduced_queries():
+    # coords, features, idxs
+    return (
+        np.load('data/red_qp_coords.npy'),
+        np.load('data/red_qp_features.npy'),
+        np.load('data/red_qp_idxs.npy')
+    )
+
 def load_test_data():
     querypoints_lowres = np.load('data/queryPoints_lowres_v2_.npz')
     qp_locations = querypoints_lowres['locations']
@@ -240,4 +248,26 @@ def map_red_coords_to_idx(red_coords, coords):
 
     return np.array([np.where(np.all(coords == red_coord, axis=1))[0][0] for red_coord in red_coords])
 
+def load_det_preds():
+    return (
+        np.load('data/lr4p.npy'),
+        np.load('data/lr24p.npy'),
+        np.load('data/svm4p.npy'),
+        np.load('data/svm24p.npy'),
+        np.load('data/knn4p.npy'),
+        np.load('data/knn24p.npy'),
+        np.load('data/rf4p.npy'),
+        np.load('data/rf24p.npy')
+    )
 
+def load_det_multi_preds():
+    return (
+        np.load('data/lr4mp.npy'),
+        np.load('data/lr24mp.npy'),
+        np.load('data/svm4mp.npy'),
+        np.load('data/svm24mp.npy'),
+        np.load('data/knn4mp.npy'),
+        np.load('data/knn24mp.npy'),
+        np.load('data/rf4mp.npy'),
+        np.load('data/rf24mp.npy')
+    )

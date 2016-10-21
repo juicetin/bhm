@@ -1,10 +1,10 @@
 import numpy as np
 import pdb
 from utils import visualisation as vis
-from utils import load_data 
 # from ML.dir_mul.nicta.dirmultreg import dirmultreg_learn, dirmultreg_predict
 from ML.dir_mul import dm_mcmc
 from ML.gp.gp_gpy import GPyC
+from ML.gp import gp_multi_gpy as gpym
 
 from ML import validation
 from sklearn.linear_model import LogisticRegression
@@ -19,12 +19,12 @@ from sklearn.svm import SVR
 
 import multiprocessing as mp
 from multiprocessing import Pool
-from pymc.diagnostics import gelman_rubin
 import itertools
 
 from utils import visualisation as vis
 from utils import data_transform
 from ML.dir_mul.nicta.dirmultreg import dirmultreg_learn, dirmultreg_predict
+from ML import pseudo_multioutput
 
 from sklearn.preprocessing import normalize
 from sklearn.preprocessing import scale
@@ -32,6 +32,9 @@ from sklearn.preprocessing import scale
 import progressbar
 import itertools
 import pymc
+
+def algo_module_to_str(algo):
+    return str(algo()).split('(')[0]
 
 # def search_even_split_areas(q_preds, q_vars):
 #     """
@@ -156,7 +159,7 @@ def det_scores(features, labels_sets):
 
 def det_multi_scores(features, label_sets):
     algos = [LinearRegression, SVR, KNeighborsRegressor, RandomForestRegressor]
-    results = ""
+    results = "Algorithm & Average Error & Labels Used & Average Row Sum* & Min \\\\\\hline"
     for label_set in label_sets:
         for algo in algos:
             print('Now calculating {} for {}-labels'.format(algo_module_to_str(algo), label_set.shape[1]))
@@ -195,16 +198,19 @@ def check_dm_err_var_rankings(dm_mc_errs, dm_mc_vars):
     for i, idx in enumerate(vars_argsort):
         print('{}-smallest variance corresponds to the {}-smallest error - index {}'.format(i, np.where(errs_argsort == idx)[0][0], idx))
 
-def det_maps(features, labels, query_features, qp_locations):
-    print('Making det predictions')
-    print('SVC predictions...')
-    svc_preds = SVC().fit(features, labels).predict(query_features)
-    print('Logistic Regression predictions...')
-    lr_preds = LogisticRegression().fit(features, labels).predict(query_features)
-    print('kNN predictions')
-    knn_preds = KNeighborsClassifier().fit(features, labels).predict(query_features)
-    print('Random Forest predictions...')
-    rf_preds = RandomForestClassifier().fit(features, labels).predict(query_features)
+def plot_det_maps(query_features, qp_locations, all_preds=None, features=None, labels=None):
+    if all_preds == None:
+        print('Making det predictions')
+        print('SVC predictions...')
+        svc_preds = SVC().fit(features, labels).predict(query_features)
+        print('Logistic Regression predictions...')
+        lr_preds = LogisticRegression().fit(features, labels).predict(query_features)
+        print('kNN predictions')
+        knn_preds = KNeighborsClassifier().fit(features, labels).predict(query_features)
+        print('Random Forest predictions...')
+        rf_preds = RandomForestClassifier().fit(features, labels).predict(query_features)
+    else:
+        lr_preds, svc_preds, knn_preds, rf_preds = all_preds
     
     det4_preds = np.column_stack((svc_preds, lr_preds, knn_preds, rf_preds))
 
@@ -220,7 +226,7 @@ def multi_dm_mcmc_chains(features, labels, iters=2000000):
     print("Distributing MCMC sampling across {} processes...".format(nprocs))
     parallel_mcmc_chains_models = pool.starmap(dm_mcmc.dirmultreg_learn, args)
 
-    # return np.array(parallel_mcmc_chains_models)
+    return np.array(parallel_mcmc_chains_models)
 
 def multi_dm_mcmc_chains_continue(features, labels, iters=100000):
     nprocs = mp.cpu_count() - 1
@@ -230,18 +236,6 @@ def multi_dm_mcmc_chains_continue(features, labels, iters=100000):
     print("Distributing MCMC sampling across {} processes...".format(nprocs))
     parallel_mcmc_chains_models = pool.starmap(dm_mcmc.continue_mcmc, args)
     # return np.array(parallel_mcmc_chains_models)
-    return pool
-
-def close_pool(pool):
-    pool.close()
-    pool.terminate()
-    pool.join()
-
-def multi_dm_mcmc_chains_continue_by_smalliters_inf(features, labels, iters=30000):
-    while True:
-        pool = multi_dm_mcmc_chains_continue(features, labels, iters=iters)
-        close_pool(pool)
-        print('pool closed! next iteration of {} iters...'.format(iters))
 
 def save_dm_mcmc(*, l):
     chain_sizes = {4:int(9e6), 24:int(9.5e5)}
@@ -298,13 +292,83 @@ def test_dm_data(features, labels):
     avg_err = np.average(np.abs(p[0] - labels))
     print('scale(normalize(), axis=1): {}'.format(avg_err))
 
-def save_then_check_cur_rhat_score(*, l):
-    chains = load_data.load_mmap_mcmc(l=l)
-    rhat = gelman_rubin(chains)
-    print(np.array(rhat))
-    print(np.average(rhat))
-
 def plot_map_with_variance_threshold(locations, predictions, variances, var_threshold):
     idxs = np.where(variances < var_threshold)[0]
     vis.plot_multi_maps(locations[idxs], predictions[idxs], offset=0, 
             filename='{}l-preds-{}var_limit'.format(predictions.shape[1], var_threshold))
+
+def calc_all_det_preds(features, l4, l24, query):
+    algos = [LogisticRegression, SVC, KNeighborsClassifier, RandomForestClassifier]
+    preds = []
+    for algo in algos:
+        preds4 = algo().fit(features, l4).predict(query)
+        preds24 = algo().fit(features, l24).predict(query)
+        preds.append(preds4)
+        preds.append(preds24)
+
+    return preds
+
+def save_all_det_preds(preds):
+    lr4p, lr24p, svm4p, svm24p, knn4p, knn24p, rf4p, rf24p = preds
+    np.save('data/lr4p', lr4p)
+    np.save('data/lr24p', lr24p)
+    np.save('data/svm4p', svm4p)
+    np.save('data/svm24p', svm24p)
+    np.save('data/knn4p', knn4p)
+    np.save('data/knn24p', knn24p)
+    np.save('data/rf4p', rf4p)
+    np.save('data/rf24p', rf24p)
+
+def calc_all_det_multi_preds(features, l4, l24, query):
+    algos = [LinearRegression, SVR, KNeighborsRegressor, RandomForestRegressor]
+    preds = []
+    for algo in algos:
+        print('Currently doing multi-output preds for {} with 4 labels...'.format(algo_module_to_str(algo)))
+        preds4 = pseudo_multioutput.predict(features, query, l4, algo)
+        print('Now 24...')
+        preds24 = pseudo_multioutput.predict(features, query, l24, algo)
+        preds.append(preds4)
+        preds.append(preds24)
+
+    return preds
+
+def save_all_det_multi_preds(multi_preds):
+    lr4mp, lr24mp, svm4mp, svm24mp, knn4mp, knn24mp, rf4mp, rf24mp = multi_preds
+    np.save('data/lr4mp', lr4mp)
+    np.save('data/lr24mp', lr24mp)
+    np.save('data/svm4mp', svm4mp)
+    np.save('data/svm24mp', svm24mp)
+    np.save('data/knn4mp', knn4mp)
+    np.save('data/knn24mp', knn24mp)
+    np.save('data/rf4mp', rf4mp)
+    np.save('data/rf24mp', rf24mp)
+
+def calc_gp_preds(features, l4, l24, query):
+    print('4-labels, single-label')
+    gp = GPyC()
+    gp.fit(features, l4)
+    gp_preds = gp.predict(query)
+    np.save('data/gp4_p', gp_preds)
+    del(gp)
+
+    print('24-labels, single-label')
+    gp = GPyC()
+    gp.fit(features, l24)
+    gp_preds = gp.predict(query)
+    np.save('data/gp24_p', gp_preds)
+    del(gp)
+
+def calc_gp_multi_preds(features, l4, l24, query):
+    print('4-labels, multi-label')
+    gp = gpym.GPyMultiOutput()
+    gp.fit(features, l4)
+    gp_preds = gp.predict(query)
+    np.save('data/gp4_mp', gp_preds)
+    del(gp)
+
+    print('24-labels, multi-label')
+    gp = gpym.GPyMultiOutput()
+    gp.fit(features, l24)
+    gp_preds = gp.predict(query)
+    np.save('data/gp24_mp', gp_preds)
+    del(gp)
