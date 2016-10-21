@@ -226,3 +226,18 @@ def load_mmap_mcmc(*, l):
         # del(db)
 
     return res
+
+def map_red_coords_to_idx(red_coords, coords):
+    """
+    Takes a list of downsampled coordinates, the original coordinate list, and build the list
+    of indices corresponding to which of the original coordinates were used to create the
+    reduced coordinate list
+    """
+    # orig_coord_dict = {}
+    # for i, coord in enumerate(coords):
+    #     orig_coord_dict[str(coord)] = i
+    # return np.array([orig_coord_dict[str(coord)] for coord in red_coords])
+
+    return np.array([np.where(np.all(coords == red_coord, axis=1))[0][0] for red_coord in red_coords])
+
+

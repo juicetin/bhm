@@ -275,3 +275,8 @@ def save_then_check_cur_rhat_score(*, l):
     rhat = gelman_rubin(chains)
     print(np.array(rhat))
     print(np.average(rhat))
+
+def plot_map_with_variance_threshold(locations, predictions, variances, var_threshold):
+    idxs = np.where(variances < var_threshold)[0]
+    vis.plot_multi_maps(locations[idxs], predictions[idxs], offset=0, 
+            filename='{}l-preds-{}var_limit'.format(predictions.shape[1], var_threshold))
