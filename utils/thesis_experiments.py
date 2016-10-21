@@ -25,6 +25,7 @@ from utils import visualisation as vis
 from utils import data_transform
 from ML.dir_mul.nicta.dirmultreg import dirmultreg_learn, dirmultreg_predict
 from ML import pseudo_multioutput
+from utils import downsample
 
 from sklearn.preprocessing import normalize
 from sklearn.preprocessing import scale
@@ -380,3 +381,9 @@ def calc_gp_multi_preds(features, l4, l24, query):
     gp_preds = gp.predict(query)
     np.save('data/gp24_mp', gp_preds)
     del(gp)
+
+def downsample_queries(qp_locs, queries):
+    qp_red_coords, qp_red_features, _, qp_red_idxs = downsample.downsample_spatial_data(qp_locs, queries, np.ones(queries.shape[0]), 'fixed-grid')
+    np.save('data/qp_red_coords'   ,qp_red_coords)
+    np.save('data/qp_red_features' ,qp_red_features)
+    np.save('data/qp_red_idxs'     ,qp_red_idxs)
