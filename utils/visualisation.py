@@ -270,13 +270,13 @@ def show_map(locations, labels, x_bins=None, y_bins=None, display=False, filenam
     y_bin_coord_map = dict( zip( y_bins, range(len(y_bins)) ) )
 
     print("Building coordinate matrix with NaNs except where actual measurements exist...")
-    X, Y = np.meshgrid(x_bins, y_bins)
-    Z = np.zeros((X.shape[0], X.shape[1]))
+    # X, Y = np.meshgrid(x_bins, y_bins)
+    Z = np.zeros((y_bins.shape[0], x_bins.shape[0]))
 
     print("Assigning labels...")
     Z[:] = None
     x_locations = [x_bin_coord_map[x] for x, y in locations]
-    y_locations = [y_bin_coord_map[y] for y, y in locations]
+    y_locations = [y_bin_coord_map[y] for x, y in locations]
     Z[(y_locations, x_locations)] = labels
 
     cur_fig = plt if ax == None else ax
