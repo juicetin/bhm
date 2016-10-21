@@ -641,7 +641,7 @@ def plot_dm_per_label_maps_multi(q_locations, q_preds, filename='dm_alllabels_he
     plot_multi_maps(q_locations, q_preds[:,18:], filename=filename+'_19-24', across=2, down=3, title_list=title_set4)
     clear_plt()
 
-def standalone_dm_colorbar(filename='dm_standalone_colorbar.pdf'):
+def standalone_multioutput_colorbar(filename='dm_standalone_colorbar.pdf', title='Dirichlet Multinomial Regression Colour Bar'):
     """
     Standalone colorbar for DM regressor
     """
@@ -651,7 +651,7 @@ def standalone_dm_colorbar(filename='dm_standalone_colorbar.pdf'):
     cmap = cm.jet
     norm = mpl.colors.Normalize(vmin=0, vmax=1)
     cb1 = mpl.colorbar.ColorbarBase(ax, cmap=cmap, norm=norm, orientation='horizontal')
-    ax.set_title('Dirichlet Multinomial Regression Colour Bar')
+    ax.set_title(title)
     plt.savefig(filename)
     clear_plt()
 
