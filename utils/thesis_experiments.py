@@ -365,23 +365,18 @@ def calc_gp_preds(features, l4, l24, query, ret=False, parallel=False, save=True
     print('4-labels, single-label')
     gp = GPyC()
     gp.fit(features, l4, parallel=True)
-    gp_preds = np.array(gp.predict(query, parallel=parallel))
-    if parallel==True:
-        gp_preds = np.array([np.concatenate(gp_preds[::2]), np.concatenate(gp_preds[1::2])])
-    # gp_preds = np.concatenate(gp_preds, axis=2)
-    if save == True:
-        np.save('data/gp4_p', gp_preds)
+    gp_preds = gp.predict(query, parallel=parallel)
     del(gp)
 
-    if ret==True:
-        return gp_preds
+    print('24-labels, single-label')
+    gp = GPyC()
+    gp.fit(features, l24, parallel=True)
+    gp_preds = gp.predict(query, parallel=parallel)
 
-    # print('24-labels, single-label')
-    # gp = GPyC()
-    # gp.fit(features, l24)
-    # gp_preds = gp.predict(query)
-    # np.save('data/gp24_p', gp_preds)
-    # del(gp)
+    if save == True:
+        np.save('data/gp4_p', gp_preds)
+        np.save('data/gp24_p', gp_preds)
+    del(gp)
 
 def calc_gp_multi_preds(features, l4, l24, query, parallel=False, ret=False, gp_true=None):
     print('4-labels, multi-label')

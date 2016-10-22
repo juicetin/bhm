@@ -59,11 +59,11 @@ class GPyC:
                     all_vars[start:end] = cur_preds[1]
             else:
                 gp_preds, gp_vars = m.predict(x)
-                all_preds[:,i] = gp_preds.flatten()
-                all_vars[:,i]  = gp_vars.flatten()
+                all_preds[:,i] = gp_preds.flatten().astype(np.float64)
+                all_vars[:,i]  = gp_vars.flatten().astype(np.float64)
 
         # The transpose here is to match the output of the Dirichlet Multinomial stuff
-        return all_preds, all_vars
+        return np.array((all_preds, all_vars))
 
     def predict_parallel(self, x):
         """
@@ -79,4 +79,5 @@ class GPyC:
         predict_results = pool.starmap(self.predict, args)
 
         # Concat along class list axis
-        return np.concatenate(predict_results, axis=0)
+        # return np.concatenate(predict_results, axis=0)
+        return np.hstack(predict_results)
