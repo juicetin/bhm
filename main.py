@@ -127,7 +127,7 @@ if __name__ == "__main__":
     qp_red_coords = np.load('data/qp_red_coords.npy')
     qp_red_features = np.load('data/qp_red_features.npy')
     qp_red_idxs = np.load('data/qp_red_idxs.npy')
-    q_sq2r = data_transform.squared_features_only(qp_red_features)
+    q_sq2r = data_transform.features_squared_only(qp_red_features)
     
     red_features, red_mlabels4, red_mlabels24, red_coords, red_scoords, \
         red_sfeatures, red_slabels4, red_slabels24 = data.load_reduced_data()
