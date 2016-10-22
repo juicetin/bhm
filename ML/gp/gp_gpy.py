@@ -23,7 +23,7 @@ class GPyC:
         uniq_C = np.unique(C)
         self.models = []
         if parallel==True:
-            args = [ c, X, C, K for c in uniq_C]
+            args = [ (c, X, C, K) for c in uniq_C]
             pool = Pool(processes=uniq_C.shape[0])
             print("Distributing GP per-class model fitting across {} processes...".format(uniq_C.shape[0]))
             self.models = pool.starmap(self.fit_label_model, args)
