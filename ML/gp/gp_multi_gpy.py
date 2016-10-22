@@ -15,14 +15,14 @@ class GPyMultiOutput:
     def __init__(self):
         pass
 
-    def fit_axis(self, i, X, C, K):
+    def fit_axis(self, i, X, C, K): 
         m = GPy.models.GPRegression(X, C[:,i][:,np.newaxis], kernel=K.copy())
         m.optimize()
         print('Finished optimising label {}'.format(i))
         return m
 
     def fit(self, X, C, parallel=False):
-        """
+        """ 
         Fit the GPy-wrapper classifier 
         """
         var = np.random.rand()
