@@ -29,6 +29,7 @@ class GPyMultiOutput:
         for i in range(C.shape[1]):
             bar.update(i)
             m = GPy.models.GPRegression(X, C[:,i][:,np.newaxis], kernel=K.copy())
+            m.optimize()
             self.models.append(m)
         bar.finish()
         self.models = np.array(self.models)

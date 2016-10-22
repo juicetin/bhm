@@ -5,7 +5,7 @@ import matplotlib as mpl
 import psutil
 if "DISPLAY" not in os.environ: # or os.environ['DISPLAY'] == ':0':
     mpl.use('SVG')
-mpl.use('SVG')
+mpl.use('Agg')
 
 from os.path import join, dirname
 from dotenv import load_dotenv, find_dotenv
@@ -26,6 +26,7 @@ from sklearn.preprocessing import scale
 from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import LinearRegression
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.neighbors import KNeighborsRegressor
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.svm import SVC
