@@ -361,15 +361,16 @@ def save_all_det_multi_preds(multi_preds):
     np.save('data/rf4mp', rf4mp)
     np.save('data/rf24mp', rf24mp)
 
-def calc_gp_preds(features, l4, l24, query, ret=False, parallel=False):
+def calc_gp_preds(features, l4, l24, query, ret=False, parallel=False, save=True):
     print('4-labels, single-label')
     gp = GPyC()
-    gp.fit(features, l4)
+    gp.fit(features, l4, parallel=True)
     gp_preds = np.array(gp.predict(query, parallel=parallel))
     if parallel==True:
         gp_preds = np.array([np.concatenate(gp_preds[::2]), np.concatenate(gp_preds[1::2])])
     # gp_preds = np.concatenate(gp_preds, axis=2)
-    np.save('data/gp4_p', gp_preds)
+    if save == True:
+        np.save('data/gp4_p', gp_preds)
     del(gp)
 
     if ret==True:
