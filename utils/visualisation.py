@@ -622,7 +622,7 @@ def plot_multi_maps(q_locations, q_preds, filename='dm_simplelabel_heatmap', acr
         else:
             raise ValueError('plot_multi_maps function needs either an offset or title list!')
 
-    plt.tight_layout()
+    fig.tight_layout()
     plt.savefig(filename+'.pdf')
     clear_plt()
 
