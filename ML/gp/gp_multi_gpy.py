@@ -70,20 +70,16 @@ class GPyMultiOutput:
                     next_idx = start + 5000
                     end = next_idx if next_idx <= x.shape[0] else x.shape[0]
                     cur_preds = self.predict(x[start:end])
-                    # all_preds[:,start:end] = cur_preds[0]
-                    # all_vars[:,start:end] = cur_preds[1]
                     all_preds[start:end] = cur_preds[0]
                     all_vars[start:end] = cur_preds[1]
                 bar.finish()
             else:
                 gp_preds, gp_vars = m.predict(x)
-                # all_preds[i] = gp_preds.flatten()
-                # all_vars[i]  = gp_vars.flatten()
-                all_preds[:,i] = gp_preds.flatten()
-                all_vars[:,i]  = gp_vars.flatten()
+                all_preds[:,i] = gp_preds.flatten().astype(np.float64)
+                all_vars[:,i]  = gp_vars.flatten().astype(np.float64)
 
         # The transpose here is to match the output of the Dirichlet Multinomial stuff
-        return all_preds, all_vars
+        return np.array((all_preds, all_vars))
 
     def predict_parallel(self, x):
         """
@@ -97,7 +93,5 @@ class GPyMultiOutput:
         pool = Pool(processes=nprocs)
         print("Distributing predictions across {} processes...".format(nprocs))
         predict_results = pool.starmap(self.predict, args)
+        return np.hstack(predict_results)
 
-        # Concat along class list axis
-        # return np.concatenate(predict_results, axis=0)
-        return predict_results
