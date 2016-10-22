@@ -29,13 +29,13 @@ def roc_auc_score_multi(y_actuals, y_preds):
 
     # Calculate AUROC for each each binary class case
     aurocs = np.zeros(y_preds.shape[0])
-    for cur_class, cur_ova_pred in enumerate(y_preds):
+    for cur_class in range(y_preds.shape[1]):
         # Compare class *i* with the rest
         cur_y_actual = np.copy(y_actuals)
         cur_y_actual[np.where(cur_y_actual != cur_class)] = -1
         cur_y_actual[np.where(cur_y_actual != -1)] = 1
         try:
-            cur_auroc = roc_auc_score(cur_y_actual, cur_ova_pred)
+            cur_auroc = roc_auc_score(cur_y_actual, y_preds[:,cur_class])
             print('success')
         except ValueError:
             print("AUC score derp")
