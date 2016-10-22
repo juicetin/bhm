@@ -121,8 +121,8 @@ if __name__ == "__main__":
     _, _, bath_locations, _ = data.load_training_data()
     # multi_locations, multi_features, multi_labels_lists = data.load_multi_label_data()
     # multi_labels = data_transform.multi_label_counts(multi_labels_lists, zero_indexed=False)
-    if config['summarise_labels'] == True:
-        multi_labels = data_transform.summarised_labels(multi_labels)
+    # if config['summarise_labels'] == True:
+    #     multi_labels = data_transform.summarised_labels(multi_labels)
     # multi_labels_norm = multi_labels/multi_labels.sum(axis=1)[:,np.newaxis]
 
     qp_red_coords = np.load('data/red_qp_coords.npy')

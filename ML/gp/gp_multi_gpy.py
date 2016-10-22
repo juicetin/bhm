@@ -5,6 +5,7 @@ from ML.helpers import partition_indexes
 import multiprocessing as mp
 from multiprocessing import Pool
 from progressbar import ProgressBar
+import pdb
 
 class GPyMultiOutput:
     """
@@ -43,7 +44,8 @@ class GPyMultiOutput:
         if parallel == True:
             return self.predict_parallel(x)
 
-        all_preds = np.empty((self.models.shape[0], x.shape[0]))
+        # all_preds = np.empty((self.models.shape[0], x.shape[0]))
+        all_preds = np.empty((x.shape[0], self.models.shape[0]))
         all_vars = np.empty(all_preds.shape)
         bar = ProgressBar(maxval=x.shape[0])
         bar.start()
@@ -56,13 +58,17 @@ class GPyMultiOutput:
                     next_idx = start + 5000
                     end = next_idx if next_idx <= x.shape[0] else x.shape[0]
                     cur_preds = self.predict(x[start:end])
-                    all_preds[:,start:end] = cur_preds[0]
-                    all_vars[:,start:end] = cur_preds[1]
+                    # all_preds[:,start:end] = cur_preds[0]
+                    # all_vars[:,start:end] = cur_preds[1]
+                    all_preds[start:end] = cur_preds[0]
+                    all_vars[start:end] = cur_preds[1]
                 bar.finish()
             else:
                 gp_preds, gp_vars = m.predict(x)
-                all_preds[i] = gp_preds.flatten()
-                all_vars[i]  = gp_vars.flatten()
+                # all_preds[i] = gp_preds.flatten()
+                # all_vars[i]  = gp_vars.flatten()
+                all_preds[:,i] = gp_preds.flatten()
+                all_vars[:,i]  = gp_vars.flatten()
 
         # The transpose here is to match the output of the Dirichlet Multinomial stuff
         return all_preds, all_vars
@@ -75,7 +81,7 @@ class GPyMultiOutput:
         # Python's GIL for proper parallelisation
         nprocs = mp.cpu_count() - 1
         jobs = partition_indexes(x.shape[0], nprocs)
-        args = [(x[start:end]) for start, end in jobs]
+        args = [ (x[start:end], False) for start, end in jobs]
         pool = Pool(processes=nprocs)
         print("Distributing predictions across {} processes...".format(nprocs))
         predict_results = pool.starmap(self.predict, args)

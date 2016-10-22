@@ -361,36 +361,49 @@ def save_all_det_multi_preds(multi_preds):
     np.save('data/rf4mp', rf4mp)
     np.save('data/rf24mp', rf24mp)
 
-def calc_gp_preds(features, l4, l24, query):
+def calc_gp_preds(features, l4, l24, query, ret=False, parallel=False):
     print('4-labels, single-label')
     gp = GPyC()
     gp.fit(features, l4)
-    gp_preds = gp.predict(query)
+    gp_preds = np.array(gp.predict(query, parallel=parallel))
+    if parallel==True:
+        gp_preds = np.array([np.concatenate(gp_preds[::2]), np.concatenate(gp_preds[1::2])])
+    # gp_preds = np.concatenate(gp_preds, axis=2)
     np.save('data/gp4_p', gp_preds)
     del(gp)
 
-    print('24-labels, single-label')
-    gp = GPyC()
-    gp.fit(features, l24)
-    gp_preds = gp.predict(query)
-    np.save('data/gp24_p', gp_preds)
-    del(gp)
+    if ret==True:
+        return gp_preds
 
-def calc_gp_multi_preds(features, l4, l24, query):
+    # print('24-labels, single-label')
+    # gp = GPyC()
+    # gp.fit(features, l24)
+    # gp_preds = gp.predict(query)
+    # np.save('data/gp24_p', gp_preds)
+    # del(gp)
+
+def calc_gp_multi_preds(features, l4, l24, query, parallel=False, ret=False, gp_true=None):
     print('4-labels, multi-label')
     gp = gpym.GPyMultiOutput()
     gp.fit(features, l4)
-    gp_preds = gp.predict(query)
+    gp_preds = np.array(gp.predict(query, parallel=parallel))
+    if parallel==True:
+        gp_preds = np.array([np.concatenate(gp_preds[::2]), np.concatenate(gp_preds[1::2])])
+        # gp_preds = np.concatenate(gp_preds, axis=2)
+        # gp_preds = np.array([np.concatenate(gp_preds[:3]), np.concatenate(gp_preds[3:])])
     np.save('data/gp4_mp', gp_preds)
     del(gp)
 
-    print('24-labels, multi-label')
-    gp = gpym.GPyMultiOutput()
-    gp.fit(features, l24)
-    gp_preds = gp.predict(query)
-    np.save('data/gp24_mp', gp_preds)
-    del(gp)
+    if ret==True:
+        return gp_preds
 
+#     print('24-labels, multi-label')
+#     gp = gpym.GPyMultiOutput()
+#     gp.fit(features, l24)
+#     gp_preds = gp.predict(query)
+#     np.save('data/gp24_mp', gp_preds)
+#     del(gp)
+# 
 def downsample_queries(qp_locs, queries):
     qp_red_coords, qp_red_features, _, qp_red_idxs = downsample.downsample_spatial_data(qp_locs, queries, np.ones(queries.shape[0]), 'fixed-grid')
     np.save('data/qp_red_coords'   ,qp_red_coords)
