@@ -30,7 +30,7 @@ class GPyC:
         if parallel == True:
             return self.predict_parallel(x)
 
-        all_preds = np.empty((self.models.shape[0], x.shape[0]))
+        all_preds = np.empty((x.shape[0], self.models.shape[0]))
         all_vars = np.empty(all_preds.shape)
         for i, m in enumerate(self.models):
             if x.shape[0] > 5000:
@@ -40,15 +40,15 @@ class GPyC:
                     next_idx = start + 5000
                     end = next_idx if next_idx <= x.shape[0] else x.shape[0]
                     cur_preds = self.predict(x[start:end])
-                    all_preds[:,start:end] = cur_preds[0]
-                    all_vars[:,start:end] = cur_preds[1]
+                    all_preds[start:end] = cur_preds[0]
+                    all_vars[start:end] = cur_preds[1]
             else:
                 gp_preds, gp_vars = m.predict(x)
-                all_preds[i] = gp_preds.flatten()
-                all_vars[i]  = gp_vars.flatten()
+                all_preds[:,i] = gp_preds.flatten()
+                all_vars[:,i]  = gp_vars.flatten()
 
         # The transpose here is to match the output of the Dirichlet Multinomial stuff
-        return all_preds.T, all_vars.T
+        return all_preds, all_vars
 
     def predict_parallel(self, x):
         """

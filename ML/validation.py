@@ -12,6 +12,16 @@ import pdb
 def algo_module_to_str(algo):
     return str(algo()).split('(')[0]
 
+def generate_cross_algo_print(*, algo_str, f1s, accs, label_cnt, auroc):
+    # return generate_cross_algo_print(algo_str, f1s, accuracies, uniq_labels)
+    f1_avg = np.around(np.average(f1s), decimals=5)
+    acc_avg = np.around(np.average(accs), decimals=5)
+    label_cnt = str(np.unique(labels).shape[0])
+    latex_row = '{} & {} & {} & {}'.format(algo_str, f1_avg, acc_avg, label_cnt + ' labels')
+    if (auroc != None):
+        latex_row = '& {}'.format(auroc)
+    latex_row += ' \\\\\n'
+
 def cross_validate_algo(features, labels, folds, algo, verbose=False):
     accuracies = []
     f1s = []
@@ -28,11 +38,14 @@ def cross_validate_algo(features, labels, folds, algo, verbose=False):
         # Execute classifier
         clf = algo()
         y_ = clf.fit(X_train, y_train).predict(X_test)
-        # y_ = lr.fit(features[train_index], labels[train_index]).predict(features[test_index])
 
         # Account for when dealing with GP (TODO any probablistic-type outputs)
+        auroc=None
         if type(clf) == GPyC:
             y_ = y_[0].argmax(axis=1)
+            for model in clf.models:
+                print(model)
+            auroc = roc_auc_score_multi(y_test, y_)
 
         # Get scores
         this_accuracy = accuracy_score(y_test, y_)
@@ -41,16 +54,12 @@ def cross_validate_algo(features, labels, folds, algo, verbose=False):
         f1s.append(np.average(this_f1))
 
         if verbose == True:
-            print("This round's f1: {}, acc: {}".format(this_accuracy, this_f1))
+            print("This round's acc: {}, f1: {}".format(this_accuracy, this_f1))
 
         del(clf)
 
-        # print("f1: {}, acc: {}".format(np.average(this_f1), this_accuracy))
-    # print("Algo: {}, f1 avg: {}, acc avg: {}".format(str(algo), np.average(f1s), np.average(accuracies)))
-    f1_avg = np.around(np.average(f1s), decimals=5)
-    acc_avg = np.around(np.average(accuracies), decimals=5)
-    algo_name = str(np.unique(labels).shape[0])
-    return '{} & {} & {} & {} \\\\\n'.format(algo_str, f1_avg, acc_avg, algo_name + ' labels')
+    # return '{} & {} & {} & {} \\\\\n'.format(algo_str=algo_str, f1s=f1s, accs=accuracies, label_cnt=uniq_labels)
+    return generate_cross_algo_print(algo_str=algo_str, f1s=f1s, accs=accuracies, label_cnt=uniq_labels, auroc=auroc)
 
 def cross_validate_dm_argmax(features, labels, algo, folds=10):
     accuracies = []
