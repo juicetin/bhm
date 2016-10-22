@@ -1,13 +1,13 @@
 import numpy as np
 from sklearn import cross_validation
-import csv
+from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import f1_score
 from sklearn.metrics import accuracy_score
 from ML.dir_mul.nicta.dirmultreg import dirmultreg_learn, dirmultreg_predict
 from ML.gp.gp_gpy import GPyC
 from ML.gp.gp_multi_gpy import GPyMultiOutput
 from ML import pseudo_multioutput
-import pdb
+from ML import helpers
 
 def algo_module_to_str(algo):
     return str(algo()).split('(')[0]
@@ -16,19 +16,21 @@ def generate_cross_algo_print(*, algo_str, f1s, accs, label_cnt, auroc):
     # return generate_cross_algo_print(algo_str, f1s, accuracies, uniq_labels)
     f1_avg = np.around(np.average(f1s), decimals=5)
     acc_avg = np.around(np.average(accs), decimals=5)
-    label_cnt = str(np.unique(labels).shape[0])
     latex_row = '{} & {} & {} & {}'.format(algo_str, f1_avg, acc_avg, label_cnt + ' labels')
     if (auroc != None):
-        latex_row = '& {}'.format(auroc)
+        latex_row += '& {}'.format(auroc)
     latex_row += ' \\\\\n'
+    return latex_row
 
 def cross_validate_algo(features, labels, folds, algo, verbose=False):
     accuracies = []
     f1s = []
-    kf = cross_validation.KFold(n=len(features), n_folds=folds, shuffle=True, random_state=None)
+    # kf = cross_validation.KFold(n=len(features), n_folds=folds, shuffle=True, random_state=None)
+    kf = StratifiedKFold(n_splits=folds) # Prevent rounds with none of any given label - breaks AUC
     count = 1
     algo_str = algo_module_to_str(algo)
-    for train_index, test_index in kf:
+    # for train_index, test_index in kf:
+    for train_index, test_index in kf.split(features, labels):
         # print("Calculating part {} of {}".format(count, folds))
         count += 1
         # Break into training and test sets
@@ -42,10 +44,11 @@ def cross_validate_algo(features, labels, folds, algo, verbose=False):
         # Account for when dealing with GP (TODO any probablistic-type outputs)
         auroc=None
         if type(clf) == GPyC:
+            y_allpreds = y_[0]
             y_ = y_[0].argmax(axis=1)
             for model in clf.models:
                 print(model)
-            auroc = roc_auc_score_multi(y_test, y_)
+            auroc = helpers.roc_auc_score_multi(y_test, y_allpreds)
 
         # Get scores
         this_accuracy = accuracy_score(y_test, y_)
@@ -59,7 +62,8 @@ def cross_validate_algo(features, labels, folds, algo, verbose=False):
         del(clf)
 
     # return '{} & {} & {} & {} \\\\\n'.format(algo_str=algo_str, f1s=f1s, accs=accuracies, label_cnt=uniq_labels)
-    return generate_cross_algo_print(algo_str=algo_str, f1s=f1s, accs=accuracies, label_cnt=uniq_labels, auroc=auroc)
+    label_cnt = str(np.unique(labels).shape[0])
+    return generate_cross_algo_print(algo_str=algo_str, f1s=f1s, accs=accuracies, label_cnt=label_cnt, auroc=auroc)
 
 def cross_validate_dm_argmax(features, labels, algo, folds=10):
     accuracies = []
@@ -115,18 +119,13 @@ def cross_validate_dm(features, labels, folds=10):
         W = dirmultreg_learn(X_train, y_train)
         y_ = dirmultreg_predict(X_test, W)[0]
 
-        all_err = y_ - labels[test_idx]
+        all_err = y_ - y_test
         avg_err = np.average(np.abs(all_err))
         errs.append(avg_err)
 
         print(avg_err)
 
     # print("Average error was {}".format(np.average(errs)))
-    if features.shape[1] == 9 or features.shape[1] == 19:
-        coords_str = 'using coordinates'
-    else:
-        coords_str = 'not using coordinates'
-
     orig_f = 'Original Features'
     quad_f = 'Quadratic projection'
     sq_f = 'Squared features with 1 bias'
