@@ -1,6 +1,8 @@
 import GPy
 import numpy as np
 import multiprocessing as mp
+from multiprocessing import Pool
+from ML.helpers import partition_indexes
 
 class GPyC:
     def __init__(self):
