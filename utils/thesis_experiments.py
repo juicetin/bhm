@@ -385,7 +385,7 @@ def calc_gp_preds(features, l4, l24, query, ret=False, parallel=False):
 def calc_gp_multi_preds(features, l4, l24, query, parallel=False, ret=False, gp_true=None):
     print('4-labels, multi-label')
     gp = gpym.GPyMultiOutput()
-    gp.fit(features, l4)
+    gp.fit(features, l4, parallel=True)
     gp_preds = np.array(gp.predict(query, parallel=parallel))
     if parallel==True:
         gp_preds = np.array([np.concatenate(gp_preds[::2]), np.concatenate(gp_preds[1::2])])

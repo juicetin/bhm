@@ -15,8 +15,14 @@ class GPyMultiOutput:
     def __init__(self):
         pass
 
-    def fit(self, X, C):
-        """
+    def fit_axis(self, i, X, C, K): 
+        m = GPy.models.GPRegression(X, C[:,i][:,np.newaxis], kernel=K.copy())
+        m.optimize()
+        print('Finished optimising label {}'.format(i))
+        return m
+
+    def fit(self, X, C, parallel=False):
+        """ 
         Fit the GPy-wrapper classifier 
         """
         var = np.random.rand()
@@ -25,14 +31,20 @@ class GPyMultiOutput:
         K = GPy.kern.RBF(input_dim=X.shape[1], variance=var, lengthscale=l_scales, ARD=True)
         self.output_count = C.shape[1]
         self.models = []
-        bar = ProgressBar(maxval=C.shape[1])
-        bar.start()
-        for i in range(C.shape[1]):
-            bar.update(i)
-            m = GPy.models.GPRegression(X, C[:,i][:,np.newaxis], kernel=K.copy())
-            m.optimize()
-            self.models.append(m)
-        bar.finish()
+        if parallel == True:
+            args = [ (i, X, C, K) for i in range(C.shape[1])]
+            pool = Pool(processes=C.shape[1])
+            print("Distributing GP multi-output model fitting across {} processes...".format(C.shape[1]))
+            self.models = pool.starmap(self.fit_axis, args)
+        else:
+            bar = ProgressBar(maxval=C.shape[1])
+            bar.start()
+            for i in range(C.shape[1]):
+                bar.update(i)
+                m = GPy.models.GPRegression(X, C[:,i][:,np.newaxis], kernel=K.copy())
+                m.optimize()
+                self.models.append(m)
+            bar.finish()
         self.models = np.array(self.models)
         return self
 
