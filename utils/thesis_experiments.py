@@ -215,7 +215,14 @@ def plot_det_maps(query_features, qp_locations, all_preds=None, features=None, l
     
     det4_preds = np.column_stack((svc_preds, lr_preds, knn_preds, rf_preds))
 
-    vis.plot_multi_maps(qp_locations, det4_preds, filename='det_preds', title_list=['SVM', 'Logistic Regression', 'kNN', 'Random Forest'])
+    vis.plot_multi_maps(qp_locations, det4_preds, filename='det4_preds', title_list=['SVM', 'Logistic Regression', 'kNN', 'Random Forest'])
+
+def plot_det_multi_maps(qp_locations, preds):
+    lr4_preds, svm4_preds, knn4_preds, rf4_preds = preds
+    vis.plot_multi_maps(qp_locations, lr4_preds, filename='multi4_preds_lr', offset=0)
+    vis.plot_multi_maps(qp_locations, svm4_preds, filename='multi4_preds_svm', offset=0)
+    vis.plot_multi_maps(qp_locations, knn4_preds, filename='multi4_preds_knn', offset=0)
+    vis.plot_multi_maps(qp_locations, rf4_preds, filename='multi4_preds_rf', offset=0)
 
 def multi_dm_mcmc_chains(features, labels, iters=2000000):
     # dirmultreg_learn(features, labels, activation='soft', reg=100, verbose=False, iters=2000000)
