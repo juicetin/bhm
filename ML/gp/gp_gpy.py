@@ -1,24 +1,39 @@
 import GPy
 import numpy as np
 import multiprocessing as mp
+from multiprocessing import Pool
+from ML.helpers import partition_indexes
 
 class GPyC:
     def __init__(self):
         pass
 
-    def fit(self, X, C):
+    def fit_label_model(self, c, X, C, K): 
+        labels = np.array([1 if c == label else 0 for label in C])[:,np.newaxis]
+        m = GPy.models.GPRegression(X, labels, kernel=K.copy())
+        m.optimize()
+        print('Finished optimising label {}'.format(c))
+        return m
+
+    def fit(self, X, C, parallel=False):
         """
         Fit the GPy-wrapper classifier 
         """
         K = GPy.kern.Matern32(X.shape[1])
         uniq_C = np.unique(C)
         self.models = []
-        for c in uniq_C:
-            labels = np.array([1 if c == label else 0 for label in C])[:,np.newaxis]
-            print('Optimising for label {}...'.format(c))
-            m = GPy.models.GPRegression(X, labels, kernel=K.copy())
-            m.optimize()
-            self.models.append(m)
+        if parallel==True:
+            args = [ (c, X, C, K) for c in uniq_C]
+            pool = Pool(processes=uniq_C.shape[0])
+            print("Distributing GP per-class model fitting across {} processes...".format(uniq_C.shape[0]))
+            self.models = pool.starmap(self.fit_label_model, args)
+        else:
+            for c in uniq_C:
+                labels = np.array([1 if c == label else 0 for label in C])[:,np.newaxis]
+                print('Optimising for label {}...'.format(c))
+                m = GPy.models.GPRegression(X, labels, kernel=K.copy())
+                m.optimize()
+                self.models.append(m)
         self.models = np.array(self.models)
         return self
 
@@ -44,11 +59,11 @@ class GPyC:
                     all_vars[start:end] = cur_preds[1]
             else:
                 gp_preds, gp_vars = m.predict(x)
-                all_preds[:,i] = gp_preds.flatten()
-                all_vars[:,i]  = gp_vars.flatten()
+                all_preds[:,i] = gp_preds.flatten().astype(np.float64)
+                all_vars[:,i]  = gp_vars.flatten().astype(np.float64)
 
         # The transpose here is to match the output of the Dirichlet Multinomial stuff
-        return all_preds, all_vars
+        return np.array((all_preds, all_vars))
 
     def predict_parallel(self, x):
         """
@@ -64,4 +79,5 @@ class GPyC:
         predict_results = pool.starmap(self.predict, args)
 
         # Concat along class list axis
-        return np.concatenate(predict_results, axis=0)
+        # return np.concatenate(predict_results, axis=0)
+        return np.hstack(predict_results)

@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 from revrand import basis_functions as bases
 from ML.dir_mul.nicta.dirmultreg import dirmultreg_learn, dirmultreg_predict # originally yavanna
 from scipy.misc import logsumexp # originally yavanna
+from sklearn.cross_validation import StratifiedShuffleSplit
 
 import utils.visualisation as vis
 
@@ -157,7 +158,7 @@ def generate_dm_toy_ex(plot_toy_graph=False, plot_cluster_distr=False):
 
     return X_train_coords, X_test_coords, X_train, X_test, C_train, C_test
 
-def save_dm_vs_gp_pickles():
+def save_dm_vs_gp_pickles(EC, C_test_norm, gp_preds, gp_vars, X_train_c, X_test_c, X_train, X_test, C_train, C_test):
     np.save('tmp_pickles/EC.npy', EC)
     np.save('tmp_pickles/C_test_norm.npy', C_test_norm)
     np.save('tmp_pickles/gp_preds.npy', gp_preds)
@@ -218,7 +219,7 @@ def load_squidle_data(path='../bhm-large-data/'):
 
 # def find_matching(ll_utm, bath_locs): 
 
-def sample_equal_multi_labels(labels):
+def sample_equal_multi_labels(multi_labels):
     """
     TODO
     """
