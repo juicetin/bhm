@@ -301,6 +301,7 @@ def test_dm_data(features, labels):
     print('scale(normalize(), axis=1): {}'.format(avg_err))
 
 def plot_map_with_variance_threshold(locations, predictions, variances, var_threshold):
+    print(var_threshold)
     idxs = np.where(variances < var_threshold)[0]
     vis.plot_multi_maps(locations[idxs], predictions[idxs], offset=0, 
             filename='{}l-preds-{}var_limit'.format(predictions.shape[1], var_threshold))
