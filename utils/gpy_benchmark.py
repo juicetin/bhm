@@ -5,9 +5,9 @@ from ML.helpers import roc_auc_score_multi
 from ML.helpers import binarised_labels_copy
 from ML.helpers import regression_score
 
-def gpy_bin_predict(features, labels):
-    m = GPy.models.GPClassification(features[train_idx], labels[train_idx])
-    probs = m.predict(features_sn[test_idx])[0].T[0,:]
+# def gpy_bin_predict(features, labels):
+#     m = GPy.models.GPClassification(features[train_idx], labels[train_idx])
+#     probs = m.predict(features_sn[test_idx])[0].T[0,:]
 
 def gpy_bench(features, labels, train_idx):
     test_idx = np.array(list(set(np.arange(16502)) - set(train_idx)))
