@@ -8,6 +8,7 @@
 !multiple_labels_training_data.npz
 hons.vim
 .session.vim
+tmp_images/**
 data/*
 
 # Byte-compiled / optimized / DLL files
