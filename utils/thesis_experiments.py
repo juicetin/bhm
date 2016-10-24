@@ -48,14 +48,20 @@ def algo_module_to_str(algo):
 #             print('Average variance in area: {}, number of points: {}'.format(np.average(split_vars), split_idxs.shape[0]))
 #             del(split_vars); del(split_idxs)
 
-def find_even_split_areas(q_preds, q_vars, bounds=[0.4, 0.6], split_labels=[1,2]):
+def find_even_split_areas(q_preds, q_vars, bounds=[[0.1, 0.4], [0.3, 0.9]], split_labels=[1,2], check='preds'):
     """
     Finds areas which contain certain mixes of labels with a minimum threshold of equality
     """
-    even_split_idxs = np.where((q_preds[:,split_labels[0]] > bounds[0]) & 
-                               (q_preds[:,split_labels[0]] < bounds[1]) & 
-                               (q_preds[:,split_labels[1]] > bounds[0]) & 
-                               (q_preds[:,split_labels[1]] < bounds[1]))
+    if check == 'preds':
+        q_comp = q_preds
+    elif check == 'vars':
+        q_comp = q_vars
+    else:
+        raise ValueError("Must check either 'preds' or 'vars', please provide a valid option.")
+    even_split_idxs = np.where((q_comp[:,split_labels[0]] > bounds[0][0]) & 
+                               (q_comp[:,split_labels[0]] < bounds[0][1]) & 
+                               (q_comp[:,split_labels[1]] > bounds[1][0]) & 
+                               (q_comp[:,split_labels[1]] < bounds[1][1]))
     even_splits_preds = q_preds[even_split_idxs]
     even_splits_vars = q_vars[even_split_idxs]
     
@@ -365,48 +371,52 @@ def calc_gp_preds(features, l4, l24, query, ret=False, parallel=False, save=True
     print('4-labels, single-label')
     gp = GPyC()
     gp.fit(features, l4, parallel=True)
-    gp_preds = np.array(gp.predict(query, parallel=parallel))
-    if parallel==True:
-        gp_preds = np.array([np.concatenate(gp_preds[::2]), np.concatenate(gp_preds[1::2])])
-    # gp_preds = np.concatenate(gp_preds, axis=2)
+    np.save('data/gp4_p_models', gp.models)
+    gp_preds = gp.predict(query, parallel=parallel)
+    del(gp)
     if save == True:
         np.save('data/gp4_p', gp_preds)
+
+    print('24-labels, single-label')
+    gp = GPyC()
+    gp.fit(features, l24, parallel=True)
+    np.save('data/gp24_p_models', gp.models)
+    gp_preds = gp.predict(query, parallel=parallel)
     del(gp)
 
-    if ret==True:
-        return gp_preds
+    if save == True:
+        np.save('data/gp24_p', gp_preds)
 
-    # print('24-labels, single-label')
-    # gp = GPyC()
-    # gp.fit(features, l24)
-    # gp_preds = gp.predict(query)
-    # np.save('data/gp24_p', gp_preds)
-    # del(gp)
-
-def calc_gp_multi_preds(features, l4, l24, query, parallel=False, ret=False, gp_true=None):
+def calc_gp_multi_preds(features, l4, l24, query, parallel=False, ret=False, gp_true=None, save=True):
     print('4-labels, multi-label')
     gp = gpym.GPyMultiOutput()
     gp.fit(features, l4, parallel=True)
+    np.save('data/gp4_mp_models', gp.models)
     gp_preds = np.array(gp.predict(query, parallel=parallel))
     if parallel==True:
         gp_preds = np.array([np.concatenate(gp_preds[::2]), np.concatenate(gp_preds[1::2])])
         # gp_preds = np.concatenate(gp_preds, axis=2)
         # gp_preds = np.array([np.concatenate(gp_preds[:3]), np.concatenate(gp_preds[3:])])
-    np.save('data/gp4_mp', gp_preds)
     del(gp)
+    if save == True:
+        np.save('data/gp4_mp', gp_preds)
 
-    if ret==True:
-        return gp_preds
+    print('24-labels, multi-label')
+    gp = gpym.GPyMultiOutput()
+    gp.fit(features, l24)
+    np.save('data/gp24_mp_models', gp.models)
+    gp_preds = gp.predict(query)
+    del(gp)
+    
+    if save == True:
+        np.save('data/gp24_mp', gp_preds)
 
-#     print('24-labels, multi-label')
-#     gp = gpym.GPyMultiOutput()
-#     gp.fit(features, l24)
-#     gp_preds = gp.predict(query)
-#     np.save('data/gp24_mp', gp_preds)
-#     del(gp)
-# 
 def downsample_queries(qp_locs, queries):
     qp_red_coords, qp_red_features, _, qp_red_idxs = downsample.downsample_spatial_data(qp_locs, queries, np.ones(queries.shape[0]), 'fixed-grid')
     np.save('data/qp_red_coords'   ,qp_red_coords)
     np.save('data/qp_red_features' ,qp_red_features)
     np.save('data/qp_red_idxs'     ,qp_red_idxs)
+
+def search_contiguous_confident_splits(preds):
+    for pair in itertools.combinations(range(preds.shape[1]), 2):
+        _, _, idxs = find_even_split_areas(q_preds, q_vars, bounds=[[0.1, 0.4], [0.3, 0.9]], split_labels=[1,2], check='preds'):
