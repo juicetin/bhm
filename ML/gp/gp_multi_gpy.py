@@ -36,6 +36,8 @@ class GPyMultiOutput:
             pool = Pool(processes=C.shape[1])
             print("Distributing GP multi-output model fitting across {} processes...".format(C.shape[1]))
             self.models = pool.starmap(self.fit_axis, args)
+            pool.close()
+            pool.join()
         else:
             bar = ProgressBar(maxval=C.shape[1])
             bar.start()
@@ -93,6 +95,8 @@ class GPyMultiOutput:
         pool = Pool(processes=nprocs)
         print("Distributing predictions across {} processes...".format(nprocs))
         predict_results = pool.starmap(self.predict, args)
+        pool.close()
+        pool.join()
         return np.hstack(predict_results)
 
 # HACKY - for use when models are saved to remove need for retraining
@@ -153,6 +157,8 @@ def predict_parallel(x, models_shape):
     pool = Pool(processes=nprocs)
     print("Distributing predictions across {} processes...".format(nprocs))
     predict_results = pool.starmap(predict, args)
+    pool.close()
+    pool.join()
 
     # Concat along class list axis
     # return np.concatenate(predict_results, axis=0)
