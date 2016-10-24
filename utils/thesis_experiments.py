@@ -52,10 +52,11 @@ def find_even_split_areas(q_preds, q_vars, bounds=[0.4, 0.6], split_labels=[1,2]
     """
     Finds areas which contain certain mixes of labels with a minimum threshold of equality
     """
-    even_split_idxs = np.where((q_preds[:,split_labels[0]] > bounds[0]) & 
-                               (q_preds[:,split_labels[0]] < bounds[1]) & 
-                               (q_preds[:,split_labels[1]] > bounds[0]) & 
-                               (q_preds[:,split_labels[1]] < bounds[1]))
+    q_comp = q_vars
+    even_split_idxs = np.where((q_comp[:,split_labels[0]] > bounds[0]) & 
+                               (q_comp[:,split_labels[0]] < bounds[1]) & 
+                               (q_comp[:,split_labels[1]] > bounds[0]) & 
+                               (q_comp[:,split_labels[1]] < bounds[1]))
     even_splits_preds = q_preds[even_split_idxs]
     even_splits_vars = q_vars[even_split_idxs]
     
