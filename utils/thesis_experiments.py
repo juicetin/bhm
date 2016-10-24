@@ -307,6 +307,7 @@ def test_dm_data(features, labels):
     print('scale(normalize(), axis=1): {}'.format(avg_err))
 
 def plot_map_with_variance_threshold(locations, predictions, variances, var_threshold):
+    print(var_threshold)
     idxs = np.where(variances < var_threshold)[0]
     vis.plot_multi_maps(locations[idxs], predictions[idxs], offset=0, 
             filename='{}l-preds-{}var_limit'.format(predictions.shape[1], var_threshold))
@@ -377,6 +378,8 @@ def calc_gp_preds(features, l4, l24, query, ret=False, parallel=False, save=True
     if save == True:
         np.save('data/gp4_p', gp_preds)
 
+    gp_preds = gp.predict(query, parallel=parallel)
+    del(gp)
     print('24-labels, single-label')
     gp = GPyC()
     gp.fit(features, l24, parallel=True)
