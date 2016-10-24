@@ -284,12 +284,12 @@ def show_map(locations, labels, x_bins=None, y_bins=None, display=False, filenam
 
     print("Setting colourbar (legend)...")
     cmap = cm.jet
-    # cmaplist = [cmap(i) for i in range(cmap.N)]
-    # cmap = cmap.from_list('custom cmap', cmaplist, cmap.N)
+    cmaplist = [cmap(i) for i in range(cmap.N)]
+    cmap = cmap.from_list('custom cmap', cmaplist, cmap.N)
 
     print("Bulding image...")
     # plt.imshow(Z, extent=[x_min, x_max, y_min, y_max], origin='lower', cmap=cmap, vmin=vmin, vmax=vmax)
-    cur_fig.imshow(Z, extent=[x_min, x_max, y_min, y_max], origin='lower', vmin=vmin, vmax=vmax, cmap=cmap)
+    im = cur_fig.imshow(Z, extent=[x_min, x_max, y_min, y_max], origin='lower', vmin=vmin, vmax=vmax, cmap=cmap)
 
     # Slightly hacky - unfortunately neeeded for 0-count argmaxs of 24 labels
     # if np.unique(labels).shape[0] < 5:
@@ -301,6 +301,7 @@ def show_map(locations, labels, x_bins=None, y_bins=None, display=False, filenam
     # norm = mpl.colors.BoundaryNorm(bounds, cmap.N)
 
     # plt.colorbar(cmap=cmap, norm=norm, spacing='Proportional', boundaries=bounds, format='%li')
+    # mpl.colorbar.colorbar_factory(cur_fig, habitat_map)
     if in_ax == False:
         plt.colorbar(spacing='Proportional', format='%li')
 
@@ -324,8 +325,7 @@ def show_map(locations, labels, x_bins=None, y_bins=None, display=False, filenam
 
     print("Image generated!")
     if in_ax == True:
-        print('HEREEE')
-        return
+        return im
     elif display == True:
         cur_fig.show()
     else:
@@ -333,6 +333,8 @@ def show_map(locations, labels, x_bins=None, y_bins=None, display=False, filenam
 
     plt.cla()
     plt.clf()
+
+    return im
 
 def multi_label_histogram(multi_labels):
     """
@@ -590,7 +592,7 @@ def plot_dm_hists(chains, filename='dm_mcmc_weight_hist'):
     clear_plt()
     mpl.rcdefaults()
 
-def plot_multi_maps(q_locations, q_preds, filename='dm_simplelabel_heatmap', across=2, down=2, offset=None, title_list=None):
+def plot_multi_maps(q_locations, q_preds, filename='dm_simplelabel_heatmap', across=2, down=2, offset=None, title_list=None, vmin=None, vmax=None):
     """
     Plots heatmap for each label in data
     """
@@ -612,9 +614,17 @@ def plot_multi_maps(q_locations, q_preds, filename='dm_simplelabel_heatmap', acr
     # plt.xlabel(xlabel)
     # plt.ylabel(ylabel)
 
+    if vmin == None and vmax == None:
+        vmin = q_preds.min()
+        vmax = q_preds.max()
+        bounds = {
+            'vmin': vmin,
+            'vmax': vmax
+        }
+
     for i, ax in enumerate(axs):
         hide_y_labels = True if i%2 == 0 else False
-        show_map(q_locations, q_preds[:,i], ax=ax, hide_y = hide_y_labels)
+        im = show_map(q_locations, q_preds[:,i], ax=ax, hide_y = hide_y_labels, **bounds)
         if offset != None:
             ax.set_title('label {}'.format(offset+i))
         elif title_list != None:
@@ -626,8 +636,31 @@ def plot_multi_maps(q_locations, q_preds, filename='dm_simplelabel_heatmap', acr
     plt.savefig(filename+'.pdf')
     clear_plt()
 
+    if q_preds.shape[1] <= 4:
+        imshow_colorbar(im, filename)
+        clear_plt()
+
     # for i in range(q_preds.shape[1]):
     #     vis.show_map(q_locations, q_preds[:,i], display=False, filename=filename+' '+str(i))
+
+    # fig, ax = plt.subplots()
+    # cax = fig.add_axes([0.27, 0.8, 0.5, 0.05])
+    # fig.colorbar(ims[0], cax=cax, orientation='horizontal')
+    # cax = fig.add_axes([0.27, 0.6, 0.5, 0.05])
+    # fig.colorbar(ims[1], cax=cax, orientation='horizontal')
+    # cax = fig.add_axes([0.27, 0.4, 0.5, 0.05])
+    # fig.colorbar(ims[2], cax=cax, orientation='horizontal')
+    # cax = fig.add_axes([0.27, 0.2, 0.5, 0.05])
+    # fig.colorbar(ims[0], cax=cax, orientation='horizontal')
+    # font = {'family' : 'normal',
+    #         'weight' : 'normal',
+    #         'size'   : 6}
+    # mpl.rc('font', **font)
+    # plt.savefig()
+    # mpl.rcdefaults()
+    # clear_plt()
+
+    return im
 
 def plot_dm_per_label_maps_multi(q_locations, q_preds, filename='dm_alllabels_heatmap'):
     """
@@ -640,10 +673,17 @@ def plot_dm_per_label_maps_multi(q_locations, q_preds, filename='dm_alllabels_he
     title_set3 = ['label {} ({})'.format(i, label_map[i+1]) for i in range(12,18)] 
     title_set4 = ['label {} ({})'.format(i, label_map[i+1]) for i in range(18,24)] 
 
-    plot_multi_maps(q_locations, q_preds[:,:6], filename=filename+'_1-6', across=2, down=3, title_list=title_set1)
-    plot_multi_maps(q_locations, q_preds[:,6:12], filename=filename+'_7-12', across=2, down=3, title_list=title_set2)
-    plot_multi_maps(q_locations, q_preds[:,12:18], filename=filename+'_13-18', across=2, down=3, title_list=title_set3)
-    plot_multi_maps(q_locations, q_preds[:,18:], filename=filename+'_19-24', across=2, down=3, title_list=title_set4)
+    vmin = q_preds.min()
+    vmax = q_preds.max()
+    bounds = {
+        'vmin': vmin,
+        'vmax': vmax
+    }
+
+    plot_multi_maps(q_locations, q_preds[:,:6], filename=filename+'_1-6', across=2, down=3, title_list=title_set1, **bounds)
+    plot_multi_maps(q_locations, q_preds[:,6:12], filename=filename+'_7-12', across=2, down=3, title_list=title_set2, **bounds)
+    plot_multi_maps(q_locations, q_preds[:,12:18], filename=filename+'_13-18', across=2, down=3, title_list=title_set3, **bounds)
+    plot_multi_maps(q_locations, q_preds[:,18:], filename=filename+'_19-24', across=2, down=3, title_list=title_set4, **bounds)
     clear_plt()
 
 def standalone_multioutput_colorbar(vmin=0, vmax=1, filename='dm_standalone_colorbar.pdf', title='Dirichlet Multinomial Regression Colour Bar'):
@@ -677,3 +717,32 @@ def standalone_label_colorbar(label_count=24, filename='label_standalone_colorba
     plt.savefig(filename)
 
     clear_plt()
+
+def imshow_colorbar(im, filename):
+    fig = plt.figure(figsize=(8, 1))
+    cax = fig.add_axes([0.05, 0.50, 0.9, 0.15])
+    fig.colorbar(im, cax=cax, orientation='horizontal')
+    font = {'family' : 'normal',
+            'weight' : 'normal',
+            'size'   : 7}
+    mpl.rc('font', **font)
+    plt.savefig('{}_colourbar.pdf'.format(filename))
+    mpl.rcdefaults()
+    clear_plt()
+
+def plot_multiple_axes(points, filename='multi_plots.pdf'):
+    """
+    Takes arguments (points, filename<optional>).
+    Scatter plots data points in the shape (N, K), where N is the number of points.
+    """
+    colors = ['c', 'b', 'r', 'y', 'g']
+    fig = plt.figure(figsize=(30,15))
+    ax = fig.add_subplot(111)
+    for i in range(points.shape[1]):
+        print('Plotting axis {} of {}...'.format(i+1, points.shape[1]))
+        x = points.shape[0]
+        y = points[:,i]
+        ax.scatter(np.arange(x), y, c=colors[i], s=1, lw=0)
+    plt.savefig(filename)
+    clear_plt()
+

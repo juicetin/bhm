@@ -73,7 +73,7 @@ class GaussianProcess:
         # Dividing by length scale first before passing into cdist to
         #   accounts for different length scale for each dimension
         l_scales = l_scales[:,np.newaxis]
-        return cdist(x1/l_scales, x2/l_scales, 'sqeuclidean')
+        return cdist(x1/l_scales.T, x2/l_scales.T, 'sqeuclidean')
 
     def K_se(self, x1, x2, f_err, l_scales):
         m = self.dist(x1, x2, l_scales)
@@ -382,7 +382,7 @@ class GaussianProcess:
 
     def fit_classes_OvR(self, X, y):
         uniq_y = np.unique(y)
-        prog_bar = Bar('Classes fitted', max=uniq_y.shape[0])
+        prog_bar = Bar('Classes fitted', uniq_y.shape[0])
         for c in uniq_y:
 
             # f_err, l_scales (for each dimension), n_err, alpha, beta
