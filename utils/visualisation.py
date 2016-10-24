@@ -369,12 +369,14 @@ def histogram(freqs, title=None, filename='freqs.pdf', offset=0):
     #     plt.annotate(str(txt), (i, 0), xytext=(i,-300), va='top', ha='center')
     plt.savefig(filename)
 
-def clear_plt():
+def clear_plt(fig=None):
     """
     Clears pyplot caches/etc.
     """
     plt.cla()
     plt.clf()
+    if fig != None:
+        del(fig)
 
 def plot_coords(locations, filename='tmp.pdf', display=True, lims=None):
     """
@@ -681,13 +683,18 @@ def plot_dm_per_label_maps_multi(q_locations, q_preds, filename='dm_alllabels_he
 
     vmin = q_preds.min()
     vmax = q_preds.max()
+    # vmin=0
+    # vmax=1
 
     bounds = {'vmin': vmin, 'vmax': vmax}
 
-    plot_multi_maps(q_locations, q_preds[:,:6], filename=filename+'_1-6', across=2, down=3, title_list=title_set1, **bounds)
-    plot_multi_maps(q_locations, q_preds[:,6:12], filename=filename+'_7-12', across=2, down=3, title_list=title_set2, **bounds)
-    plot_multi_maps(q_locations, q_preds[:,12:18], filename=filename+'_13-18', across=2, down=3, title_list=title_set3, **bounds)
-    plot_multi_maps(q_locations, q_preds[:,18:], filename=filename+'_19-24', across=2, down=3, title_list=title_set4, **bounds)
+    plot_multi_maps(q_locations, q_preds[:,:6],       '{}_1-6'.format(filename), across=2, down=3, title_list=title_set1, **bounds)
+    plot_multi_maps(q_locations, q_preds[:,6:12],     '{}_7-12'.format(filename), across=2, down=3, title_list=title_set2, **bounds)
+    plot_multi_maps(q_locations, q_preds[:,12:18],    '{}_13-18'.format(filename), across=2, down=3, title_list=title_set3, **bounds)
+    im = plot_multi_maps(q_locations, q_preds[:,18:], '{}_19-24'.format(filename), across=2, down=3, title_list=title_set4, **bounds)
+    clear_plt()
+
+    imshow_colorbar(im, filename)
     clear_plt()
 
 def standalone_multioutput_colorbar(vmin=0, vmax=1, filename='dm_standalone_colorbar.pdf', title='Dirichlet Multinomial Regression Colour Bar'):
@@ -740,13 +747,13 @@ def plot_multiple_axes(points, filename='multi_plots.pdf'):
     Scatter plots data points in the shape (N, K), where N is the number of points.
     """
     colors = ['c', 'b', 'r', 'y', 'g']
-    fig = plt.figure(figsize=(30,15))
+    fig = plt.figure()
     ax = fig.add_subplot(111)
+    ax.ticklabel_format(useOffset=False)
     for i in range(points.shape[1]):
         print('Plotting axis {} of {}...'.format(i+1, points.shape[1]))
         x = points.shape[0]
         y = points[:,i]
-        ax.scatter(np.arange(x), y, c=colors[i], s=1, lw=0)
+        ax.scatter(np.arange(x), y, c=colors[i], s=3, lw=0)
     plt.savefig(filename)
-    clear_plt()
-
+    clear_plt(fig)

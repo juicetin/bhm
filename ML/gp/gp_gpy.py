@@ -29,6 +29,8 @@ class GPyC:
             pool = Pool(processes=uniq_C.shape[0])
             print("Distributing GP per-class model fitting across {} processes...".format(uniq_C.shape[0]))
             self.models = pool.starmap(self.fit_label_model, args)
+            pool.close()
+            pool.join()
         else:
             for c in uniq_C:
                 labels = np.array([1 if c == label else 0 for label in C])[:,np.newaxis]
@@ -79,6 +81,8 @@ class GPyC:
         pool = Pool(processes=nprocs)
         print("Distributing predictions across {} processes...".format(nprocs))
         predict_results = pool.starmap(self.predict, args)
+        pool.close()
+        pool.join()
 
         # Concat along class list axis
         # return np.concatenate(predict_results, axis=0)
@@ -142,6 +146,8 @@ def predict_parallel(x, models_shape):
     pool = Pool(processes=nprocs)
     print("Distributing predictions across {} processes...".format(nprocs))
     predict_results = pool.starmap(predict, args)
+    pool.close()
+    pool.join()
 
     # Concat along class list axis
     # return np.concatenate(predict_results, axis=0)
