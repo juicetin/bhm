@@ -129,7 +129,7 @@ def dirmultreg_predict(X, W, activation='soft', counts=1):
     # Variance
     a_sum = alpha.sum(axis=1)[:,np.newaxis]
     a_norm = alpha/a_sum
-    pred_vars = counts * a_norm * (1 - a_norm ) * ((counts+a_sum)/(1+a_sum))
+    pred_vars = counts * a_norm * (1 - a_norm ) # * ((counts+a_sum)/(1+a_sum)) # counts always 1 atm, take out for safety
 
     if not np.isscalar(counts):
         return np.atleast_2d(counts).T * EC, alpha, pred_vars
