@@ -422,5 +422,7 @@ def downsample_queries(qp_locs, queries):
     np.save('data/qp_red_idxs'     ,qp_red_idxs)
 
 def search_contiguous_confident_splits(preds):
-    for pair in itertools.combinations(range(preds.shape[1]), 2):
-        _, _, idxs = find_even_split_areas(q_preds, q_vars, bounds=[[0.1, 0.4], [0.3, 0.9]], split_labels=[1,2], check='preds'):
+    for label_pair in itertools.combinations(range(preds.shape[1]), 2):
+        _, _, idxs = find_even_split_areas(q_preds, q_vars, bounds=[[0.1, 0.4], [0.3, 0.9]], split_labels=label_pair, check='preds')
+        # vis.plot_multi_maps(coords, preds[0][idxs][:,label_pair],
+

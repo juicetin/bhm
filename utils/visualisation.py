@@ -334,6 +334,11 @@ def show_map(locations, labels, x_bins=None, y_bins=None, display=False, filenam
     plt.cla()
     plt.clf()
 
+    # Create colourbar here if single (integer) labels are being predicted
+    if type(labels[0]) == np.int64:
+        print('Creating colour bar...')
+        imshow_colorbar(im, '{}_colourbar.pdf'.format(filename))
+
     return im
 
 def multi_label_histogram(multi_labels):
@@ -617,10 +622,10 @@ def plot_multi_maps(q_locations, q_preds, filename='dm_simplelabel_heatmap', acr
     if vmin == None and vmax == None:
         vmin = q_preds.min()
         vmax = q_preds.max()
-        bounds = {
-            'vmin': vmin,
-            'vmax': vmax
-        }
+    bounds = {
+        'vmin': vmin,
+        'vmax': vmax
+    }
 
     for i, ax in enumerate(axs):
         hide_y_labels = True if i%2 == 0 else False
@@ -637,6 +642,7 @@ def plot_multi_maps(q_locations, q_preds, filename='dm_simplelabel_heatmap', acr
     clear_plt()
 
     if q_preds.shape[1] <= 4:
+        print('Also creating colour bar...')
         imshow_colorbar(im, filename)
         clear_plt()
 
@@ -675,10 +681,8 @@ def plot_dm_per_label_maps_multi(q_locations, q_preds, filename='dm_alllabels_he
 
     vmin = q_preds.min()
     vmax = q_preds.max()
-    bounds = {
-        'vmin': vmin,
-        'vmax': vmax
-    }
+
+    bounds = {'vmin': vmin, 'vmax': vmax}
 
     plot_multi_maps(q_locations, q_preds[:,:6], filename=filename+'_1-6', across=2, down=3, title_list=title_set1, **bounds)
     plot_multi_maps(q_locations, q_preds[:,6:12], filename=filename+'_7-12', across=2, down=3, title_list=title_set2, **bounds)
