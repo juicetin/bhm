@@ -1,6 +1,5 @@
 import numpy as np
 from sklearn import cross_validation
-from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import f1_score
 from sklearn.metrics import accuracy_score
 from ML.dir_mul.nicta.dirmultreg import dirmultreg_learn, dirmultreg_predict
@@ -26,7 +25,7 @@ def cross_validate_algo(features, labels, folds, algo, verbose=False):
     accuracies = []
     f1s = []
     # kf = cross_validation.KFold(n=len(features), n_folds=folds, shuffle=True, random_state=None)
-    kf = StratifiedKFold(n_splits=folds) # Prevent rounds with none of any given label - breaks AUC
+    kf = cross_validation.StratifiedKFold(n_splits=folds) # Prevent rounds with none of any given label - breaks AUC
     count = 1
     algo_str = algo_module_to_str(algo)
     # for train_index, test_index in kf:
