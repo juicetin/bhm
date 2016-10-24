@@ -8,4 +8,7 @@
 * fix MCMC weight histograms to auto-split onto the appropriate number of pages
 * fix all graphs (axes, colorbars, labels, titles, etc.) and figures
 
-* redo GP predictions - hyperparameters should NOT all be 1
+* [FIXED] redo GP predictions - hyperparameters should NOT all be 1
+    + didn't optimize gpy model, assumption that it was executed on calling predict was incorrect
+* do 'subsampling' of the multi-label data to even out distributions similar to how the 1000 indices for GP Regression was originally done - may improve performance
+
