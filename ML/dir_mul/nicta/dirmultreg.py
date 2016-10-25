@@ -131,7 +131,21 @@ def dirmultreg_predict(X, W, activation='soft', counts=1):
     a_norm = alpha/a_sum
     pred_vars = counts * a_norm * (1 - a_norm ) # * ((counts+a_sum)/(1+a_sum)) # counts always 1 atm, take out for safety
 
+    entropy_vals = entropy(alpha)
+
     if not np.isscalar(counts):
-        return np.atleast_2d(counts).T * EC, alpha, pred_vars
+        return np.atleast_2d(counts).T * EC, alpha, pred_vars, entropy_vals
     else:
-        return counts * EC, alpha, pred_vars
+        return counts * EC, alpha, pred_vars, entropy_vals
+
+def entropy(alpha):
+
+    if (alpha<0).any():
+        raise ValueError("alpha has to be greater than 0!")
+
+    alpha = np.where(alpha == 0, 1e-5, alpha)
+    a0 = alpha.sum(axis=1)
+    # psi = digamma
+    return gammaln(alpha).sum(axis=1)/gammaln(a0) \
+        - (alpha.shape[1] - a0) * psi(a0) \
+        - ((alpha - 1) * psi(alpha)).sum(axis=1)

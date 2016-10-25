@@ -21,7 +21,9 @@ class GPyC:
         """
         Fit the GPy-wrapper classifier 
         """
-        K = GPy.kern.Matern32(X.shape[1])
+        var = np.random.rand()
+        l_scales = np.random.rand(X.shape[1])
+        K = GPy.kern.RBF(input_dim=X.shape[1], variance=var, lengthscale=l_scales, ARD=True)
         uniq_C = np.unique(C)
         self.models = []
         if parallel==True:
@@ -87,6 +89,16 @@ class GPyC:
         # Concat along class list axis
         # return np.concatenate(predict_results, axis=0)
         return np.hstack(predict_results)
+
+    def prior_variance(self, x):
+
+        params = np.array([model.param_array for model in self.models])
+        averaged_params = np.average(params, axis=0)
+        f_errs = averaged_params[0]
+        n_errs = averaged_params[-1]
+
+        prior_var = f_errs**2 * np.exp([0] * x.shape[0]) + np.full(x.shape[0], n_errs**2)
+        return prior_var
 
 # HACKY - for use when models are saved to remove need for retraining
 def predict(x, models_shape=None, parallel=False, models=None, index_range=None, npy_name=None):

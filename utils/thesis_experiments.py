@@ -49,10 +49,10 @@ def search_even_split_areas(q_preds, q_vars):
     for label_pair in itertools.combinations(labels, 2):
 
         # Compare labels with the following occupancy bounds
-        for cur_bounds in itertools.combinations(bounds_list, 2):
+        for cur_bounds in itertools.combinations(itertools.combinations(bounds_list, 2), 2):
 
             # Get co-habitation stats
-            _, split_vars, idxs = find_even_split_areas(q_preds, q_vars, bounds=cur_bounds, split_labels=label_pair)
+            _, _, idxs = find_even_split_areas(q_preds, q_vars, bounds=cur_bounds, split_labels=label_pair)
 
             # See if variance is lower than on average
             split_var_avg = np.average(q_vars[idxs])
@@ -61,7 +61,7 @@ def search_even_split_areas(q_preds, q_vars):
                 print(label_pair, cur_bounds)
                 print(split_var_avg, rest_var_avg)
 
-            print('Average variance in area: {}, number of points: {}'.format(np.average(split_vars), split_idxs.shape[0]))
+            print('Average variance in area: {}, number of points: {}'.format(split_var_avg, idxs[0].shape[0]))
 
 def find_even_split_areas(q_preds, q_vars, bounds=[[0.1, 0.4], [0.3, 0.9]], split_labels=[1,2], check='preds'):
     """

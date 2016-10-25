@@ -1,17 +1,17 @@
 from ML.gp.gp import GaussianProcess
 from ML.helpers import partition_indexes
-from ML.gp.gp_ensemble_estimators import GP_ensembles
+from ML.gp.gpy_ensemble_estimators import GP_ensembles
 
 import numpy as np
 import math
 import pdb
 
 class rBCM(GP_ensembles):
-    def __init__(self, args):
-        super().__init__(args)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
-    def predict(self, x, keep_probs=False):
-        gaussian_means, gaussian_variances = self.gp_means_vars(x)
+    def predict(self, x, parallel=True, keep_probs=False):
+        gaussian_means, gaussian_variances = self.gp_means_vars(x, parallel=parallel)
 
         # These contain a row for each binary class case (OvR)
         #   AFTER summing along axis 0 (each of the local experts)
