@@ -272,3 +272,7 @@ def load_det_multi_preds():
         np.load('data/rf4mp.npy'),
         np.load('data/rf24mp.npy')
     )
+
+def inverse_indices(data, idxs):
+    return np.array(list(set(range(data.shape[0])) - set(list(idxs[0]))))
+
