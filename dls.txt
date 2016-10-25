@@ -1,0 +1,10 @@
+https://transfer.sh/nT4UX/conda-list
+https://transfer.sh/ml3vM/gp-preds.zip # gp4_p, gp24_p, gp24_p, gp24_mp
+https://transfer.sh/maWKP/dm-mcmc-chains.zip
+
+ami-3bee4958
+
+sudo pacman -S zsh base-devel git 
+ssh-keygen -t rsa -b 4096 -f $HOME/.ssh/id_rsa -C "justingling@gmail.com" -q -N ""
+eval $(ssh-agent -s)
+ssh-add
