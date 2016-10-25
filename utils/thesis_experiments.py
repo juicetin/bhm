@@ -29,6 +29,7 @@ from utils import downsample
 
 from sklearn.preprocessing import normalize
 from sklearn.preprocessing import scale
+from utils.load_data import inverse_indices
 
 import progressbar
 import itertools
@@ -37,16 +38,30 @@ import pymc
 def algo_module_to_str(algo):
     return str(algo()).split('(')[0]
 
-# def search_even_split_areas(q_preds, q_vars):
-#     """
-#     Wrapper for find_even_split_areas to search many parameters for the largest matching areas
-#     """
-#     labels = np.arange(qp_preds.shape[1])
-#     for label_pair in itertools.combinations(labels, 2):
-#         for cur_bounds in ?:
-#             _, split_vars, split_idxs = find_even_split_areas(q_preds, q_vars, bounds=cur_bounds, split_labels=label_pair)
-#             print('Average variance in area: {}, number of points: {}'.format(np.average(split_vars), split_idxs.shape[0]))
-#             del(split_vars); del(split_idxs)
+def search_even_split_areas(q_preds, q_vars):
+    """
+    Wrapper for find_even_split_areas to search many parameters for the largest matching areas
+    """
+    labels = np.arange(q_preds.shape[1])
+    bounds_list = np.arange(.02, .36, .02)
+
+    # Iterate over all label pairs #TODO more than just pairs though?
+    for label_pair in itertools.combinations(labels, 2):
+
+        # Compare labels with the following occupancy bounds
+        for cur_bounds in itertools.combinations(bounds_list, 2):
+
+            # Get co-habitation stats
+            _, split_vars, idxs = find_even_split_areas(q_preds, q_vars, bounds=cur_bounds, split_labels=label_pair)
+
+            # See if variance is lower than on average
+            split_var_avg = np.average(q_vars[idxs])
+            rest_var_avg = np.average(q_vars[inverse_indices(q_preds, idxs)])
+            if split_var_avg < rest_var_avg:
+                print(label_pair, cur_bounds)
+                print(split_var_avg, rest_var_avg)
+
+            print('Average variance in area: {}, number of points: {}'.format(np.average(split_vars), split_idxs.shape[0]))
 
 def find_even_split_areas(q_preds, q_vars, bounds=[[0.1, 0.4], [0.3, 0.9]], split_labels=[1,2], check='preds'):
     """
