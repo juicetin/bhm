@@ -55,6 +55,7 @@ from ML.gp.rbcm import rBCM
 from ML.gp.gp_mt import GPMT
 from ML.dir_mul.dirichlet_multinomial import DirichletMultinomialRegression
 from ML.dir_mul.nicta.dirmultreg import dirmultreg_learn, dirmultreg_predict
+from ML.dir_mul.nicta import dirmultreg
 from ML.dir_mul.dm_mcmc import dirmultreg_learn as dm_mcmc_learn
 from ML import validation as val
 
@@ -244,8 +245,6 @@ if __name__ == "__main__":
 
     # vis.show_map(bath_locations, labels, display=False, vmin=1, vmax=24, filename='original_map_plot')
 
-    preds_gp = np.load('data/plain_gp_simplelabels_querypreds.npy', mmap_mode='r')
-
     # size = 100
     # train_idx = data.mini_batch_idxs(labels_simple, size, 'even')
     train_idx = np.load('data/semi-optimal-1000-subsample.npy')
@@ -305,3 +304,5 @@ if __name__ == "__main__":
 
     # thesis_experiments.det_maps(f_sq2, red_mlabels4, q_sq2)
 
+    dm4_p, alpha4, dm4_v, a4entropy = dirmultreg_predict(q_sq2r, W4)
+    dm24_p, alpha24, dm24_v, a24entropy = dirmultreg_predict(q_sq2r, W24)
