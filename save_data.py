@@ -25,7 +25,7 @@ def class_to_str(cls):
     return str(cls).split('.')[-1][:-2]
 
 def save_for_ensemble(e_GP, train_features, train_labels, pred_features):
-    label_count = np.unique(train_labels.shape[0])
+    label_count = np.unique(train_labels).shape[0]
     t1 = datetime.now()
     model = e_GP()
     model.fit(train_features, train_labels, True)
