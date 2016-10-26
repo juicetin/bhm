@@ -2,7 +2,6 @@ SETUP="
 import numpy as np
 from ML.dir_mul.nicta.dirmultreg import dirmultreg_learn, dirmultreg_predict
 from utils.data_transform import features_squared_only
-# W4 = np.load('data/W4.npy')
 red_features = np.load('data/red_features.npy')
 f_sq2r = features_squared_only(red_features)
 query_sn = np.load('data/query_sn.npy')
