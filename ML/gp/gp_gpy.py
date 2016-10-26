@@ -90,15 +90,17 @@ class GPyC:
         # return np.concatenate(predict_results, axis=0)
         return np.hstack(predict_results)
 
+    # k(x_*, x_*) is the prior variance - http://www.tsc.uc3m.es/~fernando/l1.pdf
     def prior_variance(self, x):
 
         params = np.array([model.param_array for model in self.models])
-        averaged_params = np.average(params, axis=0)
-        f_errs = averaged_params[0]
-        n_errs = averaged_params[-1]
+        # averaged_params = np.average(params, axis=0)
+        f_errs = params[:,0][:,np.newaxis]
+        n_errs = params[:,-1][:,np.newaxis]
 
-        prior_var = f_errs**2 * np.exp([0] * x.shape[0]) + np.full(x.shape[0], n_errs**2)
-        return prior_var
+        # [0] because the (x_p-x_q)**2 in the kern for x_p=x_1 = 0**2
+        prior_var = f_errs**2 * np.exp([0] * x.shape[0]) + n_errs**2 * np.full(x.shape[0], 1)
+        return prior_var.T
 
 # HACKY - for use when models are saved to remove need for retraining
 def predict(x, models_shape=None, parallel=False, models=None, index_range=None, npy_name=None):

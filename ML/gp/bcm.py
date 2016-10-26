@@ -11,7 +11,7 @@ class BCM(GP_ensembles):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def predict(self, x, parallel=True, keep_probs=False):
+    def predict(self, x, parallel=True):
         gaussian_means, gaussian_variances = self.gp_means_vars(x, parallel=parallel)
 
         # These contain a row for each binary class case (OvR)
@@ -31,9 +31,4 @@ class BCM(GP_ensembles):
         bcm_variances = bcm_precisions**(-1)
         bcm_means = bcm_variances * np.sum(gaussian_precisions * gaussian_means, axis=0) # means
 
-        if self.gp_type == 'classification':
-            if keep_probs == True:
-                return bcm_means, bcm_variances
-            return np.argmax(bcm_means, axis=0)
-        elif self.gp_type == 'regression':
-            return bcm_means, bcm_variances
+        return bcm_means, bcm_variances

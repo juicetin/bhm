@@ -245,7 +245,6 @@ class GaussianProcess:
     ####################### PLSC #######################
     ####################################################
 
-    # k(x_*, x_*) is the prior variance - http://www.tsc.uc3m.es/~fernando/l1.pdf
     def prior_variance(self, x):
 
         if self.gp_type == 'classification':

@@ -10,7 +10,7 @@ class rBCM(GP_ensembles):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def predict(self, x, parallel=True, keep_probs=False):
+    def predict(self, x, parallel=True):
         gaussian_means, gaussian_variances = self.gp_means_vars(x, parallel=parallel)
 
         # These contain a row for each binary class case (OvR)
@@ -32,9 +32,4 @@ class rBCM(GP_ensembles):
         rbcm_variances = rbcm_precisions**(-1)
         rbcm_means = rbcm_variances * np.sum(betas * gaussian_precisions * gaussian_means, axis=0) # means
 
-        if self.gp_type == 'classification':
-            if keep_probs == True:
-                return rbcm_means, rbcm_variances
-            return np.argmax(rbcm_means, axis=0)
-        elif self.gp_type == 'regression':
-            return rbcm_means, rbcm_variances
+        return rbcm_means, rbcm_variances

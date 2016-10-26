@@ -3,12 +3,13 @@ from ML.helpers import partition_indexes
 
 import numpy as np
 import math
+import pdb
 
 class GP_ensembles():
     def __init__(self, expert_size=200):
         self.expert_size = expert_size
     
-    def fit(self, X, y):
+    def fit(self, X, y, parallel=False):
         # if type(y[0]) != np.int64:
         #     self.gp_type = 'regression'
         # else:
@@ -31,7 +32,7 @@ class GP_ensembles():
         gp_experts = np.full(expert_count, gp_gpy.GPyC(), dtype='object')
         idxs = partition_indexes(X_s.shape[0], expert_count)
         for gp_expert, (start, end) in zip(gp_experts, idxs):
-            gp_expert.fit(X_s[start:end], y_s[start:end], True)
+            gp_expert.fit(X_s[start:end], y_s[start:end], parallel=parallel)
         self.gp_experts = gp_experts
     
     # Returns the means and variances for each GP expert
@@ -43,8 +44,8 @@ class GP_ensembles():
         y_preds = np.array([gp_expert.predict(x, parallel=parallel) for gp_expert in self.gp_experts])
     
         # Extract means and variances
-        vars_gp = y_preds[:,1]
         means_gp = y_preds[:,0]
+        vars_gp = y_preds[:,1]
     
         return means_gp, vars_gp
 

@@ -11,7 +11,7 @@ class PoGPE(GP_ensembles):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def predict(self, x, parallel=True, keep_probs=False):
+    def predict(self, x, parallel=True):
         gaussian_means, gaussian_variances = self.gp_means_vars(x, parallel=parallel)
 
         # -1 : 8.4768 (100 iter), 9.3239 (100 iter), 8.42110 (100 iter), 8.3598 (100 iter)
@@ -24,10 +24,4 @@ class PoGPE(GP_ensembles):
         poe_variances = poe_precisions**(-1)
         poe_means = poe_variances * np.sum(gaussian_precisions * gaussian_means, axis=0)  # means
 
-        if keep_probs == True:
-            return poe_means, poe_variances
-
-        if self.gp_type == 'classification':
-            return np.argmax(poe_means, axis=0)
-        elif self.gp_type == 'regression':
-            return poe_means, poe_variances
+        return poe_means, poe_variances

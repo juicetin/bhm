@@ -1,7 +1,6 @@
 from ML.gp.gp import GaussianProcess
 from ML.helpers import partition_indexes
-# from ML.gp.gp_ensemble_estimators import GP_ensembles
-from ML.gp.gp_ensemble_estimators import GP_ensembles
+from ML.gp.gpy_ensemble_estimators import GP_ensembles
 
 import numpy as np
 import math
@@ -11,12 +10,12 @@ class GPoGPE(GP_ensembles):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def predict(self, x, parallel=True, keep_probs=False):
+    def predict(self, x, parallel=True):
         gaussian_means, gaussian_variances = self.gp_means_vars(x, parallel=parallel)
 
         # Expert contributions 
         expert_count = self.gp_experts.shape[0]
-        betas = np.full(x.shape[0], 1/expert_count)
+        betas = np.full(x.shape[0], 1/expert_count)[:,np.newaxis]
 
         gaussian_precisions = gaussian_variances ** (-1)
 
@@ -27,10 +26,4 @@ class GPoGPE(GP_ensembles):
         gpoe_variances = gpoe_precisions ** (-1)
         gpoe_means = gpoe_variances * np.sum(betas * gaussian_precisions * gaussian_means, axis=0)
 
-        if keep_probs == True:
-            return gpoe_means, gpoe_variances
-
-        if self.gp_type == 'classification':
-            return np.argmax(means_poe, axis=0)
-        elif self.gp_type == 'regression':
-            return gpoe_means, gpoe_variances
+        return gpoe_means, gpoe_variances
