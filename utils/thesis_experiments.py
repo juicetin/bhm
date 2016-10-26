@@ -446,3 +446,13 @@ def search_contiguous_confident_splits(preds):
         _, _, idxs = find_even_split_areas(q_preds, q_vars, bounds=[[0.1, 0.4], [0.3, 0.9]], split_labels=label_pair, check='preds')
         # vis.plot_multi_maps(coords, preds[0][idxs][:,label_pair],
 
+def test_naive_GP_time(train_features, train_labels, test_features):
+    gp = GPyC()
+    t1 = datetime.now()
+    gp.fit(train_features, train_labels, True)
+    t2 = datetime.now()
+    print('time taken to train on all training features: {}'.format(t2-t1))
+    gp4_p = gp.predict(test_features, True)
+    t3 = datetime.now()
+    print('time taken to predict all query points: {}'.format(t3-t2))
+    np.save('preds/gp4_p_fixed', gp4_p)
