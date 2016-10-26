@@ -17,6 +17,8 @@ from sklearn.cross_validation import LeaveOneOut
 from sklearn.cross_validation import StratifiedKFold
 from sklearn import datasets
 from sklearn.metrics import roc_auc_score
+from sklearn.metrics import f1_score
+from sklearn.metrics import accuracy_score
 from sklearn import neighbors
 from sklearn.preprocessing import PolynomialFeatures
 
@@ -544,8 +546,30 @@ def dm_test_norm_labels_vs_count_labels_training(features, labels, runs=10):
     results = np.array(results)
     return results
 
+def class_to_str(cls):
+    return str(cls).split('.')[-1][:-2]
+
 def dm_performance(f, l, reg=100):
     W = dirmultreg_learn(f, l, verbose=True, reg=reg)
     preds = dirmultreg_predict(f, W)
     avg_err = np.average(np.abs(preds[0] - l/l.sum(axis=1)[:,np.newaxis]))
     return avg_err
+
+def test_ensemble(e_GP, train_f, train_l, test_f, test_l, expert_size=200):
+    t1_model = datetime.now()
+    model = e_GP(expert_size=expert_size)
+    model.fit(train_f, train_l, True)
+    model_p = model.predict(test_f, True)
+    t2_model = datetime.now()
+    duration_model = t2_model - t1_model
+    acc = accuracy_score(test_l, model_p[0].argmax(axis=1))
+    fscore = f1_score(test_l, model_p[0].argmax(axis=1), average=None)
+    print('{} with {} labels took {}'.format(class_to_str(e_GP), model_p[0].shape[1], duration_model))
+    print('acc: {}, fscore: {}'.format(acc, np.average(fscore)))
+    del(model_p)
+
+def test_ensembles():
+    red_features, red_mlabels4, red_mlabels24, red_coords, red_scoords, \
+        red_sfeatures, red_slabels4, red_slabels24 = data.load_reduced_data()
+
+

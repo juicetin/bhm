@@ -1,5 +1,6 @@
 from ML.gp import gp_gpy
 from ML.helpers import partition_indexes
+from progressbar import Bar, Percentage, Counter, ProgressBar, ETA
 
 import numpy as np
 import math
@@ -15,7 +16,11 @@ class GP_ensembles():
         # else:
         #     self.gp_type = 'classification'
 
-        # self.X = X
+        self.labels_count = np.unique(y).shape[0]
+
+        # NOTE hacky fix here
+        if self.labels_count > 4:
+            self.labels_count = 24
 
         # self.num_classes = np.unique(y).shape[0]
     
@@ -31,9 +36,16 @@ class GP_ensembles():
         # Create and train all local GP experts
         gp_experts = np.full(expert_count, gp_gpy.GPyC(), dtype='object')
         idxs = partition_indexes(X_s.shape[0], expert_count)
-        for gp_expert, (start, end) in zip(gp_experts, idxs):
+        widgets=['Fitting: ', Bar(), ' ', Counter(), ' ', Percentage(), ' ', ETA()]
+        bar = ProgressBar(widgets=widgets, maxval=gp_experts.shape[0])
+        bar.start()
+        for i, gp_expert, (start, end) in zip(range(gp_experts.shape[0]), gp_experts, idxs):
+            bar.update(i)
             gp_expert.fit(X_s[start:end], y_s[start:end], parallel=parallel)
+        bar.finish()
         self.gp_experts = gp_experts
+
+        return self
     
     # Returns the means and variances for each GP expert
     def gp_means_vars(self, x, parallel=False):
@@ -41,7 +53,17 @@ class GP_ensembles():
         # Means, variances for each binary class case for each GP regressor (classifier)
         # Shape - (experts, 2, classes, data points)
         #   2 - 0-axis for means, 1-axis for variances
-        y_preds = np.array([gp_expert.predict(x, parallel=parallel) for gp_expert in self.gp_experts])
+
+        y_preds = np.zeros((self.gp_experts.shape[0], 2, x.shape[0], self.labels_count ))
+        widgets=['Predicting: ', Bar(), ' ', Counter(), ' ', Percentage(), ' ', ETA()]
+        bar = ProgressBar(widgets=widgets, maxval=self.gp_experts.shape[0])
+        bar.start()
+        for i in range(self.gp_experts.shape[0]):
+            bar.update(i)
+            y_preds[i] = self.gp_experts[i].predict(x, parallel=parallel)
+        bar.finish()
+
+        # y_preds = np.array([gp_expert.predict(x, parallel=parallel) for gp_expert in self.gp_experts])
     
         # Extract means and variances
         means_gp = y_preds[:,0]
