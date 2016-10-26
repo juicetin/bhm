@@ -291,7 +291,20 @@ def show_map(locations, labels, x_bins=None, y_bins=None, display=False, filenam
 
     print("Bulding image...")
     # plt.imshow(Z, extent=[x_min, x_max, y_min, y_max], origin='lower', cmap=cmap, vmin=vmin, vmax=vmax)
-    im = cur_fig.imshow(Z, extent=[x_min, x_max, y_min, y_max], origin='lower', vmin=vmin, vmax=vmax, cmap=cmap)
+
+    ###############
+    norm=None
+    uniq_C = np.unique(labels)
+    # Can also take an Nx3 or Nx4 array of rgb/rgba values - will need for 24 case hmmm
+    # cmap = colors.ListedColormap(['blue', 'cyan', 'yellow', 'red'])
+    if uniq_C.shape[0] > 4:
+        bounds=np.linspace(0,23,24)
+    else:
+        bounds=np.linspace(0,3,4)
+    norm = colors.BoundaryNorm(bounds, cmap.N)
+    ###############
+
+    im = cur_fig.imshow(Z, extent=[x_min, x_max, y_min, y_max], origin='lower', vmin=vmin, vmax=vmax, cmap=cmap, norm=norm)
 
     # Slightly hacky - unfortunately neeeded for 0-count argmaxs of 24 labels
     # if np.unique(labels).shape[0] < 5:
@@ -305,7 +318,8 @@ def show_map(locations, labels, x_bins=None, y_bins=None, display=False, filenam
     # plt.colorbar(cmap=cmap, norm=norm, spacing='Proportional', boundaries=bounds, format='%li')
     # mpl.colorbar.colorbar_factory(cur_fig, habitat_map)
     if in_ax == False:
-        plt.colorbar(spacing='Proportional', format='%li')
+        # plt.colorbar(ticks=range(np.unique(labels).shape[0]))
+        plt.colorbar(im, ticks=bounds, cmap=cmap, norm=norm)
 
     # Setting axis labels
     xlabel = 'UTM x-coordinate, zone 51S'
@@ -763,3 +777,42 @@ def plot_multiple_axes(points, labels = None, filename='multi_plots.pdf'):
         ax.scatter(np.arange(x), y, c=colors[i], s=3, lw=0)
     plt.savefig(filename)
     clear_plt(fig)
+
+def plot_training_with_colours(locations, labels, filename='training_plots.pdf'):
+    """
+    Plots a given set of x,y coordinates with corresponding labels.
+    Locations are given as a list of (x,y) tuples
+    """
+    x_min = locations[:,0].min()
+    x_max = locations[:,0].max()
+    y_min = locations[:,1].min()
+    y_max = locations[:,1].max()
+    plt.xlim(x_min, x_max)
+    plt.ylim(y_min, y_max)
+
+    colours4 = ['b', 'c', 'y', 'r']
+    colours = np.full(labels.shape[0], None, str)
+    # for c, cur_label in zip(colours4, np.unique(labels)):
+    #     cur_idxs = np.where(labels == cur_label)[0]
+    #     colours[cur_idxs] = c
+    plt.scatter(locations[:,0], locations[:,1], s=1, lw=0, c=labels, cmap=discrete_cmap(4, 'jet'))
+    
+    plt.colorbar(ticks=[2,8,4,9], spacing='Proportional')
+    plt.xlabel('UTM x-coordinate, zone 51S')
+    plt.ylabel('UTM y-coordinate, zone 51S')
+
+    plt.tight_layout()
+    plt.savefig(filename)
+    clear_plt()
+
+def discrete_cmap(N, base_cmap=None):
+    """Create an N-bin discrete colormap from the specified input map"""
+
+    # Note that if base_cmap is a string or None, you can simply do
+    #    return plt.cm.get_cmap(base_cmap, N)
+    # The following works for string, None, or a colormap instance:
+
+    base = plt.cm.get_cmap(base_cmap)
+    color_list = base(np.linspace(0, 1, N))
+    cmap_name = base.name + str(N)
+    return base.from_list(cmap_name, color_list, N)
