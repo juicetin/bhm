@@ -4,9 +4,14 @@ from sklearn.metrics import f1_score
 from sklearn.metrics import accuracy_score
 from ML.dir_mul.nicta.dirmultreg import dirmultreg_learn, dirmultreg_predict
 from ML.gp.gp_gpy import GPyC
+from ML.gp.poe import PoGPE
+from ML.gp.gpoe import GPoGPE
+from ML.gp.bcm import BCM
+from ML.gp.rbcm import rBCM
 from ML.gp.gp_multi_gpy import GPyMultiOutput
 from ML import pseudo_multioutput
 from ML import helpers
+import pdb
 
 def algo_module_to_str(algo):
     return str(algo()).split('(')[0]
@@ -21,15 +26,19 @@ def generate_cross_algo_print(*, algo_str, f1s, accs, label_cnt, auroc):
     latex_row += ' \\\\\n'
     return latex_row
 
+def is_GP_model(module):
+    valid_GP_models = np.array([GPyC, PoGPE, GPoGPE, BCM, rBCM])
+    return (module == valid_GP_models).any()
+
 def cross_validate_algo(features, labels, folds, algo, verbose=False):
     accuracies = []
     f1s = []
     # kf = cross_validation.KFold(n=len(features), n_folds=folds, shuffle=True, random_state=None)
-    kf = cross_validation.StratifiedKFold(n_splits=folds) # Prevent rounds with none of any given label - breaks AUC
+    kf = cross_validation.StratifiedKFold(labels, n_folds=folds) # Prevent rounds with none of any given label - breaks AUC
     count = 1
     algo_str = algo_module_to_str(algo)
-    # for train_index, test_index in kf:
-    for train_index, test_index in kf.split(features, labels):
+    for train_index, test_index in kf:
+    # for train_index, test_index in kf.split(features, labels):
         # print("Calculating part {} of {}".format(count, folds))
         count += 1
         # Break into training and test sets
@@ -40,13 +49,11 @@ def cross_validate_algo(features, labels, folds, algo, verbose=False):
         clf = algo()
         y_ = clf.fit(X_train, y_train).predict(X_test)
 
-        # Account for when dealing with GP (TODO any probablistic-type outputs)
+        #################### GP and GP ensemble handling ####################
         auroc=None
-        if type(clf) == GPyC:
+        if is_GP_model(algo):
             y_allpreds = y_[0]
             y_ = y_[0].argmax(axis=1)
-            for model in clf.models:
-                print(model)
             auroc = helpers.roc_auc_score_multi(y_test, y_allpreds)
 
         # Get scores
