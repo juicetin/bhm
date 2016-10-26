@@ -56,16 +56,16 @@ red_mlabels24 = red_mlabels24.argmax(axis=1)
 
 ###### PoGPE ######
 # save_for_ensemble(PoGPE, red_features, red_mlabels4, qp_red_features) # SAVED! redo for better plot though
-save_for_ensemble(PoGPE, red_features, red_mlabels24, qp_red_features)
+# save_for_ensemble(PoGPE, red_features, red_mlabels24, qp_red_features)
 
 ###### GPoGPE ######
 # save_for_ensemble(GPoGPE, red_features, red_mlabels4, qp_red_features) # SAVED!
-save_for_ensemble(GPoGPE, red_features, red_mlabels24, qp_red_features)
+# save_for_ensemble(GPoGPE, red_features, red_mlabels24, qp_red_features) # SAVED!
 
 # # ###### BCM ######
-# save_for_ensemble(BCM, red_features, red_mlabels4, qp_red_features)
+save_for_ensemble(BCM, red_features, red_mlabels4, qp_red_features)
 # save_for_ensemble(BCM, red_features, red_mlabels24, qp_red_features)
 # 
 # # ###### rBCM ######
-# save_for_ensemble(rBCM, red_features, red_mlabels4, qp_red_features)
+save_for_ensemble(rBCM, red_features, red_mlabels4, qp_red_features)
 # save_for_ensemble(rBCM, red_features, red_mlabels24, qp_red_features)
