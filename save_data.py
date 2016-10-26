@@ -26,6 +26,7 @@ def class_to_str(cls):
 
 def save_for_ensemble(e_GP, train_features, train_labels, pred_features):
     label_count = np.unique(train_labels).shape[0]
+    print('Now doing {} with {} labels'.format(class_to_str(e_GP), label_count))
     t1 = datetime.now()
     model = e_GP()
     model.fit(train_features, train_labels, True)
@@ -33,6 +34,7 @@ def save_for_ensemble(e_GP, train_features, train_labels, pred_features):
     np.save('preds/{}{}_p'.format(class_to_str(e_GP), label_count), preds)
     t2 = datetime.now()
     print('{} took {} to train and predict all query points with {} labels'.format(class_to_str(e_GP), t2-t1, label_count))
+    print()
 
 red_features, red_mlabels4, red_mlabels24, red_coords, red_scoords, \
     red_sfeatures, red_slabels4, red_slabels24 = load_data.load_reduced_data()
@@ -40,7 +42,7 @@ qp_red_features = np.load('data/red_qp_features.npy')
 
 test = True
 if test == True:
-    subset = 1000
+    subset = 400
     red_sfeatures = red_sfeatures[:subset]
     red_features = red_features[:subset]
     red_slabels4 = red_slabels4[:subset]
