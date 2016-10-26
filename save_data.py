@@ -40,7 +40,7 @@ red_features, red_mlabels4, red_mlabels24, red_coords, red_scoords, \
     red_sfeatures, red_slabels4, red_slabels24 = load_data.load_reduced_data()
 qp_red_features = np.load('data/red_qp_features.npy')
 
-test = True
+test = False
 if test == True:
     subset = 400
     red_sfeatures = red_sfeatures[:subset]
@@ -55,17 +55,17 @@ red_mlabels4 = red_mlabels4.argmax(axis=1)
 red_mlabels24 = red_mlabels24.argmax(axis=1)
 
 ###### PoGPE ######
-save_for_ensemble(PoGPE, red_features, red_mlabels4, qp_red_features)
+# save_for_ensemble(PoGPE, red_features, red_mlabels4, qp_red_features) # SAVED! redo for better plot though
 save_for_ensemble(PoGPE, red_features, red_mlabels24, qp_red_features)
 
 ###### GPoGPE ######
-save_for_ensemble(GPoGPE, red_features, red_mlabels4, qp_red_features)
+# save_for_ensemble(GPoGPE, red_features, red_mlabels4, qp_red_features) # SAVED!
 save_for_ensemble(GPoGPE, red_features, red_mlabels24, qp_red_features)
 
-# ###### BCM ######
-save_for_ensemble(BCM, red_features, red_mlabels4, qp_red_features)
-save_for_ensemble(BCM, red_features, red_mlabels24, qp_red_features)
-
-# ###### rBCM ######
-save_for_ensemble(rBCM, red_features, red_mlabels4, qp_red_features)
-save_for_ensemble(rBCM, red_features, red_mlabels24, qp_red_features)
+# # ###### BCM ######
+# save_for_ensemble(BCM, red_features, red_mlabels4, qp_red_features)
+# save_for_ensemble(BCM, red_features, red_mlabels24, qp_red_features)
+# 
+# # ###### rBCM ######
+# save_for_ensemble(rBCM, red_features, red_mlabels4, qp_red_features)
+# save_for_ensemble(rBCM, red_features, red_mlabels24, qp_red_features)
