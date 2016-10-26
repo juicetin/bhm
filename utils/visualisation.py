@@ -337,7 +337,7 @@ def show_map(locations, labels, x_bins=None, y_bins=None, display=False, filenam
     # Create colourbar here if single (integer) labels are being predicted
     if type(labels[0]) == np.int64:
         print('Creating colour bar...')
-        imshow_colorbar(im, '{}_colourbar.pdf'.format(filename))
+        imshow_colorbar(im, filename='{}_colourbar.pdf'.format(filename))
 
     return im
 
@@ -645,7 +645,7 @@ def plot_multi_maps(q_locations, q_preds, filename='dm_simplelabel_heatmap', acr
 
     if q_preds.shape[1] <= 4:
         print('Also creating colour bar...')
-        imshow_colorbar(im, filename)
+        imshow_colorbar(im, q_preds, filename=filename)
         clear_plt()
 
     # for i in range(q_preds.shape[1]):
@@ -741,11 +741,15 @@ def imshow_colorbar(im, filename):
     mpl.rcdefaults()
     clear_plt()
 
-def plot_multiple_axes(points, filename='multi_plots.pdf'):
+def plot_multiple_axes(points, labels = None, filename='multi_plots.pdf'):
     """
     Takes arguments (points, filename<optional>).
     Scatter plots data points in the shape (N, K), where N is the number of points.
     """
+    if labels != None and labels[0][0] == np.int64:
+        # need to make discrete colour bar
+        pass
+
     colors = ['c', 'b', 'r', 'y', 'g']
     fig = plt.figure()
     ax = fig.add_subplot(111)
