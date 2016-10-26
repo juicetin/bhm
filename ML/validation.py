@@ -49,16 +49,12 @@ def cross_validate_algo(features, labels, folds, algo, verbose=False):
         clf = algo()
         y_ = clf.fit(X_train, y_train).predict(X_test)
 
-        # Account for when dealing with GP (TODO any probablistic-type outputs)
+        #################### GP and GP ensemble handling ####################
         auroc=None
-        if is_GP_model(clf):
+        if is_GP_model(algo):
             y_allpreds = y_[0]
             y_ = y_[0].argmax(axis=1)
-            for model in clf.models:
-                print(model)
             auroc = helpers.roc_auc_score_multi(y_test, y_allpreds)
-
-        pdb.set_trace()
 
         # Get scores
         this_accuracy = accuracy_score(y_test, y_)
