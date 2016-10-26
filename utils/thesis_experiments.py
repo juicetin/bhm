@@ -5,6 +5,11 @@ from utils import load_data
 from ML.dir_mul import dm_mcmc
 from ML.gp.gp_gpy import GPyC
 from ML.gp import gp_multi_gpy as gpym
+from ML.gp.poe import PoGPE
+from ML.gp.gpoe import GPoGPE
+from ML.gp.bcm import BCM
+from ML.gp.rbcm import rBCM
+from datetime import datetime
 
 from ML import validation
 from sklearn.linear_model import LogisticRegression

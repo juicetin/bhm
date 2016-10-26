@@ -10,11 +10,12 @@ class GPyC:
     def __init__(self):
         pass
 
-    def fit_label_model(self, c, X, C, K): 
+    def fit_label_model(self, c, X, C, K, verbose=False): 
         labels = np.array([1 if c == label else 0 for label in C])[:,np.newaxis]
         m = GPy.models.GPRegression(X, labels, kernel=K.copy())
         m.optimize()
-        print('Finished optimising label {}'.format(c))
+        if verbose == True:
+            print('Finished optimising label {}'.format(c))
         return m
 
     def fit(self, X, C, parallel=False):
@@ -24,12 +25,16 @@ class GPyC:
         var = np.random.rand()
         l_scales = np.random.rand(X.shape[1])
         K = GPy.kern.RBF(input_dim=X.shape[1], variance=var, lengthscale=l_scales, ARD=True)
+
         uniq_C = np.unique(C)
+        # NOTE hacky fix for small datasets here!
+        if uniq_C.shape[0] > 4:
+            uniq_C = np.arange(24)
+
         self.models = []
         if parallel==True:
             args = [ (c, X, C, K) for c in uniq_C]
             pool = Pool(processes=uniq_C.shape[0])
-            print("Distributing GP per-class model fitting across {} processes...".format(uniq_C.shape[0]))
             self.models = pool.starmap(self.fit_label_model, args)
             pool.close()
             pool.join()
@@ -78,10 +83,11 @@ class GPyC:
         # Set up the parallel jobs on separate processes, to overcome 
         # Python's GIL for proper parallelisation
         nprocs = mp.cpu_count() - 1
+        # if nprocs > 4:
+        #     nprocs = 4
         jobs = partition_indexes(x.shape[0], nprocs)
         args = [(x[start:end], False) for start, end in jobs]
         pool = Pool(processes=nprocs)
-        print("Distributing predictions across {} processes...".format(nprocs))
         predict_results = pool.starmap(self.predict, args)
         pool.close()
         pool.join()
@@ -158,7 +164,6 @@ def predict_parallel(x, models_shape):
     jobs = partition_indexes(x.shape[0], nprocs)
     args = [(None, models_shape, False, None, [start, end], 'data/qp_red_features.npy') for start, end in jobs]
     pool = Pool(processes=nprocs)
-    print("Distributing predictions across {} processes...".format(nprocs))
     predict_results = pool.starmap(predict, args)
     pool.close()
     pool.join()

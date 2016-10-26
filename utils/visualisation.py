@@ -1,15 +1,17 @@
 import numpy as np
 from datetime import datetime
-import matplotlib as mpl
 
-import matplotlib as mpl
-from matplotlib import pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-from matplotlib.patches import Rectangle
-# from utils.benchmarks import dm_test_data
-import matplotlib.cm as cm
-import matplotlib as mpl
-from matplotlib import colors
+try:
+    import matplotlib as mpl
+    from matplotlib import pyplot as plt
+    from mpl_toolkits.mplot3d import Axes3D
+    from matplotlib.patches import Rectangle
+    # from utils.benchmarks import dm_test_data
+    import matplotlib.cm as cm
+    import matplotlib as mpl
+    from matplotlib import colors
+except:
+    print("Failed to import matplotlib stuff.")
 import math
 import pdb
 
