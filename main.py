@@ -215,8 +215,8 @@ if __name__ == "__main__":
         # f = pf.fit_transform(features_sn)
         f = features_sn
 
-    if config['load_query'] == True:
-        q_sq2 = np.load('data/q_sq2.npy')
+    # if config['load_query'] == True:
+    #     q_sq2 = np.load('data/q_sq2.npy')
         # q = query_sn
         # q_sq2 = data_transform.features_squared_only(query_sn)
         # res3 = benchmarks.dm_vs_det_stats(preds_dm, preds_gp)
