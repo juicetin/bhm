@@ -1,10 +1,30 @@
-https://transfer.sh/nT4UX/conda-list
-https://transfer.sh/ml3vM/gp-preds.zip # gp4_p, gp24_p, gp24_p, gp24_mp
-https://transfer.sh/maWKP/dm-mcmc-chains.zip
+wget https://transfer.sh/nT4UX/conda-list &
+wget https://transfer.sh/ml3vM/gp-preds.zip &
+wget https://transfer.sh/maWKP/dm-mcmc-chains.zip &
+wget https://repo.continuum.io/archive/Anaconda3-4.2.0-Linux-x86_64.sh &
+wget https://transfer.sh/4Fe0x/red-data.zip &
+wget https://transfer.sh/xS0Q2/query-sn.npy & 
+wget https://transfer.sh/wJhx1/qp-locations.npy & 
 
 ami-3bee4958
 
-sudo pacman -S zsh base-devel git 
+sudo pacman -Syy
+sudo pacman -S zsh base-devel git wget tmux unzip zip python-pyqt4
 ssh-keygen -t rsa -b 4096 -f $HOME/.ssh/id_rsa -C "justingling@gmail.com" -q -N ""
 eval $(ssh-agent -s)
 ssh-add
+sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"
+localectl set-locale LANG=en_AU.UTF-8
+
+wget https://github.com/jyting/arch-system/raw/master/.zshrc
+wget https://github.com/jyting/arch-system/raw/master/.vimrc
+wget https://github.com/jyting/arch-system/raw/master/.tmux.conf
+wget https://github.com/jyting/arch-system/raw/master/.aliasrc
+wget https://github.com/jyting/arch-system/raw/master/.exportrc
+https://github.com/jyting/arch-system/raw/master/.condarc
+
+chsh root -s /bin/zsh
+
+sudo pacman -Syyu
+
+bash Anaconda3-4.2.0-Linux-x86_64.sh
