@@ -3,7 +3,10 @@ from pandas import read_csv
 import pdb; import code
 import utm
 
-import matplotlib.pyplot as plt
+try:
+    import matplotlib.pyplot as plt
+except:
+    print("Failed to import matplotlib stuff.")
 from revrand import basis_functions as bases
 from ML.dir_mul.nicta.dirmultreg import dirmultreg_learn, dirmultreg_predict # originally yavanna
 from scipy.misc import logsumexp # originally yavanna
