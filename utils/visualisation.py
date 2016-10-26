@@ -337,9 +337,9 @@ def show_map(locations, labels, x_bins=None, y_bins=None, display=False, filenam
     plt.clf()
 
     # Create colourbar here if single (integer) labels are being predicted
-    if type(labels[0]) == np.int64:
-        print('Creating colour bar...')
-        imshow_colorbar(im, filename='{}_colourbar.pdf'.format(filename))
+    # if type(labels[0]) == np.int64:
+    #     print('Creating colour bar...')
+    #     imshow_colorbar(im, '{}_colourbar.pdf'.format(filename))
 
     return im
 
