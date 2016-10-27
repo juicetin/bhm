@@ -9,6 +9,7 @@ from ML.gp.poe import PoGPE
 from ML.gp.gpoe import GPoGPE
 from ML.gp.bcm import BCM
 from ML.gp.rbcm import rBCM
+from ML import helpers
 from datetime import datetime
 
 from ML import validation
@@ -333,15 +334,20 @@ def plot_map_with_variance_threshold(locations, predictions, variances, var_thre
     vis.plot_multi_maps(locations[idxs], predictions[idxs], offset=0, 
             filename='{}l-preds-{}var_limit'.format(predictions.shape[1], var_threshold))
 
-def dm_maps_from_chains(*, chains, coords, features):
-    if chains.shape[1] == 4:
+def dm_maps_from_chains(*, chains, coords, features, argmax=True):
+    if argmax==True:
+        plot_map_func = vis.show_map
+    elif chains.shape[1] == 4:
         plot_map_func = vis.plot_multi_maps
     elif chains.shape[1] == 24:
         plot_map_func = vis.plot_dm_per_label_maps_multi # (q_locations, q_preds, filename='dm_alllabels_heatmap')
     for i, chain in enumerate(chains):
         print('creating {}-th map'.format(i))
         preds = dirmultreg_predict(features, chain)[0]
-        plot_map_func(coords, preds, filename='dm{}_images/dm_heatmap_{}'.format(preds.shape[1], i))
+        if argmax == True:
+            plot_map_func(coords, preds.argmax(axis=1), filename='dm{}_argmax_images/dm_heatmap_{}'.format(preds.shape[1], i))
+        else:
+            plot_map_func(coords, preds, filename='dm{}_images/dm_heatmap_{}'.format(preds.shape[1], i))
 
 def calc_all_det_preds(features, l4, l24, query):
     algos = [LogisticRegression, SVC, KNeighborsClassifier, RandomForestClassifier]
@@ -456,3 +462,10 @@ def test_naive_GP_time(train_features, train_labels, test_features):
     t3 = datetime.now()
     print('time taken to predict all query points: {}'.format(t3-t2))
     np.save('preds/gp4_p_fixed', gp4_p)
+
+def plot_entropy(coords, entropies, threshold=-1e-3):
+    idxs = helpers.discard_outlier_entropies(entropies, threshold)
+    print('{}% of points discarded'.format((1-idxs.shape[0]/coords.shape[0])*100))
+    norm_entr = helpers.normalise_entropies(entropies[idxs])
+    vis.show_map(coords[idxs], norm_entr, filename='entropy_map')
+    return norm_entr

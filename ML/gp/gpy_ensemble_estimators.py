@@ -70,5 +70,5 @@ class GP_ensembles():
         means_gp = y_preds[:,0]
         vars_gp = y_preds[:,1]
     
-        return sigmoid(means_gp), vars_gp
+        return means_gp, vars_gp
 
