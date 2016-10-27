@@ -31,7 +31,7 @@ def save_for_ensemble(e_GP, train_features, train_labels, pred_features):
     model = e_GP()
     model.fit(train_features, train_labels, True)
     preds = model.predict(pred_features, True)
-    np.save('preds/{}{}_p'.format(class_to_str(e_GP), label_count), preds)
+    np.save('/{}{}_p'.format(class_to_str(e_GP), label_count), preds)
     t2 = datetime.now()
     print('{} took {} to train and predict all query points with {} labels'.format(class_to_str(e_GP), t2-t1, label_count))
     print()
@@ -55,7 +55,7 @@ red_mlabels4 = red_mlabels4.argmax(axis=1)
 red_mlabels24 = red_mlabels24.argmax(axis=1)
 
 ###### PoGPE ######
-# save_for_ensemble(PoGPE, red_features, red_mlabels4, qp_red_features) # SAVED! redo for better plot though
+save_for_ensemble(PoGPE, red_features, red_mlabels4, qp_red_features) # SAVED! redo for better plot though
 # save_for_ensemble(PoGPE, red_features, red_mlabels24, qp_red_features)
 
 ###### GPoGPE ######
@@ -63,9 +63,9 @@ red_mlabels24 = red_mlabels24.argmax(axis=1)
 # save_for_ensemble(GPoGPE, red_features, red_mlabels24, qp_red_features) # SAVED!
 
 # # ###### BCM ######
-save_for_ensemble(BCM, red_features, red_mlabels4, qp_red_features)
+# save_for_ensemble(BCM, red_features, red_mlabels4, qp_red_features)
 # save_for_ensemble(BCM, red_features, red_mlabels24, qp_red_features)
 # 
 # # ###### rBCM ######
-save_for_ensemble(rBCM, red_features, red_mlabels4, qp_red_features)
+# save_for_ensemble(rBCM, red_features, red_mlabels4, qp_red_features)
 # save_for_ensemble(rBCM, red_features, red_mlabels24, qp_red_features)

@@ -11,4 +11,4 @@
 * [FIXED] redo GP predictions - hyperparameters should NOT all be 1
     + didn't optimize gpy model, assumption that it was executed on calling predict was incorrect
 * do 'subsampling' of the multi-label data to even out distributions similar to how the 1000 indices for GP Regression was originally done - may improve performance
-
+* use LISTEDCOLORMAP to get colour bars working properly with discrete labels!
