@@ -1,6 +1,7 @@
 from ML.gp import gp_gpy
 from ML.helpers import partition_indexes
 from progressbar import Bar, Percentage, Counter, ProgressBar, ETA
+from ML.helpers import sigmoid
 
 import numpy as np
 import math
@@ -69,5 +70,5 @@ class GP_ensembles():
         means_gp = y_preds[:,0]
         vars_gp = y_preds[:,1]
     
-        return means_gp, vars_gp
+        return sigmoid(means_gp), vars_gp
 
