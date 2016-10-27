@@ -63,7 +63,10 @@ def cross_validate_algo(features, labels, folds, algo, verbose=False):
         f1s.append(np.average(this_f1))
 
         if verbose == True:
-            print("This round's acc: {}, f1: {}".format(this_accuracy, this_f1))
+            round_str = "This round's acc: {}, f1: {}, f1 avg: {}".format(this_accuracy, this_f1, np.average(this_f1))
+            if auroc != None:
+                round_str += ", auroc: {}, auroc avg: {}".format(auroc, np.average(auroc))
+            print(round_str)
 
         del(clf)
 
