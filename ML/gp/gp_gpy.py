@@ -106,6 +106,7 @@ class GPyC:
 
         # [0] because the (x_p-x_q)**2 in the kern for x_p=x_1 = 0**2
         prior_var = f_errs**2 * np.exp([0] * x.shape[0]) + n_errs**2 * np.full(x.shape[0], 1)
+        # prior_var = np.ones((f_errs.shape[0], x.shape[0]))
         return prior_var.T
 
 # HACKY - for use when models are saved to remove need for retraining
