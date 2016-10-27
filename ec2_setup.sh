@@ -1,4 +1,5 @@
-ami-3bee4958
+#!/bin/bash
+# ami-3bee4958
 
 sudo pacman -S reflector
 sudo reflector --verbose -p http --sort rate --save /etc/pacman.d/mirrorlist
