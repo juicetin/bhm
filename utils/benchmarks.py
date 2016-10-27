@@ -30,6 +30,7 @@ from ML.logistic_regression import lr
 
 from ML import helpers
 from ML.gp.gp import GaussianProcess
+from ML.gp.gp_gpy import GPyC
 from ML.gp.poe import PoGPE
 from ML.gp.gpoe import GPoGPE
 from ML.gp.bcm import BCM
@@ -568,8 +569,33 @@ def test_ensemble(e_GP, train_f, train_l, test_f, test_l, expert_size=200):
     print('acc: {}, fscore: {}'.format(acc, np.average(fscore)))
     del(model_p)
 
-def test_ensembles():
+def test_gp_ensembles(folds=10):
     red_features, red_mlabels4, red_mlabels24, red_coords, red_scoords, \
         red_sfeatures, red_slabels4, red_slabels24 = data.load_reduced_data()
 
+    result_strs = []
 
+    result_strs.append(cross_validate_algo(red_features, red_mlabels4.argmax(axis=1), folds, PoGPE, verbose=True))
+    result_strs.append(cross_validate_algo(red_features, red_mlabels4.argmax(axis=1), folds, GPoGPE, verbose=True))
+    result_strs.append(cross_validate_algo(red_features, red_mlabels4.argmax(axis=1), folds, BCM, verbose=True))
+    result_strs.append(cross_validate_algo(red_features, red_mlabels4.argmax(axis=1), folds, rBCM, verbose=True))
+
+    result_strs.append(cross_validate_algo(red_features, red_mlabels24.argmax(axis=1), folds, PoGPE, verbose=True))
+    result_strs.append(cross_validate_algo(red_features, red_mlabels24.argmax(axis=1), folds, GPoGPE, verbose=True))
+    result_strs.append(cross_validate_algo(red_features, red_mlabels24.argmax(axis=1), folds, BCM, verbose=True))
+    result_strs.append(cross_validate_algo(red_features, red_mlabels24.argmax(axis=1), folds, rBCM, verbose=True))
+    
+    for res in result_strs:
+        print(res)
+    return result_strs
+
+def test_naive_GP_time(train_features, train_labels, test_features):
+    gp = GPyC()
+    t1 = datetime.now()
+    gp.fit(train_features, train_labels, True)
+    t2 = datetime.now()
+    print('time taken to train on all training features: {}'.format(t2-t1))
+    gp4_p = gp.predict(test_features, True)
+    t3 = datetime.now()
+    print('time taken to predict all query points: {}'.format(t3-t2))
+    np.save('preds/gp4_p_fixed', gp4_p)
