@@ -16,9 +16,8 @@ wget https://github.com/jyting/arch-system/raw/master/.tmux.conf
 wget https://github.com/jyting/arch-system/raw/master/.aliasrc
 wget https://github.com/jyting/arch-system/raw/master/.exportrc
 wget https://github.com/jyting/arch-system/raw/master/.condarc
-
-
 wget https://transfer.sh/nT4UX/conda-list &
+
 wget https://transfer.sh/4Fe0x/red-data.zip &
 wget https://transfer.sh/xS0Q2/query-sn.npy & 
 wget https://transfer.sh/wJhx1/qp-locations.npy & 
@@ -33,3 +32,6 @@ conda install --file $HOME/conda-list -n root
 
 wget https://transfer.sh/ml3vM/gp-preds.zip &
 wget https://transfer.sh/maWKP/dm-mcmc-chains.zip &
+
+git clone git@github.com:jyting/bhm.git
+https://transfer.sh/rDt4E/.env

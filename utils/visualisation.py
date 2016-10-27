@@ -49,7 +49,10 @@ def plot_gp_stats(points, display=False, filename='gp_stats.pdf'):
     clear_plt()
 
 def scatter_array(points, display=False, filename='scatterplot.pdf'):
-    plt.scatter(np.arange(points.shape[0]), points)
+    fig, ax = plt.subplots()
+    ax.scatter(np.arange(points.shape[0]), points, s=2, lw=0)
+    ax.get_yaxis().get_major_formatter().set_useOffset(False)
+    ax.set_ylim((points.min(), points.max()))
     if display == False:
         plt.savefig(filename)
     else:
@@ -294,14 +297,14 @@ def show_map(locations, labels, x_bins=None, y_bins=None, display=False, filenam
 
     ###############
     norm=None
-    uniq_C = np.unique(labels)
+    # uniq_C = np.unique(labels)
     # Can also take an Nx3 or Nx4 array of rgb/rgba values - will need for 24 case hmmm
     # cmap = colors.ListedColormap(['blue', 'cyan', 'yellow', 'red'])
-    if uniq_C.shape[0] > 4:
-        bounds=np.linspace(0,23,24)
-    else:
-        bounds=np.linspace(0,3,4)
-    norm = colors.BoundaryNorm(bounds, cmap.N)
+    # if uniq_C.shape[0] > 4:
+    #     bounds=np.linspace(0,23,24)
+    # else:
+    #     bounds=np.linspace(0,3,4)
+    # norm = colors.BoundaryNorm(bounds, cmap.N)
     ###############
 
     im = cur_fig.imshow(Z, extent=[x_min, x_max, y_min, y_max], origin='lower', vmin=vmin, vmax=vmax, cmap=cmap, norm=norm)
@@ -318,8 +321,12 @@ def show_map(locations, labels, x_bins=None, y_bins=None, display=False, filenam
     # plt.colorbar(cmap=cmap, norm=norm, spacing='Proportional', boundaries=bounds, format='%li')
     # mpl.colorbar.colorbar_factory(cur_fig, habitat_map)
     if in_ax == False:
-        # plt.colorbar(ticks=range(np.unique(labels).shape[0]))
-        plt.colorbar(im, ticks=bounds, cmap=cmap, norm=norm)
+        uniq = np.unique(labels).shape[0]
+        if uniq <= 24:
+            plt.colorbar(ticks=range(uniq))
+        else:
+            plt.colorbar()
+        # plt.colorbar(im, ticks=bounds, cmap=cmap, norm=norm)
 
     # Setting axis labels
     xlabel = 'UTM x-coordinate, zone 51S'
@@ -661,7 +668,7 @@ def plot_multi_maps(q_locations, q_preds, filename='dm_simplelabel_heatmap', acr
 
     if q_preds.shape[1] <= 4:
         print('Also creating colour bar...')
-        imshow_colorbar(im, q_preds, filename=filename)
+        imshow_colorbar(im, filename=filename)
         clear_plt()
 
     # for i in range(q_preds.shape[1]):

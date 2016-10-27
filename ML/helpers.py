@@ -7,6 +7,8 @@ from sklearn.metrics import roc_auc_score
 from sklearn.cross_validation import StratifiedShuffleSplit
 from sklearn.metrics import mean_squared_error
 
+from sklearn.preprocessing import scale, normalize
+
 def partition_indexes(length, blocks):
     block_size = int(length/blocks)
     idxs = []
@@ -78,3 +80,10 @@ def sqeucl_dist(x, xs):
         2), axis=2)
 
     return dist_matrix
+
+def discard_outlier_entropies(entropies, threshold=-1e-2):
+    norm_entr = normalise_entropies(entropies)
+    return np.where(norm_entr >= threshold)[1]
+
+def normalise_entropies(entropies):
+    return normalize(entropies/(entropies.max()-entropies.min()).reshape(1, -1))
