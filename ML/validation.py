@@ -20,7 +20,7 @@ def generate_cross_algo_print(*, algo_str, f1s, accs, label_cnt, auroc):
     # return generate_cross_algo_print(algo_str, f1s, accuracies, uniq_labels)
     f1_avg = np.around(np.average(f1s), decimals=5)
     acc_avg = np.around(np.average(accs), decimals=5)
-    latex_row = '{} & {} & {}'format(algo_str, f1_avg, acc_avg)
+    latex_row = '{} & {} & {}'.format(algo_str, f1_avg, acc_avg)
     if (auroc != None):
         latex_row += '& {}'.format(auroc)
     latex_row += '& {}\\\\n'.format(label_cnt + ' labels')
