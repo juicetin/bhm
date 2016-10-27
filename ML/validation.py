@@ -2,6 +2,7 @@ import numpy as np
 from sklearn import cross_validation
 from sklearn.metrics import f1_score
 from sklearn.metrics import accuracy_score
+from sklearn.model_selection import StratifiedShuffleSplit
 from ML.dir_mul.nicta.dirmultreg import dirmultreg_learn, dirmultreg_predict
 from ML.gp.gp_gpy import GPyC
 from ML.gp.poe import PoGPE
@@ -12,6 +13,24 @@ from ML.gp.gp_multi_gpy import GPyMultiOutput
 from ML import pseudo_multioutput
 from ML import helpers
 import pdb
+
+def get_even_split(labels, threshold=20):
+    bins = np.bincount(labels)
+    per_label = int(0.9 * bins.min())
+    if per_label < threshold:
+        raise ValueError('each labl requires at least {} instances! Readjust/aggregate data to meet this requirement.'.format(threshold))
+    train_idxs = []
+    for i in range(bins.shape[0]):
+        cur_label_idxs = np.where(labels == i)[0]
+        np.random.shuffle(cur_label_idxs)
+        train_idxs.append(cur_label_idxs[:per_label])
+    train_idxs = np.concatenate(train_idxs)
+
+    set(train_idxs)
+    range(labels.shape[0])
+    set(range(labels.shape[0]))
+    test_idxs = np.array(list(set(range(labels.shape[0])) - set(train_idxs)))
+    return train_idxs, test_idxs
 
 def algo_module_to_str(algo):
     return str(algo()).split('(')[0]
