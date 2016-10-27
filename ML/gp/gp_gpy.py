@@ -19,7 +19,7 @@ class GPyC:
             print('Finished optimising label {}'.format(c))
         return m
 
-    def fit(self, X, C, parallel=False):
+    def fit(self, X, C, parallel=True):
         """
         Fit the GPy-wrapper classifier 
         """
@@ -48,7 +48,7 @@ class GPyC:
         self.models = np.array(self.models)
         return self
 
-    def predict(self, x, parallel=False):
+    def predict(self, x, parallel=True):
         """
         Make predictions using the GPy-wrapper classifier
         """
