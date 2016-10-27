@@ -1,4 +1,5 @@
-ami-3bee4958
+#!/bin/bash
+# ami-3bee4958
 
 sudo pacman -S reflector
 sudo reflector --verbose -p http --sort rate --save /etc/pacman.d/mirrorlist
@@ -10,6 +11,7 @@ eval $(ssh-agent -s)
 ssh-add
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"
 localectl set-locale LANG=en_AU.UTF-8
+
 wget https://github.com/jyting/arch-system/raw/master/.zshrc
 wget https://github.com/jyting/arch-system/raw/master/.vimrc
 wget https://github.com/jyting/arch-system/raw/master/.tmux.conf
@@ -26,12 +28,11 @@ chsh root -s /bin/zsh
 
 sudo pacman -Syyu
 
-wget https://repo.continuum.io/archive/Anaconda3-4.2.0-Linux-x86_64.sh &
+wget https://transfer.sh/saA3U/anaconda3-4.2.0-linux-x86-64.sh &
 bash Anaconda3-4.2.0-Linux-x86_64.sh
 conda install --file $HOME/conda-list -n root
 
-wget https://transfer.sh/ml3vM/gp-preds.zip &
-wget https://transfer.sh/maWKP/dm-mcmc-chains.zip &
-
 git clone git@github.com:jyting/bhm.git
 https://transfer.sh/rDt4E/.env
+# wget https://transfer.sh/ml3vM/gp-preds.zip &
+# wget https://transfer.sh/maWKP/dm-mcmc-chains.zip &
