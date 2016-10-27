@@ -27,7 +27,7 @@ chsh root -s /bin/zsh
 
 sudo pacman -Syyu
 
-wget https://repo.continuum.io/archive/Anaconda3-4.2.0-Linux-x86_64.sh &
+wget https://transfer.sh/saA3U/anaconda3-4.2.0-linux-x86-64.sh &
 bash Anaconda3-4.2.0-Linux-x86_64.sh
 conda install --file $HOME/conda-list -n root
 
