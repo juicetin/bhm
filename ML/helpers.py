@@ -25,10 +25,9 @@ def regression_score(y_true, y_pred):
     return mean_squared_error(y_true, y_pred)
 
 def roc_auc_score_multi(y_actuals, y_preds):
-    print(y_preds.shape)
 
     # Calculate AUROC for each each binary class case
-    aurocs = np.zeros(y_preds.shape[0])
+    aurocs = np.zeros(y_preds.shape[1])
     for cur_class in range(y_preds.shape[1]):
         # Compare class *i* with the rest
         cur_y_actual = np.copy(y_actuals)
@@ -36,7 +35,6 @@ def roc_auc_score_multi(y_actuals, y_preds):
         cur_y_actual[np.where(cur_y_actual != -1)] = 1
         try:
             cur_auroc = roc_auc_score(cur_y_actual, y_preds[:,cur_class])
-            print('success')
         except ValueError:
             print("AUC score derp")
             pdb.set_trace()

@@ -3,6 +3,7 @@ import numpy as np
 import multiprocessing as mp
 from multiprocessing import Pool
 from ML.helpers import partition_indexes
+from ML.helpers import sigmoid
 from progressbar import ProgressBar
 import pdb
 
@@ -73,7 +74,7 @@ class GPyC:
                 all_vars[:,i]  = gp_vars.flatten().astype(np.float64)
 
         # The transpose here is to match the output of the Dirichlet Multinomial stuff
-        return np.array((all_preds, all_vars))
+        return np.array((sigmoid(all_preds), all_vars))
 
     def predict_parallel(self, x):
         """
