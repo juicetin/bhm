@@ -72,8 +72,9 @@ class GaussianProcess:
     def dist(self, x1, x2, l_scales):
         # Dividing by length scale first before passing into cdist to
         #   accounts for different length scale for each dimension
-        l_scales = l_scales[:,np.newaxis]
-        return cdist(x1/l_scales.T, x2/l_scales.T, 'sqeuclidean')
+        if type(l_scales) == np.ndarray:
+            l_scales = l_scales[:,np.newaxis].T
+        return cdist(x1/l_scales, x2/l_scales, 'sqeuclidean')
 
     def K_se(self, x1, x2, f_err, l_scales):
         m = self.dist(x1, x2, l_scales)
@@ -181,11 +182,18 @@ class GaussianProcess:
 
         # Assign hyperparameters and other calculated variables
         if L==None and alpha==None and f_err==None and l_scales==None:
-            L = self.L
-            alpha = self.alpha
             f_err = self.f_err
             l_scales = self.l_scales
             n_err = self.n_err
+            try:
+                L = self.L
+                alpha = self.alpha
+            except AttributeError:
+                print("L and alpha hadn't been calculated yet")
+                self.L = self.L_create(self.X, f_err, l_scales, n_err)
+                self.alpha = linalg.solve(self.L.T, (linalg.solve(self.L, self.y))) # save for use with derivative func
+                L = self.L
+                alpha = self.alpha
 
         # f_star = k_star.T.dot(alpha)
         # v = np.linalg.solve(L, k_star)

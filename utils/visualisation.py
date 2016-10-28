@@ -14,8 +14,46 @@ except:
     print("Failed to import matplotlib stuff.")
 import math
 import pdb
+from ML.gp import gp
 
 from utils.downsample import fixed_grid_blocksize
+
+def plot_illustrative_gp_hparams(filename='gp_sample_plot.pdf'):
+    def f(x):
+        return np.sin(x) + np.random.normal(scale=0.3, size=len(x))[:,np.newaxis]
+    x = np.linspace(1, 10, 70).reshape(-1, 1)
+    y = f(x)
+
+    var = 1
+    l_scale=1
+    gpr = gp.GaussianProcess()
+    gpr.fit(x, y)
+    gpr.f_err = 1
+    gpr.l_scales = 1
+    gpr.n_err = 0.1
+    y_, _ = gpr.predict_regression(x)
+
+    gpr = gp.GaussianProcess()
+    gpr.fit(x, y)
+    gpr.f_err = 1
+    gpr.l_scales = 0.3
+    gpr.n_err = 0.1
+    y_2, _ = gpr.predict_regression(x)
+
+    gpr = gp.GaussianProcess()
+    gpr.fit(x, y)
+    gpr.f_err = 1
+    gpr.l_scales = 3
+    gpr.n_err = 0.1
+    y_3, _ = gpr.predict_regression(x)
+
+    plt.scatter(x, y)
+    plt.scatter(x, y_, c='r')
+    plt.scatter(x, y_2, c='g')
+    plt.scatter(x, y_3, c='c')
+    plt.show()
+    plt.savefig(filename)
+    clear_plt()
 
 def plot_dm_stats(points, display=False, filename='dm_stats.pdf'):
     axes = points.shape[1]
@@ -288,9 +326,9 @@ def show_map(locations, labels, x_bins=None, y_bins=None, display=False, filenam
     in_ax = False if ax == None else True
 
     print("Setting colourbar (legend)...")
-    cmap = cm.jet
-    cmaplist = [cmap(i) for i in range(cmap.N)]
-    cmap = cmap.from_list('custom cmap', cmaplist, cmap.N)
+    cmap = cm.viridis
+    # cmaplist = [cmap(i) for i in range(cmap.N)]
+    # cmap = cmap.from_list('custom cmap', cmaplist, cmap.N)
 
     print("Bulding image...")
     # plt.imshow(Z, extent=[x_min, x_max, y_min, y_max], origin='lower', cmap=cmap, vmin=vmin, vmax=vmax)
@@ -298,8 +336,8 @@ def show_map(locations, labels, x_bins=None, y_bins=None, display=False, filenam
     ###############
     norm=None
     # uniq_C = np.unique(labels)
-    # Can also take an Nx3 or Nx4 array of rgb/rgba values - will need for 24 case hmmm
-    # cmap = colors.ListedColormap(['blue', 'cyan', 'yellow', 'red'])
+    # # Can also take an Nx3 or Nx4 array of rgb/rgba values - will need for 24 case hmmm
+    # # cmap = colors.ListedColormap(['blue', 'cyan', 'yellow', 'red'])
     # if uniq_C.shape[0] > 4:
     #     bounds=np.linspace(0,23,24)
     # else:
@@ -325,8 +363,8 @@ def show_map(locations, labels, x_bins=None, y_bins=None, display=False, filenam
         if uniq <= 24:
             plt.colorbar(ticks=range(uniq))
         else:
-            plt.colorbar()
-        # plt.colorbar(im, ticks=bounds, cmap=cmap, norm=norm)
+            # plt.colorbar()
+            plt.colorbar(im, ticks=bounds, cmap=cmap, norm=norm)
 
     # Setting axis labels
     xlabel = 'UTM x-coordinate, zone 51S'

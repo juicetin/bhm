@@ -36,6 +36,8 @@ cd data/
 wget https://transfer.sh/4Fe0x/red-data.zip &
 wget https://transfer.sh/xS0Q2/query-sn.npy & 
 wget https://transfer.sh/wJhx1/qp-locations.npy & 
+cd ../ && mkdir preds && cd preds
+https://transfer.sh/51obg/gp4-allpreds.npy
 
 cd /usr/share/terminfo/r/
 wget https://transfer.sh/ROd2n/rxvt-unicode
