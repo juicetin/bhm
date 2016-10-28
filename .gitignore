@@ -9,6 +9,11 @@
 hons.vim
 .session.vim
 tmp_images/**
+dm24_argmax_images/*
+dm24_images/*
+dm4_images/*
+mcmc_db/*
+preds/*
 data/*
 
 # Byte-compiled / optimized / DLL files
