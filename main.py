@@ -305,8 +305,10 @@ if __name__ == "__main__":
     # thesis_experiments.det_maps(f_sq2, red_mlabels4, q_sq2)
 
     print('dm4 preds')
-    W4 = dirmultreg_learn(f_sq2, l4_norm, reg=100)
+    # W4 = dirmultreg_learn(f_sq2, l4_norm, reg=100)
+    W4 = dirmultreg_learn(f_sq2, red_mlabels4, reg=100)
     dm4_p, alpha4, dm4_v, a4entropy = dirmultreg_predict(q_sq2r, W4)
     print('dm24 preds')
-    W24 = dirmultreg_learn(f_sq2, l24_norm, reg=100)
+    # W24 = dirmultreg_learn(f_sq2, l24_norm, reg=100)
+    W24 = dirmultreg_learn(f_sq2, red_mlabels24, reg=100)
     dm24_p, alpha24, dm24_v, a24entropy = dirmultreg_predict(q_sq2r, W24)

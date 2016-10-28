@@ -81,9 +81,64 @@ def sqeucl_dist(x, xs):
 
     return dist_matrix
 
+def tune_entropies_better_spread(entropies, threshold, rungs=5, stepsize=100):
+    """
+    Adjusts the outlier upper and lower bound entropies to have more reasonable values, by
+    readjusting entropy values outside the threshold in 'rungs'.
+    """
+    # Get valid indexes strictly within threshold
+    new_entropies = np.copy(entropies)
+    def scale(i):
+        return 1+(i/rungs**2)
+
+    # Tune entropies outside threshold by groups increasing super-linearly
+    # For all but the final rung, replace all entropies with their rung-border
+    for i in np.arange(1,rungs):
+        cur_boundary = threshold+stepsize*i**2
+        prev_boundary = threshold+stepsize*(i-1)**2
+
+        new_lower = entropies >= -cur_boundary
+        prev_lower = entropies < -prev_boundary
+
+        new_upper = entropies <= cur_boundary
+        prev_upper = entropies > prev_boundary
+
+        lower_idxs = np.where(new_lower & prev_lower)[0]
+        upper_idxs = np.where(new_upper & prev_upper)[0]
+
+        new_boundary_value = threshold*scale(i)
+        print(new_boundary_value)
+        new_entropies[lower_idxs] = -new_boundary_value
+        new_entropies[upper_idxs] = new_boundary_value
+
+    final_boundary = threshold*scale(rungs)
+    print(final_boundary)
+    final_lower_idxs = np.where(entropies < -final_boundary)[0]
+    final_upper_idxs = np.where(entropies > final_boundary)[0]
+    new_entropies[final_lower_idxs] = -final_boundary
+    new_entropies[final_upper_idxs] = final_boundary
+
+    print('The final boundary was: {}, and contained {} elements'.format(final_boundary, final_lower_idxs.shape[0]))
+
+    return new_entropies
+
+
 def discard_outlier_entropies(entropies, threshold=-1e-2):
-    norm_entr = normalise_entropies(entropies)
-    return np.where(norm_entr >= threshold)[1]
+    """
+    Return the indices of a list of entropies that lie within a given threshold.
+    Values of x over 1 are considered as the 'absolute' entropy values, where the bounds [-x, x]
+    are returned, whereas those under one filter the normalised version. Basic tests seem
+    to show that filtering the normalised version still doesn't prevent clustering of points very
+    well, resulting in entropy maps that are almost consistently a single value (or a minutely
+    small range of values).
+    """
+    if threshold >= 1:
+        idxs = np.where((entropies>-threshold) & (entropies<threshold))[0]
+    else:
+        norm_entr = normalise_entropies(entropies)
+        idxs = np.where(norm_entr >= threshold)[1]
+    print('{}% of points kept'.format((idxs.shape[0]/entropies.shape[0]*100)))
+    return idxs
 
 def normalise_entropies(entropies):
     return normalize(entropies/(entropies.max()-entropies.min()).reshape(1, -1))
