@@ -469,3 +469,12 @@ def plot_entropy(coords, entropies, threshold=-1e-3):
     norm_entr = helpers.normalise_entropies(entropies[idxs])
     vis.show_map(coords[idxs], norm_entr, filename='entropy_map')
     return norm_entr
+
+def map_many_entropy_thresholds(coords, entropies, *, labels):
+    for threshold in np.arange(10, 20000, 10):
+        idxs = helpers.discard_outlier_entropies(entropies, threshold)
+        vis.show_map(coords[idxs], helpers.normalise_entropies(entropies[idxs]), filename='dm{}_entropies_t{}'.format(labels, threshold))
+
+def final_entropy_maps(cooords, entr4, entr24):
+    new_entr4 = helpers.tune_entropies_better_spread(entr4, 200, rungs=5, stepsize=100)
+    vis.show_map(coords, new_entr4, filename='dm4_entropy_map')
