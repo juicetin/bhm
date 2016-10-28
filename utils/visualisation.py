@@ -627,7 +627,7 @@ def plot_multi_maps(q_locations, q_preds, filename='dm_simplelabel_heatmap', acr
     Plots heatmap for each label in data
     """
     dims = q_preds.shape[1]
-    axs, fig, big_ax = generate_subplots(rows=down, columns=across, actual_count=dims, title_list=None, with_fig=True, with_big_ax=True)
+    axs, fig, big_ax = generate_subplots(rows=down, columns=across, actual_count=dims, title_list=title_list, with_fig=True, with_big_ax=True)
     xlabel = 'UTM x-coordinates, zone 51S'
     ylabel = 'UTM y-coordinates, zone 51S'
     big_ax.spines['top'].set_color('none')
@@ -664,32 +664,13 @@ def plot_multi_maps(q_locations, q_preds, filename='dm_simplelabel_heatmap', acr
 
     fig.tight_layout()
     plt.savefig(filename+'.pdf')
-    clear_plt()
 
-    if q_preds.shape[1] <= 4:
+    if title_list == None and q_preds.shape[1] <= 4:
         print('Also creating colour bar...')
         imshow_colorbar(im, filename=filename)
         clear_plt()
-
-    # for i in range(q_preds.shape[1]):
-    #     vis.show_map(q_locations, q_preds[:,i], display=False, filename=filename+' '+str(i))
-
-    # fig, ax = plt.subplots()
-    # cax = fig.add_axes([0.27, 0.8, 0.5, 0.05])
-    # fig.colorbar(ims[0], cax=cax, orientation='horizontal')
-    # cax = fig.add_axes([0.27, 0.6, 0.5, 0.05])
-    # fig.colorbar(ims[1], cax=cax, orientation='horizontal')
-    # cax = fig.add_axes([0.27, 0.4, 0.5, 0.05])
-    # fig.colorbar(ims[2], cax=cax, orientation='horizontal')
-    # cax = fig.add_axes([0.27, 0.2, 0.5, 0.05])
-    # fig.colorbar(ims[0], cax=cax, orientation='horizontal')
-    # font = {'family' : 'normal',
-    #         'weight' : 'normal',
-    #         'size'   : 6}
-    # mpl.rc('font', **font)
-    # plt.savefig()
-    # mpl.rcdefaults()
-    # clear_plt()
+    else:
+        clear_plt()
 
     return im
 
@@ -699,11 +680,6 @@ def plot_dm_per_label_maps_multi(q_locations, q_preds, filename='dm_alllabels_he
     """
     label_map={1:0,2:0,3:1,4:3,5:1,6:3,7:3,8:3,9:3,10:1,11:3,12:3,13:2,14:2,15:2,16:1,17:1,18:0,19:1,20:0,21:0,22:1,23:0,24:0}
 
-    title_set1 = ['label {} ({})'.format(i, label_map[i+1]) for i in range(0,6)]
-    title_set2 = ['label {} ({})'.format(i, label_map[i+1]) for i in range(6,12)] 
-    title_set3 = ['label {} ({})'.format(i, label_map[i+1]) for i in range(12,18)] 
-    title_set4 = ['label {} ({})'.format(i, label_map[i+1]) for i in range(18,24)] 
-
     vmin = q_preds.min()
     vmax = q_preds.max()
     # vmin=0
@@ -711,10 +687,23 @@ def plot_dm_per_label_maps_multi(q_locations, q_preds, filename='dm_alllabels_he
 
     bounds = {'vmin': vmin, 'vmax': vmax}
 
-    plot_multi_maps(q_locations, q_preds[:,:6],       '{}_1-6'.format(filename), across=2, down=3, title_list=title_set1, **bounds)
-    plot_multi_maps(q_locations, q_preds[:,6:12],     '{}_7-12'.format(filename), across=2, down=3, title_list=title_set2, **bounds)
-    plot_multi_maps(q_locations, q_preds[:,12:18],    '{}_13-18'.format(filename), across=2, down=3, title_list=title_set3, **bounds)
-    im = plot_multi_maps(q_locations, q_preds[:,18:], '{}_19-24'.format(filename), across=2, down=3, title_list=title_set4, **bounds)
+    step = 4
+    if 24 % step != 0:
+        raise ValueError('step size needs to divide into 24 perfectly!')
+    across = 2
+    down = int(step/across)
+    step_locs = np.arange(0,24,step)
+    for idx, i in enumerate(step_locs):
+        title_set = ['label {} ({})'.format(i, label_map[i+1]) for i in range(i, i+step)]
+        cur_filename = '{}_{}-{}'.format(filename, i, i+step-1)
+        print(cur_filename)
+        im = plot_multi_maps(q_locations, q_preds[:,i:i+step], cur_filename, 
+                across=across, down=down, title_list=title_set, **bounds)
+
+    # plot_multi_maps(q_locations, q_preds[:,:6],       '{}_1-6'.format(filename), across=2, down=3, title_list=title_set1, **bounds)
+    # plot_multi_maps(q_locations, q_preds[:,6:12],     '{}_7-12'.format(filename), across=2, down=3, title_list=title_set2, **bounds)
+    # plot_multi_maps(q_locations, q_preds[:,12:18],    '{}_13-18'.format(filename), across=2, down=3, title_list=title_set3, **bounds)
+    # im = plot_multi_maps(q_locations, q_preds[:,18:], '{}_19-24'.format(filename), across=2, down=3, title_list=title_set4, **bounds)
     clear_plt()
 
     imshow_colorbar(im, filename)
@@ -823,3 +812,6 @@ def discrete_cmap(N, base_cmap=None):
     color_list = base(np.linspace(0, 1, N))
     cmap_name = base.name + str(N)
     return base.from_list(cmap_name, color_list, N)
+
+def bathymetry_survey_example():
+    pass

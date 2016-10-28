@@ -478,3 +478,17 @@ def map_many_entropy_thresholds(coords, entropies, *, labels):
 def final_entropy_maps(cooords, entr4, entr24):
     new_entr4 = helpers.tune_entropies_better_spread(entr4, 200, rungs=5, stepsize=100)
     vis.show_map(coords, new_entr4, filename='dm4_entropy_map')
+
+def biodiversity(preds):
+    labels = np.arange(0, preds.shape[1])
+
+    cohabitations = 2
+    factor=1.2
+    label_sets = itertools.combinations(labels, cohabitations)
+    cur_cohabitat_idxs = set()
+    for pair in label_sets:
+        for axis in pair:
+            cur_cohabitat_idxs.union(np.where(preds[:,axis] > (1/cohabitations*factor))[0])
+            # [np.where(preds[:,axis] > (1/cohabitations*factor)) for axis in pair]
+
+    return cur_cohabitat_idxs
