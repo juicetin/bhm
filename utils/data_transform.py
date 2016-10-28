@@ -1,6 +1,7 @@
 from sklearn.preprocessing import PolynomialFeatures
 import numpy as np
 from utils.downsample import downsample_spatial_data
+import pdb
 
 def poly_features(data, polyspace=2):
     pf = PolynomialFeatures(polyspace)
@@ -45,6 +46,9 @@ def summarise_list(old_lst, label_map):
     return new_lst
 
 def summarised_labels(labels):
+    """
+    Summarise labels based on mapping provided by marine experts.
+    """
 
     label_map={1:0,2:0,3:1,4:3,5:1,6:3,7:3,8:3,9:3,10:1,11:3,12:3,13:2,14:2,15:2,16:1,17:1,18:0,19:1,20:0,21:0,22:1,23:0,24:0}
 
@@ -65,4 +69,41 @@ def summarised_labels(labels):
         #     new_labels[labels==k] = v
 
 def features_squared_only(features):
+    """
+    Square features (not full quadratic expansion), and include the 1 bias term.
+    """
     return np.concatenate((np.hstack((features, features**2)), np.ones(features.shape[0])[:,np.newaxis]), 1)
+
+def merge_rare_labels(labels, min_count=20):
+    """
+    As some labels will be very low in occurrence as a result of simplifying the multi-label counts down to
+    their argmaxes (in some cases, labels may occur 0 times), it may be beneficial to merge them for a
+    number of reasons, one being that cross-fold validation can then be done, as labels that occur, say, 2
+    times, cannot be split up into several folds.
+    """
+    new_labels = np.copy(labels)
+    label_map={1:0,2:0,3:1,4:3,5:1,6:3,7:3,8:3,9:3,10:1,11:3,12:3,13:2,14:2,15:2,16:1,17:1,18:0,19:1,20:0,21:0,22:1,23:0,24:0}
+
+    # Build reverse label map
+    simplelabels = np.unique(list(label_map.values()))
+    reverse_label_map = {}
+    for label in simplelabels:
+        reverse_label_map[label] = []
+    for key in label_map:
+        reverse_label_map[label_map[key]].append(key)
+    print(reverse_label_map)
+
+    bins = np.bincount(labels)
+    rare_idxs = np.where(bins < min_count)[0]
+    print('The rare labels are: {}'.format(rare_idxs))
+
+    # Merge rare labels with the most common one corresponding to their parent label
+    for i in rare_idxs:
+        parent_label = label_map[i+1]
+        max_count = 0
+        sibling_counts = np.array([(label, bins[label-1]) for label in reverse_label_map[parent_label]])
+        substitute_label = sibling_counts[:,0][sibling_counts[:,1].argmax()]
+        print('Rare label {} is being substituted with {}'.format(i, substitute_label))
+        new_labels = np.where(new_labels == i, substitute_label, new_labels)
+
+    return new_labels
