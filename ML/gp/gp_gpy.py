@@ -19,7 +19,7 @@ class GPyC:
             print('Finished optimising label {}'.format(c))
         return m
 
-    def fit(self, X, C, parallel=True):
+    def fit(self, X, C, parallel=True, optimize=True):
         """
         Fit the GPy-wrapper classifier 
         """
@@ -43,7 +43,8 @@ class GPyC:
             for c in uniq_C:
                 labels = np.array([1 if c == label else 0 for label in C])[:,np.newaxis]
                 m = GPy.models.GPRegression(X, labels, kernel=K.copy())
-                m.optimize()
+                if optimize==True:
+                    m.optimize()
                 self.models.append(m)
         self.models = np.array(self.models)
         return self
@@ -217,8 +218,8 @@ class GPR:
 
         # The transpose here is to match the output of the Dirichlet Multinomial stuff
         gp_preds, gp_vars = self.model.predict(x)
-        all_preds = gp_preds.flatten().astype(np.float64)
-        return sigmoid(all_preds), gp_vars
+        # all_preds = gp_preds.flatten().astype(np.float64)
+        return np.array((gp_preds, gp_vars))
 
     # def predict_parallel(self, x):
     #     """

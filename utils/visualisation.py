@@ -1,5 +1,7 @@
 import numpy as np
 from datetime import datetime
+from ML.gp.poe import PoGPE
+from ML.gp.gpoe import GPoGPE
 
 try:
     import matplotlib as mpl
@@ -16,73 +18,104 @@ import math
 import pdb
 from ML.gp import gp
 from ML.gp import gp_gpy
+from scipy.interpolate import spline
+from utils import load_data
 
 from utils.downsample import fixed_grid_blocksize
 
-def plot_illustrative_gp_hparams(filename='gp_sample_plot.pdf'):
+def ova_example(filename='ova_example.pdf'):
+    X1, X2, X3 = load_data.generate_toy_clusters()
+
+    fig, ax = plt.subplots()
+    ax.scatter(X3[:,0], X3[:,1], c='g', cmap=cm.viridis, label='class 1')
+    ax.scatter(X2[:,0], X2[:,1], c='b', cmap=cm.viridis, label='class 2')
+    ax.scatter(X1[:,0], X1[:,1], c='r', cmap=cm.viridis, label='class 3')
+    ax.set_xlim(-10, 10)
+    ax.set_ylim(-10, 10)
+    ax.plot((-6, 2), (-10,10), 'g-')
+    ax.plot((6, -2), (-10,10), 'b-')
+    ax.plot((-10, 10), (0, 0), 'r-')
+    ax.set_xlabel('$x$-coordinate')
+    ax.set_ylabel('$y$-coordinate')
+
+    plt.legend(loc='lower right')
+
+    plt.savefig(filename)
+    clear_plt()
+
+def smooth_pred(x, y_pred, v_pred):
+    xnew = np.linspace(x.min(), x.max(), 300)
+    yp_smooth = spline(x.flatten(), y_pred, xnew)
+    vp_smooth = spline(x.flatten(), v_pred, xnew)
+    return yp_smooth, np.abs(vp_smooth)
+
+def plot_illustrative_gp_hparams(x=None, filename='gp_sample_plot.pdf'):
     def f(x):
-        return 4*np.sin(x) + np.random.normal(scale=0.4, size=len(x))[:,np.newaxis]**2
-    x = np.linspace(1, 10, 30).reshape(-1, 1)
+        return 5*np.sin(x) + np.random.normal(scale=0.4, size=len(x))[:,np.newaxis]**2
+
+    if x == None:
+        x = np.linspace(1, 10, 30).reshape(-1, 1)
     y = f(x)
 
     x = np.array([-7, -6, -5.5, -4.9, -2.5, -2.4, -2.0, -1.5, -0.5, 0.3, 0.4, 0.5, 2.3, 2.5, 4.0, 4.1, 5.0, 6.0, 6.5]).reshape(-1, 1)
     y = np.array([-1.8, 0, 0.3, -0.9, -1.3, -1.2, 0.4, 1.6, 1.9, 0.0, -0.9, -1.1, -2.7, -2.2, -1.2, -1.0, -1.5, -1.0, -0.8]).reshape(-1, 1)
-    pdb.set_trace()
+    xnew = np.linspace(x.min(), x.max(), 300).reshape(-1, 1)
+    # pdb.set_trace()
 
-    # gpr3 = gp.GaussianProcess()
-    gpr3 = gp_gpy.GPR()
-    gpr3.fit(x, y)
-    y3, v3 = gpr3.predict(x)
-    # print(gpr3.f_err, gpr3.l_scales, gpr3.n_err)
+    gp_model = gp.GaussianProcess
+    # gp_model = gp_gpy.GPR
 
-    # var = 1
-    # l_scale=1
-    # gpr1 = gp.GaussianProcess()
-    # gpr1.fit(x, y)
-    # gpr1.f_err = 0.4
-    # gpr1.l_scales = 0.3
-    # gpr1.n_err = 0.05
-    # y1, v1 = gpr1.predict_regression(x)
+    # gpr1 = gp_model()
+    gpr1 = PoGPE(15)
+    gpr1.fit(x, y)
+    y1, v1 = gpr1.predict(xnew)
+    y1 = np.average(y1, axis=1); v1 = np.average(v1, axis=1)
+    # y1, v1 = smooth_pred(x, y1, v1)
+    # print("The fitted GP's stats were: ferr:{} l_scale:{} nerr:{}".format(gpr1.f_err, gpr1.l_scales, gpr1.n_err))
+    print(gpr1)
+    # 2.435308763334455 l_scale:[ 0.81049339] nerr:0.0
 
-    # gpr2 = gp.GaussianProcess()
-    # gpr2.fit(x, y)
-    # gpr2.f_err = 1
-    # gpr2.l_scales = 3
-    # gpr2.n_err = 0.1
-    # y2, v2 = gpr2.predict_regression(x)
+    # gpr2 = gp_model()
+    gpr2 = GPoGPE(15)
+    gpr2.fit(x, y, False)
+    # gpr2.set_hps(ferr=2, lscales=2.7, nerr=0.5)
+    y2, v2 = gpr2.predict(xnew)
+    y2 = np.average(y2, axis=1); v2 = np.average(v2, axis=1)
+    # y2, v2 = smooth_pred(x, y2, v2)
+
+    gpr3 = gp_model()
+    gpr3.fit(x, y, False)
+    gpr3.set_hps(ferr=1, lscales=0.3, nerr=0.001)
+    y3, v3 = gpr3.predict(xnew)
+    # y3, v3 = smooth_pred(x, y3, v3)
+
+    # gpr4 = gp.GaussianProcess()
+    # gpr4.fit(x, y)
+    # gpr4.f_err = 3
+    # gpr4.l_scales = 1
+    # gpr4.n_err = 0.1
+    # y4, v4 = gpr4.predict_regression(xnew)
     
-    # plot_gp_with_variance(X, Y, x, y, y_pred, sigma, filename='gp_with_variance.pdf'):
+    plot_confidence(x, y, xnew, y1, np.sqrt(v1), title=None, filename='gp_with_variance_plot1.pdf')
+    plot_confidence(x, y, xnew, y2, np.sqrt(v2), title=None, filename='gp_with_variance_plot2.pdf')
+    plot_confidence(x, y, xnew, y3, np.sqrt(v3), title=None, filename='gp_with_variance_plot3.pdf')
 
-    # plt.scatter(x, y)
-    # plt.plot(x, y1, c='r')
-    # plt.plot(x, y2, c='g')
-    # plt.plot(x, y3, c='c')
-    # plt.show()
-    # plt.savefig(filename)
-    # clear_plt()
+    return (y1, v1), (y2, v2), (y3, v3)
 
-    # plot_gp_with_variance(x, y, x, y, y3, np.sqrt(v2))
-    # print(v1)
-    # print(v2)
-    print(v3)
-    # plot_confidence(x, y, y1, np.sqrt(v1), title=None, filename='gp_with_variance_plot1.pdf')
-    # plot_confidence(x, y, y2, np.sqrt(v2), title=None, filename='gp_with_variance_plot2.pdf')
-    plot_confidence(x, y, y3, np.sqrt(v3), title=None, filename='gp_with_variance_plot3.pdf')
-
-def plot_confidence(x, y, y_pred, sigma, title=None, filename='gp_with_variance_plot.pdf'):
+def plot_confidence(x, y, xnew, y_pred, sigma, title=None, filename='gp_with_variance_plot.pdf'):
     # Plot function, prediction, and 95% confidence interval based on MSE
     confidence = 1.9600
     # plt.plot(x, y, 'r:', label=u'$f(x) = x\, \sin(x)$')
     plt.scatter(x, y)
-    plt.plot(x, y_pred, 'b-', label=u'Prediction')
-    # plt.fill(np.concatenate([x, x[::-1]]),
-    #         np.concatenate([y_pred - confidence * sigma,
-    #             (y_pred + confidence * sigma)[::-1]]),
-    #         alpha=.5, fc='b', ec='None', label='95% confidence interval (1 standard deviation)')
-    plt.xlabel('$x$')
-    plt.ylabel('$y$')
+    plt.plot(xnew, y_pred, 'b-', label=u'Prediction')
+    plt.fill(np.concatenate([xnew, xnew[::-1]]),
+            np.concatenate([y_pred - confidence * sigma,
+                (y_pred + confidence * sigma)[::-1]]),
+            alpha=.3, fc='b', ec='None', label='95% confidence interval (1 standard deviation)')
+    plt.xlabel('$x$ (inputs)')
+    plt.ylabel('$y$ (outputs)')
 
-    plt.legend(loc='upper left')
+    # plt.legend()
     if title != None:
         plt.title(title)
 

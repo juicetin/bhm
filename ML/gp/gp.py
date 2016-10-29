@@ -59,6 +59,11 @@ class GaussianProcess:
     ################################## Generic ##################################
     #############################################################################
 
+    def set_hps(self, *, ferr, lscales, nerr):
+        self.f_err = ferr
+        self.l_scales=lscales
+        self.n_err = nerr
+
     def L_create(self, X, f_err, l_scales, n_err):
 
         K = self.K_se(X, X, f_err, l_scales)
@@ -91,7 +96,7 @@ class GaussianProcess:
         n_err = args[self.X.shape[1]+1]
         return f_err, l_scales, n_err
 
-    def fit(self, X, y):
+    def fit(self, X, y, optimise=True):
         # Class labels TODO account for more integer types properly
         if type(y[0]) == np.int64:
             self.gp_type = 'classification'
@@ -100,7 +105,7 @@ class GaussianProcess:
         # Continuous outputs
         else:
             self.gp_type = 'regression'
-            return self.fit_regression(X, y)
+            return self.fit_regression(X, y, optimise)
 
     def predict(self, x, keep_probs=False, parallel=False):
 
@@ -144,7 +149,7 @@ class GaussianProcess:
     ####################################################
 
     # Regression fit
-    def fit_regression(self, X, y):
+    def fit_regression(self, X, y, optimise=True):
 
         # Set basic data
         self.X = X  # Inputs
@@ -160,13 +165,17 @@ class GaussianProcess:
         # res = minimize(self.SE_NLL, x0, method='bfgs')
         # res = minimize(self.SE_NLL, x0, method='bfgs', jac=self.SE_der)
         # res = minimize(self.SE_NLL, x0, method='l-bfgs-b', jac=self.SE_der, bounds=bounds)
-        res = minimize(self.SE_NLL, x0, method='l-bfgs-b', jac=True, bounds=bounds)
+
+        if optimise == True:
+            res = minimize(self.SE_NLL, x0, method='l-bfgs-b', jac=True, bounds=bounds)
+            self.f_err, self.l_scales, self.n_err = self.unpack_GP_args(res['x'])
+        else:
+            self.f_err, self.l_scales, self.n_err = self.unpack_GP_args(x0)
 
         # res['x'] = np.array([3076.7471, 100.58150154, 0.304933902061]) # NOTE hardcoded sample values 
         # res['x'] = np.array([3000, 100, 0.3])
-        self.f_err, self.l_scales, self.n_err = self.unpack_GP_args(res['x'])
 
-        final_likelihood, _ = self.SE_NLL(res['x'])
+        final_likelihood, _ = self.SE_NLL(np.array([self.f_err, self.l_scales, self.n_err]))
         print('Marginal log likelihood: {}'.format(-final_likelihood))
 
         # S et a few 'fixed' variables once GP HPs are determined for later use (with classifier)
@@ -177,7 +186,9 @@ class GaussianProcess:
     def predictive_variances(self, x, L, k_star, f_err, l_scales, n_err):
         v = np.linalg.solve(L, k_star)
         var = np.diag(self.K_se(x, x, f_err, l_scales) - v.T.dot(v)) + n_err**2
-        return var
+
+        # NOTE this assumption/condition of turning negative variance positive is probably wrong
+        return np.abs(var)
 
     def predictive_mean(self, alpha, k_star):
         return k_star.T.dot(alpha)
