@@ -12,7 +12,7 @@ from ML.dir_mul.nicta.dirmultreg import dirmultreg_learn, dirmultreg_predict # o
 from scipy.misc import logsumexp # originally yavanna
 from sklearn.cross_validation import StratifiedShuffleSplit
 
-import utils.visualisation as vis
+from utils import visualisation as vis
 
 import pymc
 import multiprocessing as mp
@@ -120,22 +120,38 @@ def fill(labels, num_uniqs, zero_indexed=False):
     else:
         return list(counts)[1:]
 
-def generate_dm_toy_ex(plot_toy_graph=False, plot_cluster_distr=False):
-    # Settings
+def generate_toy_dm_clusters():
     size = 100
     multisamp1 = 500
     multisamp2 = 10
     multisamp3 = 50
-    kfolds = 5
-    activation = 'soft'
-
-    # Make data
     X1 = np.random.multivariate_normal([-5, -5], [[1, 0], [0, 1]], size)
     X2 = np.random.multivariate_normal([5, 5], [[1, 0], [0, 1]], size)
     X3 = np.random.multivariate_normal([-5, 5], [[1, 0], [0, 1]], size)
     C1 = np.random.multinomial(multisamp1, [0.7, 0.3], size)
     C2 = np.random.multinomial(multisamp2, [0.3, 0.7], size)
     C3 = np.random.multinomial(multisamp3, [0.5, 0.5], size)
+
+    return X1, X2, X3, C1, C2, C3
+
+def generate_toy_clusters():
+    size = 100
+    multisamp1 = 500
+    multisamp2 = 10
+    multisamp3 = 50
+    X1 = np.random.multivariate_normal([0, -5], [[1, 0], [0, 1]], size)
+    X2 = np.random.multivariate_normal([5, 5], [[1, 0], [0, 1]], size)
+    X3 = np.random.multivariate_normal([-5, 5], [[1, 0], [0, 1]], size)
+
+    return X1, X2, X3
+
+def generate_dm_toy_ex(plot_toy_graph=False, plot_cluster_distr=False):
+    # Settings
+    kfolds = 5
+    activation = 'soft'
+
+    # Make data
+    X1, X2, X3, C1, C2, C3 = generate_toy_dm_clusters()
 
     # Concatenate data
     X_train_coords = np.vstack((X1[:size/2], X2[:size/2], X3[:size/2]))

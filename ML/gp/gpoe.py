@@ -26,4 +26,5 @@ class GPoGPE(GP_ensembles):
         gpoe_variances = gpoe_precisions ** (-1)
         gpoe_means = gpoe_variances * np.sum(betas * gaussian_precisions * gaussian_means, axis=0)
 
+        # shape of gpoe_means, gpoe_variances - (N x K)
         return gpoe_means, gpoe_variances
