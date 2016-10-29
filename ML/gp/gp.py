@@ -159,11 +159,15 @@ class GaussianProcess:
 
         # res = minimize(self.SE_NLL, x0, method='bfgs')
         # res = minimize(self.SE_NLL, x0, method='bfgs', jac=self.SE_der)
-        res = minimize(self.SE_NLL, x0, method='l-bfgs-b', jac=self.SE_der, bounds=bounds)
+        # res = minimize(self.SE_NLL, x0, method='l-bfgs-b', jac=self.SE_der, bounds=bounds)
+        res = minimize(self.SE_NLL, x0, method='l-bfgs-b', jac=True, bounds=bounds)
 
         # res['x'] = np.array([3076.7471, 100.58150154, 0.304933902061]) # NOTE hardcoded sample values 
         # res['x'] = np.array([3000, 100, 0.3])
         self.f_err, self.l_scales, self.n_err = self.unpack_GP_args(res['x'])
+
+        final_likelihood, _ = self.SE_NLL(res['x'])
+        print('Marginal log likelihood: {}'.format(-final_likelihood))
 
         # S et a few 'fixed' variables once GP HPs are determined for later use (with classifier)
         self.L = self.L_create(self.X, self.f_err, self.l_scales, self.n_err)
@@ -207,6 +211,8 @@ class GaussianProcess:
         if len(f_star.shape) == 2 and f_star.shape[1] == 1:
             f_star = f_star.reshape(f_star.shape[0])
 
+        if ~np.isfinite(var).any():
+            pdb.set_trace()
         return f_star, var
 
 
@@ -247,7 +253,12 @@ class GaussianProcess:
             0.5 * self.size * math.log(2*math.pi)
         )
 
-        return nll
+        aaT = alpha.dot(alpha.T)
+        K_inv = np.linalg.inv(L.T).dot(np.linalg.inv(L))
+        eval_dK_dthetas = self.eval_dK_dthetas(f_err, l_scales, n_err)
+        derivatives = np.array([float(-0.5 * np.matrix.trace((aaT - K_inv).dot(dK_dtheta))) for dK_dtheta in eval_dK_dthetas])
+
+        return [nll, derivatives]
 
     ####################################################
     ####################### PLSC #######################

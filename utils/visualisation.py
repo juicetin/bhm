@@ -15,43 +15,77 @@ except:
 import math
 import pdb
 from ML.gp import gp
+from ML.gp import gp_gpy
 
 from utils.downsample import fixed_grid_blocksize
 
 def plot_illustrative_gp_hparams(filename='gp_sample_plot.pdf'):
     def f(x):
-        return np.sin(x) + np.random.normal(scale=0.3, size=len(x))[:,np.newaxis]
-    x = np.linspace(1, 10, 70).reshape(-1, 1)
+        return 4*np.sin(x) + np.random.normal(scale=0.4, size=len(x))[:,np.newaxis]**2
+    x = np.linspace(1, 10, 30).reshape(-1, 1)
     y = f(x)
 
-    var = 1
-    l_scale=1
-    gpr = gp.GaussianProcess()
-    gpr.fit(x, y)
-    gpr.f_err = 1
-    gpr.l_scales = 1
-    gpr.n_err = 0.1
-    y_, _ = gpr.predict_regression(x)
+    x = np.array([-7, -6, -5.5, -4.9, -2.5, -2.4, -2.0, -1.5, -0.5, 0.3, 0.4, 0.5, 2.3, 2.5, 4.0, 4.1, 5.0, 6.0, 6.5]).reshape(-1, 1)
+    y = np.array([-1.8, 0, 0.3, -0.9, -1.3, -1.2, 0.4, 1.6, 1.9, 0.0, -0.9, -1.1, -2.7, -2.2, -1.2, -1.0, -1.5, -1.0, -0.8]).reshape(-1, 1)
+    pdb.set_trace()
 
-    gpr = gp.GaussianProcess()
-    gpr.fit(x, y)
-    gpr.f_err = 1
-    gpr.l_scales = 0.3
-    gpr.n_err = 0.1
-    y_2, _ = gpr.predict_regression(x)
+    # gpr3 = gp.GaussianProcess()
+    gpr3 = gp_gpy.GPR()
+    gpr3.fit(x, y)
+    y3, v3 = gpr3.predict(x)
+    # print(gpr3.f_err, gpr3.l_scales, gpr3.n_err)
 
-    gpr = gp.GaussianProcess()
-    gpr.fit(x, y)
-    gpr.f_err = 1
-    gpr.l_scales = 3
-    gpr.n_err = 0.1
-    y_3, _ = gpr.predict_regression(x)
+    # var = 1
+    # l_scale=1
+    # gpr1 = gp.GaussianProcess()
+    # gpr1.fit(x, y)
+    # gpr1.f_err = 0.4
+    # gpr1.l_scales = 0.3
+    # gpr1.n_err = 0.05
+    # y1, v1 = gpr1.predict_regression(x)
 
+    # gpr2 = gp.GaussianProcess()
+    # gpr2.fit(x, y)
+    # gpr2.f_err = 1
+    # gpr2.l_scales = 3
+    # gpr2.n_err = 0.1
+    # y2, v2 = gpr2.predict_regression(x)
+    
+    # plot_gp_with_variance(X, Y, x, y, y_pred, sigma, filename='gp_with_variance.pdf'):
+
+    # plt.scatter(x, y)
+    # plt.plot(x, y1, c='r')
+    # plt.plot(x, y2, c='g')
+    # plt.plot(x, y3, c='c')
+    # plt.show()
+    # plt.savefig(filename)
+    # clear_plt()
+
+    # plot_gp_with_variance(x, y, x, y, y3, np.sqrt(v2))
+    # print(v1)
+    # print(v2)
+    print(v3)
+    # plot_confidence(x, y, y1, np.sqrt(v1), title=None, filename='gp_with_variance_plot1.pdf')
+    # plot_confidence(x, y, y2, np.sqrt(v2), title=None, filename='gp_with_variance_plot2.pdf')
+    plot_confidence(x, y, y3, np.sqrt(v3), title=None, filename='gp_with_variance_plot3.pdf')
+
+def plot_confidence(x, y, y_pred, sigma, title=None, filename='gp_with_variance_plot.pdf'):
+    # Plot function, prediction, and 95% confidence interval based on MSE
+    confidence = 1.9600
+    # plt.plot(x, y, 'r:', label=u'$f(x) = x\, \sin(x)$')
     plt.scatter(x, y)
-    plt.scatter(x, y_, c='r')
-    plt.scatter(x, y_2, c='g')
-    plt.scatter(x, y_3, c='c')
-    plt.show()
+    plt.plot(x, y_pred, 'b-', label=u'Prediction')
+    # plt.fill(np.concatenate([x, x[::-1]]),
+    #         np.concatenate([y_pred - confidence * sigma,
+    #             (y_pred + confidence * sigma)[::-1]]),
+    #         alpha=.5, fc='b', ec='None', label='95% confidence interval (1 standard deviation)')
+    plt.xlabel('$x$')
+    plt.ylabel('$y$')
+
+    plt.legend(loc='upper left')
+    if title != None:
+        plt.title(title)
+
     plt.savefig(filename)
     clear_plt()
 
@@ -98,10 +132,10 @@ def scatter_array(points, display=False, filename='scatterplot.pdf'):
 
     clear_plt()
 
-def plot_gp_with_variance(X, Y, x, y, y_pred, sigma):
+def plot_gp_with_variance(X, Y, x, y, y_pred, sigma, filename='gp_with_variance.pdf'):
 
     # Plot function, prediction, and 95% confidence interval based on MSE
-    confidence = 1.9600
+    # confidence = 1.9600
     fig = plt.figure(figsize=(12,8))
 
     # plt.plot(x, y, 'r:', label=u'$f(x) = x\, \sin(x)$')
@@ -115,8 +149,8 @@ def plot_gp_with_variance(X, Y, x, y, y_pred, sigma):
     # Predictions and variance
     plt.plot(x, y_pred, 'g-', label=u'Prediction', mew=2.0)
     plt.fill(np.concatenate([x, x[::-1]]),
-            np.concatenate([y_pred - confidence * sigma,
-                (y_pred + confidence * sigma)[::-1]]),
+            np.concatenate([y_pred - sigma,
+                (y_pred + sigma)[::-1]]),
             alpha=0.2, fc='b', ec='None', label='95% confidence interval')
 
     # Axes labels
@@ -132,6 +166,8 @@ def plot_gp_with_variance(X, Y, x, y, y_pred, sigma):
     plt.xlim(np.min(x_mins), np.max(x_maxs))
 
     # plt.legend(loc='upper left')
+    plt.savefig(filename)
+    clear_plt()
     # plt.show()
 
 def show_all():
@@ -184,25 +220,6 @@ def generate_subplots(rows=1, columns=1, actual_count=1, title_list=None, with_f
 
     return ret 
 
-def plot_confidence(x, y_pred, sigma, title=None):
-    # Plot function, prediction, and 95% confidence interval based on MSE
-    confidence = 1.9600
-    fig = plt.figure()
-    # plt.plot(x, y, 'r:', label=u'$f(x) = x\, \sin(x)$')
-    plt.plot(x, y_pred, 'b-', label=u'Prediction')
-    plt.fill(np.concatenate([x, x[::-1]]),
-            np.concatenate([y_pred - confidence * sigma,
-                (y_pred + confidence * sigma)[::-1]]),
-            alpha=.5, fc='b', ec='None', label='95% confidence interval')
-    plt.xlabel('$x$')
-    plt.ylabel('$y$')
-
-    plt.ylim(-200, 200)
-
-    plt.legend(loc='upper left')
-    if title != None:
-        plt.title(title)
-    plt.show()
 
 def plot_test_graph():
     f_output1 = lambda x: 4. * np.cos(x/5.) - .4*x - 35. + np.random.rand(x.size)[:,None] * 2

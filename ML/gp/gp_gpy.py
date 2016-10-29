@@ -173,3 +173,69 @@ def predict_parallel(x, models_shape):
     # return np.concatenate(predict_results, axis=0)
 
     # return np.hstack(predict_results)
+
+class GPR:
+    def __init__(self):
+        pass
+
+    def fit(self, X, Y, parallel=True, K=None):
+        """
+        Fit the GPy-wrapper classifier 
+        """
+        var = np.random.rand()
+        l_scales = np.random.rand(X.shape[1])
+        if K == None:
+            K = GPy.kern.RBF(input_dim=X.shape[1], variance=var, lengthscale=l_scales, ARD=True)
+        m = GPy.models.GPRegression(X, Y, kernel=K.copy())
+        m.optimize()
+        self.model = m
+        return self
+
+    def predict(self, x, parallel=False):
+        """
+        Make predictions using the GPy-wrapper classifier
+        """
+
+        # if parallel == True:
+        #     return self.predict_parallel(x)
+
+        # all_preds = np.empty(x.shape[0])
+        # all_vars = np.empty(all_preds.shape)
+        # if x.shape[0] > 5000:
+        #     step = 5000
+        #     # Break into blocks of 5000
+        #     for start in range(0, x.shape[0], step):
+        #         next_idx = start + 5000
+        #         end = next_idx if next_idx <= x.shape[0] else x.shape[0]
+        #         cur_preds = self.predict(x[start:end])
+        #         all_preds[start:end] = cur_preds[0]
+        #         all_vars[start:end] = cur_preds[1]
+        # else:
+        #     gp_preds, gp_vars = self.model.predict(x)
+        #     all_preds = gp_preds.flatten().astype(np.float64)
+        #     all_vars = gp_vars.flatten().astype(np.float64)
+
+        # The transpose here is to match the output of the Dirichlet Multinomial stuff
+        gp_preds, gp_vars = self.model.predict(x)
+        all_preds = gp_preds.flatten().astype(np.float64)
+        return sigmoid(all_preds), gp_vars
+
+    # def predict_parallel(self, x):
+    #     """
+    #     Does predictions in parallel
+    #     """
+    #     # Set up the parallel jobs on separate processes, to overcome 
+    #     # Python's GIL for proper parallelisation
+    #     nprocs = mp.cpu_count() - 1
+    #     # if nprocs > 4:
+    #     #     nprocs = 4
+    #     jobs = partition_indexes(x.shape[0], nprocs)
+    #     args = [(x[start:end], False) for start, end in jobs]
+    #     pool = Pool(processes=nprocs)
+    #     predict_results = pool.starmap(self.predict, args)
+    #     pool.close()
+    #     pool.join()
+
+    #     # Concat along class list axis
+    #     # return np.concatenate(predict_results, axis=0)
+    #     return np.hstack(predict_results)
