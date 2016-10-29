@@ -395,27 +395,27 @@ def save_all_det_multi_preds(multi_preds):
     np.save('data/rf4mp', rf4mp)
     np.save('data/rf24mp', rf24mp)
 
-def calc_gp_preds(features, l4, l24, query, ret=False, parallel=False, save=True):
-    print('4-labels, single-label')
-    gp = GPyC()
-    gp.fit(features, l4, parallel=True)
-    np.save('data/gp4_p_models', gp.models)
-    gp_preds = gp.predict(query, parallel=parallel)
-    del(gp)
-    if save == True:
-        np.save('data/gp4_p', gp_preds)
-
-    gp_preds = gp.predict(query, parallel=parallel)
-    del(gp)
-    print('24-labels, single-label')
-    gp = GPyC()
-    gp.fit(features, l24, parallel=True)
-    np.save('data/gp24_p_models', gp.models)
-    gp_preds = gp.predict(query, parallel=parallel)
-    del(gp)
-
-    if save == True:
-        np.save('data/gp24_p', gp_preds)
+# def calc_gp_preds(features, l4, l24, query, ret=False, parallel=False, save=True):
+#     print('4-labels, single-label')
+#     gp = GPyC()
+#     gp.fit(features, l4, parallel=True)
+#     np.save('data/gp4_p_models', gp.models)
+#     gp_preds = gp.predict(query, parallel=parallel)
+#     del(gp)
+#     if save == True:
+#         np.save('data/gp4_p', gp_preds)
+# 
+#     gp_preds = gp.predict(query, parallel=parallel)
+#     del(gp)
+#     print('24-labels, single-label')
+#     gp = GPyC()
+#     gp.fit(features, l24, parallel=True)
+#     np.save('data/gp24_p_models', gp.models)
+#     gp_preds = gp.predict(query, parallel=parallel)
+#     del(gp)
+# 
+#     if save == True:
+#         np.save('data/gp24_p', gp_preds)
 
 def calc_gp_multi_preds(features, l4, l24, query, parallel=False, ret=False, gp_true=None, save=True):
     print('4-labels, multi-label')
@@ -447,21 +447,33 @@ def downsample_queries(qp_locs, queries):
     np.save('data/qp_red_features' ,qp_red_features)
     np.save('data/qp_red_idxs'     ,qp_red_idxs)
 
-def search_contiguous_confident_splits(preds):
-    for label_pair in itertools.combinations(range(preds.shape[1]), 2):
-        _, _, idxs = find_even_split_areas(q_preds, q_vars, bounds=[[0.1, 0.4], [0.3, 0.9]], split_labels=label_pair, check='preds')
-        # vis.plot_multi_maps(coords, preds[0][idxs][:,label_pair],
+# def search_contiguous_confident_splits(preds):
+#     for label_pair in itertools.combinations(range(preds.shape[1]), 2):
+#         _, _, idxs = find_even_split_areas(q_preds, q_vars, bounds=[[0.1, 0.4], [0.3, 0.9]], split_labels=label_pair, check='preds')
+#         # vis.plot_multi_maps(coords, preds[0][idxs][:,label_pair],
 
-def test_naive_GP_time(train_features, train_labels, test_features):
+def test_naive_GP_time(train_features, train_labels, test_features=None, parallel=False, predict=True):
+    print('Fit/predict in parallel: {}, doing predictions: {}'.format(parallel, predict))
+
     gp = GPyC()
     t1 = datetime.now()
-    gp.fit(train_features, train_labels, True)
+    gp.fit(train_features, train_labels, parallel)
     t2 = datetime.now()
     print('time taken to train on all training features: {}'.format(t2-t1))
-    gp4_p = gp.predict(test_features, True)
-    t3 = datetime.now()
-    print('time taken to predict all query points: {}'.format(t3-t2))
-    np.save('preds/gp4_p_fixed', gp4_p)
+
+    if predict == True:
+        gp4_p = gp.predict(test_features, parallel)
+        t3 = datetime.now()
+        print('time taken to predict all query points: {}'.format(t3-t2))
+        np.save('preds/gp4_p_fixed_{}'.format(train_features.shape[0]), gp4_p)
+
+    return gp
+
+def test_naive_GP_time_combo(train_features, train_labels, test_features=None, predict=True, parallel=False):
+    for i in np.arange(1, 6):
+        idx = i*1000
+        print('Now testing GP runtime for {} points'.format(idx))
+        test_naive_GP_time(train_features[:idx], train_labels[:idx], test_features, parallel=parallel, predict=predict)
 
 def plot_entropy(coords, entropies, threshold=-1e-3):
     idxs = helpers.discard_outlier_entropies(entropies, threshold)
@@ -475,6 +487,6 @@ def map_many_entropy_thresholds(coords, entropies, *, labels):
         idxs = helpers.discard_outlier_entropies(entropies, threshold)
         vis.show_map(coords[idxs], helpers.normalise_entropies(entropies[idxs]), filename='dm{}_entropies_t{}'.format(labels, threshold))
 
-def final_entropy_maps(cooords, entr4, entr24):
+def final_entropy_maps(coords, entr4, entr24):
     new_entr4 = helpers.tune_entropies_better_spread(entr4, 200, rungs=5, stepsize=100)
     vis.show_map(coords, new_entr4, filename='dm4_entropy_map')

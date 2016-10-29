@@ -139,7 +139,7 @@ if __name__ == "__main__":
     l4 = red_mlabels4
     l4_norm = l4/l4.sum(axis=1)[:,np.newaxis]
     l24 = red_mlabels24
-    redred_mlabels24 = data_transform.merge_rare_labels(red_mlabels24.argmax(axis=1), 100)
+    redred_mlabels24 = data_transform.merge_rare_labels(red_mlabels24.argmax(axis=1), 20)
     l24_norm = l24/l24.sum(axis=1)[:,np.newaxis]
     W4 = np.load('data/W4.npy')
     W24 = np.load('data/W_2m_1444288.npy')

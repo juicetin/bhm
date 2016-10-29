@@ -30,7 +30,8 @@ def roc_auc_score_multi(y_actuals, y_preds):
 
     # Calculate AUROC for each each binary class case
     aurocs = np.zeros(y_preds.shape[1])
-    for cur_class in range(y_preds.shape[1]):
+    valid_labels = np.where(np.bincount(y_actuals) != 0)[0]
+    for cur_class in valid_labels:
         # Compare class *i* with the rest
         cur_y_actual = np.copy(y_actuals)
         cur_y_actual[np.where(cur_y_actual != cur_class)] = -1
