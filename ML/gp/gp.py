@@ -59,6 +59,11 @@ class GaussianProcess:
     ################################## Generic ##################################
     #############################################################################
 
+    def set_hps(self, *, ferr, lscales, nerr):
+        self.f_err = ferr
+        self.l_scales=lscales
+        self.n_err = nerr
+
     def L_create(self, X, f_err, l_scales, n_err):
 
         K = self.K_se(X, X, f_err, l_scales)
@@ -72,8 +77,9 @@ class GaussianProcess:
     def dist(self, x1, x2, l_scales):
         # Dividing by length scale first before passing into cdist to
         #   accounts for different length scale for each dimension
-        l_scales = l_scales[:,np.newaxis]
-        return cdist(x1/l_scales.T, x2/l_scales.T, 'sqeuclidean')
+        if type(l_scales) == np.ndarray:
+            l_scales = l_scales[:,np.newaxis].T
+        return cdist(x1/l_scales, x2/l_scales, 'sqeuclidean')
 
     def K_se(self, x1, x2, f_err, l_scales):
         m = self.dist(x1, x2, l_scales)
@@ -90,7 +96,7 @@ class GaussianProcess:
         n_err = args[self.X.shape[1]+1]
         return f_err, l_scales, n_err
 
-    def fit(self, X, y):
+    def fit(self, X, y, optimise=True):
         # Class labels TODO account for more integer types properly
         if type(y[0]) == np.int64:
             self.gp_type = 'classification'
@@ -99,7 +105,7 @@ class GaussianProcess:
         # Continuous outputs
         else:
             self.gp_type = 'regression'
-            return self.fit_regression(X, y)
+            return self.fit_regression(X, y, optimise)
 
     def predict(self, x, keep_probs=False, parallel=False):
 
@@ -143,7 +149,7 @@ class GaussianProcess:
     ####################################################
 
     # Regression fit
-    def fit_regression(self, X, y):
+    def fit_regression(self, X, y, optimise=True):
 
         # Set basic data
         self.X = X  # Inputs
@@ -158,11 +164,19 @@ class GaussianProcess:
 
         # res = minimize(self.SE_NLL, x0, method='bfgs')
         # res = minimize(self.SE_NLL, x0, method='bfgs', jac=self.SE_der)
-        res = minimize(self.SE_NLL, x0, method='l-bfgs-b', jac=self.SE_der, bounds=bounds)
+        # res = minimize(self.SE_NLL, x0, method='l-bfgs-b', jac=self.SE_der, bounds=bounds)
+
+        if optimise == True:
+            res = minimize(self.SE_NLL, x0, method='l-bfgs-b', jac=True, bounds=bounds)
+            self.f_err, self.l_scales, self.n_err = self.unpack_GP_args(res['x'])
+        else:
+            self.f_err, self.l_scales, self.n_err = self.unpack_GP_args(x0)
 
         # res['x'] = np.array([3076.7471, 100.58150154, 0.304933902061]) # NOTE hardcoded sample values 
         # res['x'] = np.array([3000, 100, 0.3])
-        self.f_err, self.l_scales, self.n_err = self.unpack_GP_args(res['x'])
+
+        final_likelihood, _ = self.SE_NLL(np.array([self.f_err, self.l_scales, self.n_err]))
+        print('Marginal log likelihood: {}'.format(-final_likelihood))
 
         # S et a few 'fixed' variables once GP HPs are determined for later use (with classifier)
         self.L = self.L_create(self.X, self.f_err, self.l_scales, self.n_err)
@@ -172,7 +186,9 @@ class GaussianProcess:
     def predictive_variances(self, x, L, k_star, f_err, l_scales, n_err):
         v = np.linalg.solve(L, k_star)
         var = np.diag(self.K_se(x, x, f_err, l_scales) - v.T.dot(v)) + n_err**2
-        return var
+
+        # NOTE this assumption/condition of turning negative variance positive is probably wrong
+        return np.abs(var)
 
     def predictive_mean(self, alpha, k_star):
         return k_star.T.dot(alpha)
@@ -181,11 +197,18 @@ class GaussianProcess:
 
         # Assign hyperparameters and other calculated variables
         if L==None and alpha==None and f_err==None and l_scales==None:
-            L = self.L
-            alpha = self.alpha
             f_err = self.f_err
             l_scales = self.l_scales
             n_err = self.n_err
+            try:
+                L = self.L
+                alpha = self.alpha
+            except AttributeError:
+                print("L and alpha hadn't been calculated yet")
+                self.L = self.L_create(self.X, f_err, l_scales, n_err)
+                self.alpha = linalg.solve(self.L.T, (linalg.solve(self.L, self.y))) # save for use with derivative func
+                L = self.L
+                alpha = self.alpha
 
         # f_star = k_star.T.dot(alpha)
         # v = np.linalg.solve(L, k_star)
@@ -199,6 +222,8 @@ class GaussianProcess:
         if len(f_star.shape) == 2 and f_star.shape[1] == 1:
             f_star = f_star.reshape(f_star.shape[0])
 
+        if ~np.isfinite(var).any():
+            pdb.set_trace()
         return f_star, var
 
 
@@ -239,7 +264,12 @@ class GaussianProcess:
             0.5 * self.size * math.log(2*math.pi)
         )
 
-        return nll
+        aaT = alpha.dot(alpha.T)
+        K_inv = np.linalg.inv(L.T).dot(np.linalg.inv(L))
+        eval_dK_dthetas = self.eval_dK_dthetas(f_err, l_scales, n_err)
+        derivatives = np.array([float(-0.5 * np.matrix.trace((aaT - K_inv).dot(dK_dtheta))) for dK_dtheta in eval_dK_dthetas])
+
+        return [nll, derivatives]
 
     ####################################################
     ####################### PLSC #######################

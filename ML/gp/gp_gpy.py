@@ -19,7 +19,7 @@ class GPyC:
             print('Finished optimising label {}'.format(c))
         return m
 
-    def fit(self, X, C, parallel=True):
+    def fit(self, X, C, parallel=True, optimize=True):
         """
         Fit the GPy-wrapper classifier 
         """
@@ -43,7 +43,8 @@ class GPyC:
             for c in uniq_C:
                 labels = np.array([1 if c == label else 0 for label in C])[:,np.newaxis]
                 m = GPy.models.GPRegression(X, labels, kernel=K.copy())
-                m.optimize()
+                if optimize==True:
+                    m.optimize()
                 self.models.append(m)
         self.models = np.array(self.models)
         return self
@@ -173,3 +174,134 @@ class GPyC:
 #     # return np.concatenate(predict_results, axis=0)
 # 
 #     # return np.hstack(predict_results)
+=======
+# HACKY - for use when models are saved to remove need for retraining
+def predict(x, models_shape=None, parallel=False, models=None, index_range=None, npy_name=None):
+    """
+    Make predictions using the GPy-wrapper classifier
+    """
+    if models != None:
+        models_shape = len(models)
+    elif models_shape == None:
+        raise NameError('models_shape needs to be provided if models aren\'t!')
+
+    if parallel == True:
+        return predict_parallel(x, models_shape)
+
+    # if index_range == None or npy_name == None:
+    #     raise NameError('index_range and npy_name must be given for actual predictions!')
+
+    # Load memory-mapped data into this process in READ-ONLY mode within the given indices
+    # x = np.load(npy_name, mmap_mode='r')[index_range[0]:index_range[1]]
+
+    all_preds = np.empty((x.shape[0], models_shape))
+    all_vars = np.empty(all_preds.shape)
+    for i, m in enumerate(models):
+        if x.shape[0] > 5000:
+            step = 5000
+            # Break into blocks of 5000
+            bar = ProgressBar(maxval=x.shape[0])
+            bar.start()
+            for start in range(0, x.shape[0], step):
+                bar.update(start)
+                next_idx = start + 5000
+                end = next_idx if next_idx <= x.shape[0] else x.shape[0]
+                cur_preds = predict(x[start:end], None, None, models)
+                all_preds[start:end] = cur_preds[0]
+                all_vars[start:end] = cur_preds[1]
+            bar.finish()
+        else:
+            gp_preds, gp_vars = m.predict(x)
+            all_preds[:,i] = gp_preds.flatten().astype(np.float64)
+            all_vars[:,i]  = gp_vars.flatten().astype(np.float64)
+
+    # The transpose here is to match the output of the Dirichlet Multinomial stuff
+    return np.array((all_preds, all_vars))
+
+def predict_parallel(x, models_shape):
+    """
+    Does predictions in parallel
+    """
+    if models_shape == None:
+        raise NameError('models_shape needs to be provided')
+
+    # Set up the parallel jobs on separate processes, to overcome 
+    # Python's GIL for proper parallelisation
+    nprocs = mp.cpu_count() - 1
+    jobs = partition_indexes(x.shape[0], nprocs)
+    args = [(None, models_shape, False, None, [start, end], 'data/qp_red_features.npy') for start, end in jobs]
+    pool = Pool(processes=nprocs)
+    predict_results = pool.starmap(predict, args)
+    pool.close()
+    pool.join()
+
+    # Concat along class list axis
+    # return np.concatenate(predict_results, axis=0)
+
+    # return np.hstack(predict_results)
+
+class GPR:
+    def __init__(self):
+        pass
+
+    def fit(self, X, Y, parallel=True, K=None):
+        """
+        Fit the GPy-wrapper classifier 
+        """
+        var = np.random.rand()
+        l_scales = np.random.rand(X.shape[1])
+        if K == None:
+            K = GPy.kern.RBF(input_dim=X.shape[1], variance=var, lengthscale=l_scales, ARD=True)
+        m = GPy.models.GPRegression(X, Y, kernel=K.copy())
+        m.optimize()
+        self.model = m
+        return self
+
+    def predict(self, x, parallel=False):
+        """
+        Make predictions using the GPy-wrapper classifier
+        """
+
+        # if parallel == True:
+        #     return self.predict_parallel(x)
+
+        # all_preds = np.empty(x.shape[0])
+        # all_vars = np.empty(all_preds.shape)
+        # if x.shape[0] > 5000:
+        #     step = 5000
+        #     # Break into blocks of 5000
+        #     for start in range(0, x.shape[0], step):
+        #         next_idx = start + 5000
+        #         end = next_idx if next_idx <= x.shape[0] else x.shape[0]
+        #         cur_preds = self.predict(x[start:end])
+        #         all_preds[start:end] = cur_preds[0]
+        #         all_vars[start:end] = cur_preds[1]
+        # else:
+        #     gp_preds, gp_vars = self.model.predict(x)
+        #     all_preds = gp_preds.flatten().astype(np.float64)
+        #     all_vars = gp_vars.flatten().astype(np.float64)
+
+        # The transpose here is to match the output of the Dirichlet Multinomial stuff
+        gp_preds, gp_vars = self.model.predict(x)
+        # all_preds = gp_preds.flatten().astype(np.float64)
+        return np.array((gp_preds, gp_vars))
+
+    # def predict_parallel(self, x):
+    #     """
+    #     Does predictions in parallel
+    #     """
+    #     # Set up the parallel jobs on separate processes, to overcome 
+    #     # Python's GIL for proper parallelisation
+    #     nprocs = mp.cpu_count() - 1
+    #     # if nprocs > 4:
+    #     #     nprocs = 4
+    #     jobs = partition_indexes(x.shape[0], nprocs)
+    #     args = [(x[start:end], False) for start, end in jobs]
+    #     pool = Pool(processes=nprocs)
+    #     predict_results = pool.starmap(self.predict, args)
+    #     pool.close()
+    #     pool.join()
+
+    #     # Concat along class list axis
+    #     # return np.concatenate(predict_results, axis=0)
+    #     return np.hstack(predict_results)

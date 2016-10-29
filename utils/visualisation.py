@@ -1,5 +1,7 @@
 import numpy as np
 from datetime import datetime
+from ML.gp.poe import PoGPE
+from ML.gp.gpoe import GPoGPE
 
 try:
     import matplotlib as mpl
@@ -11,11 +13,114 @@ try:
     import matplotlib as mpl
     from matplotlib import colors
 except:
-    print("Failed to import matplotlib stuff.")
+    print("Failed to import matplotlib stuff. Check relevant libraries are installed if working from a headless server.")
 import math
 import pdb
+from ML.gp import gp
+from ML.gp import gp_gpy
+from scipy.interpolate import spline
+from utils import load_data
 
 from utils.downsample import fixed_grid_blocksize
+
+def ova_example(filename='ova_example.pdf'):
+    X1, X2, X3 = load_data.generate_toy_clusters()
+
+    fig, ax = plt.subplots()
+    ax.scatter(X3[:,0], X3[:,1], c='g', cmap=cm.viridis, label='class 1')
+    ax.scatter(X2[:,0], X2[:,1], c='b', cmap=cm.viridis, label='class 2')
+    ax.scatter(X1[:,0], X1[:,1], c='r', cmap=cm.viridis, label='class 3')
+    ax.set_xlim(-10, 10)
+    ax.set_ylim(-10, 10)
+    ax.plot((-6, 2), (-10,10), 'g-')
+    ax.plot((6, -2), (-10,10), 'b-')
+    ax.plot((-10, 10), (0, 0), 'r-')
+    ax.set_xlabel('$x$-coordinate')
+    ax.set_ylabel('$y$-coordinate')
+
+    plt.legend(loc='lower right')
+
+    plt.savefig(filename)
+    clear_plt()
+
+def smooth_pred(x, y_pred, v_pred):
+    xnew = np.linspace(x.min(), x.max(), 300)
+    yp_smooth = spline(x.flatten(), y_pred, xnew)
+    vp_smooth = spline(x.flatten(), v_pred, xnew)
+    return yp_smooth, np.abs(vp_smooth)
+
+def plot_illustrative_gp_hparams(x=None, filename='gp_sample_plot.pdf'):
+    def f(x):
+        return 5*np.sin(x) + np.random.normal(scale=0.4, size=len(x))[:,np.newaxis]**2
+
+    if x == None:
+        x = np.linspace(1, 10, 30).reshape(-1, 1)
+    y = f(x)
+
+    x = np.array([-7, -6, -5.5, -4.9, -2.5, -2.4, -2.0, -1.5, -0.5, 0.3, 0.4, 0.5, 2.3, 2.5, 4.0, 4.1, 5.0, 6.0, 6.5]).reshape(-1, 1)
+    y = np.array([-1.8, 0, 0.3, -0.9, -1.3, -1.2, 0.4, 1.6, 1.9, 0.0, -0.9, -1.1, -2.7, -2.2, -1.2, -1.0, -1.5, -1.0, -0.8]).reshape(-1, 1)
+    xnew = np.linspace(x.min(), x.max(), 300).reshape(-1, 1)
+    # pdb.set_trace()
+
+    gp_model = gp.GaussianProcess
+    # gp_model = gp_gpy.GPR
+
+    # gpr1 = gp_model()
+    gpr1 = PoGPE(15)
+    gpr1.fit(x, y)
+    y1, v1 = gpr1.predict(xnew)
+    y1 = np.average(y1, axis=1); v1 = np.average(v1, axis=1)
+    # y1, v1 = smooth_pred(x, y1, v1)
+    # print("The fitted GP's stats were: ferr:{} l_scale:{} nerr:{}".format(gpr1.f_err, gpr1.l_scales, gpr1.n_err))
+    print(gpr1)
+    # 2.435308763334455 l_scale:[ 0.81049339] nerr:0.0
+
+    # gpr2 = gp_model()
+    gpr2 = GPoGPE(15)
+    gpr2.fit(x, y, False)
+    # gpr2.set_hps(ferr=2, lscales=2.7, nerr=0.5)
+    y2, v2 = gpr2.predict(xnew)
+    y2 = np.average(y2, axis=1); v2 = np.average(v2, axis=1)
+    # y2, v2 = smooth_pred(x, y2, v2)
+
+    gpr3 = gp_model()
+    gpr3.fit(x, y, False)
+    gpr3.set_hps(ferr=1, lscales=0.3, nerr=0.001)
+    y3, v3 = gpr3.predict(xnew)
+    # y3, v3 = smooth_pred(x, y3, v3)
+
+    # gpr4 = gp.GaussianProcess()
+    # gpr4.fit(x, y)
+    # gpr4.f_err = 3
+    # gpr4.l_scales = 1
+    # gpr4.n_err = 0.1
+    # y4, v4 = gpr4.predict_regression(xnew)
+    
+    plot_confidence(x, y, xnew, y1, np.sqrt(v1), title=None, filename='gp_with_variance_plot1.pdf')
+    plot_confidence(x, y, xnew, y2, np.sqrt(v2), title=None, filename='gp_with_variance_plot2.pdf')
+    plot_confidence(x, y, xnew, y3, np.sqrt(v3), title=None, filename='gp_with_variance_plot3.pdf')
+
+    return (y1, v1), (y2, v2), (y3, v3)
+
+def plot_confidence(x, y, xnew, y_pred, sigma, title=None, filename='gp_with_variance_plot.pdf'):
+    # Plot function, prediction, and 95% confidence interval based on MSE
+    confidence = 1.9600
+    # plt.plot(x, y, 'r:', label=u'$f(x) = x\, \sin(x)$')
+    plt.scatter(x, y)
+    plt.plot(xnew, y_pred, 'b-', label=u'Prediction')
+    plt.fill(np.concatenate([xnew, xnew[::-1]]),
+            np.concatenate([y_pred - confidence * sigma,
+                (y_pred + confidence * sigma)[::-1]]),
+            alpha=.3, fc='b', ec='None', label='95% confidence interval (1 standard deviation)')
+    plt.xlabel('$x$ (inputs)')
+    plt.ylabel('$y$ (outputs)')
+
+    # plt.legend()
+    if title != None:
+        plt.title(title)
+
+    plt.savefig(filename)
+    clear_plt()
 
 def plot_dm_stats(points, display=False, filename='dm_stats.pdf'):
     axes = points.shape[1]
@@ -60,10 +165,10 @@ def scatter_array(points, display=False, filename='scatterplot.pdf'):
 
     clear_plt()
 
-def plot_gp_with_variance(X, Y, x, y, y_pred, sigma):
+def plot_gp_with_variance(X, Y, x, y, y_pred, sigma, filename='gp_with_variance.pdf'):
 
     # Plot function, prediction, and 95% confidence interval based on MSE
-    confidence = 1.9600
+    # confidence = 1.9600
     fig = plt.figure(figsize=(12,8))
 
     # plt.plot(x, y, 'r:', label=u'$f(x) = x\, \sin(x)$')
@@ -77,8 +182,8 @@ def plot_gp_with_variance(X, Y, x, y, y_pred, sigma):
     # Predictions and variance
     plt.plot(x, y_pred, 'g-', label=u'Prediction', mew=2.0)
     plt.fill(np.concatenate([x, x[::-1]]),
-            np.concatenate([y_pred - confidence * sigma,
-                (y_pred + confidence * sigma)[::-1]]),
+            np.concatenate([y_pred - sigma,
+                (y_pred + sigma)[::-1]]),
             alpha=0.2, fc='b', ec='None', label='95% confidence interval')
 
     # Axes labels
@@ -94,6 +199,8 @@ def plot_gp_with_variance(X, Y, x, y, y_pred, sigma):
     plt.xlim(np.min(x_mins), np.max(x_maxs))
 
     # plt.legend(loc='upper left')
+    plt.savefig(filename)
+    clear_plt()
     # plt.show()
 
 def show_all():
@@ -146,25 +253,6 @@ def generate_subplots(rows=1, columns=1, actual_count=1, title_list=None, with_f
 
     return ret 
 
-def plot_confidence(x, y_pred, sigma, title=None):
-    # Plot function, prediction, and 95% confidence interval based on MSE
-    confidence = 1.9600
-    fig = plt.figure()
-    # plt.plot(x, y, 'r:', label=u'$f(x) = x\, \sin(x)$')
-    plt.plot(x, y_pred, 'b-', label=u'Prediction')
-    plt.fill(np.concatenate([x, x[::-1]]),
-            np.concatenate([y_pred - confidence * sigma,
-                (y_pred + confidence * sigma)[::-1]]),
-            alpha=.5, fc='b', ec='None', label='95% confidence interval')
-    plt.xlabel('$x$')
-    plt.ylabel('$y$')
-
-    plt.ylim(-200, 200)
-
-    plt.legend(loc='upper left')
-    if title != None:
-        plt.title(title)
-    plt.show()
 
 def plot_test_graph():
     f_output1 = lambda x: 4. * np.cos(x/5.) - .4*x - 35. + np.random.rand(x.size)[:,None] * 2
@@ -288,9 +376,9 @@ def show_map(locations, labels, x_bins=None, y_bins=None, display=False, filenam
     in_ax = False if ax == None else True
 
     print("Setting colourbar (legend)...")
-    cmap = cm.jet
-    cmaplist = [cmap(i) for i in range(cmap.N)]
-    cmap = cmap.from_list('custom cmap', cmaplist, cmap.N)
+    cmap = cm.viridis
+    # cmaplist = [cmap(i) for i in range(cmap.N)]
+    # cmap = cmap.from_list('custom cmap', cmaplist, cmap.N)
 
     print("Bulding image...")
     # plt.imshow(Z, extent=[x_min, x_max, y_min, y_max], origin='lower', cmap=cmap, vmin=vmin, vmax=vmax)
@@ -298,8 +386,8 @@ def show_map(locations, labels, x_bins=None, y_bins=None, display=False, filenam
     ###############
     norm=None
     # uniq_C = np.unique(labels)
-    # Can also take an Nx3 or Nx4 array of rgb/rgba values - will need for 24 case hmmm
-    # cmap = colors.ListedColormap(['blue', 'cyan', 'yellow', 'red'])
+    # # Can also take an Nx3 or Nx4 array of rgb/rgba values - will need for 24 case hmmm
+    # # cmap = colors.ListedColormap(['blue', 'cyan', 'yellow', 'red'])
     # if uniq_C.shape[0] > 4:
     #     bounds=np.linspace(0,23,24)
     # else:
@@ -325,8 +413,8 @@ def show_map(locations, labels, x_bins=None, y_bins=None, display=False, filenam
         if uniq <= 24:
             plt.colorbar(ticks=range(uniq))
         else:
-            plt.colorbar()
-        # plt.colorbar(im, ticks=bounds, cmap=cmap, norm=norm)
+            # plt.colorbar()
+            plt.colorbar(im, ticks=bounds, cmap=cmap, norm=norm)
 
     # Setting axis labels
     xlabel = 'UTM x-coordinate, zone 51S'
@@ -353,6 +441,8 @@ def show_map(locations, labels, x_bins=None, y_bins=None, display=False, filenam
         cur_fig.show()
     else:
         cur_fig.savefig(filename + '.pdf')
+
+    im = np.copy(im)
 
     plt.cla()
     plt.clf()
@@ -506,7 +596,7 @@ def dm_pred_vs_actual(preds, actuals, title='DM predictions vs actuals', filenam
     """
     x = np.arange(1, preds.shape[0]+1)
     colours = ['b', 'g', 'r', 'c', 'm', 'y', 'b', 'w']
-    # cmap = cm.jet
+    # cmap = cm.viridis
     # colours = [cmap(i) for i in range(cmap.N)]
 
     for i in range(preds.shape[1]):
@@ -627,7 +717,7 @@ def plot_multi_maps(q_locations, q_preds, filename='dm_simplelabel_heatmap', acr
     Plots heatmap for each label in data
     """
     dims = q_preds.shape[1]
-    axs, fig, big_ax = generate_subplots(rows=down, columns=across, actual_count=dims, title_list=None, with_fig=True, with_big_ax=True)
+    axs, fig, big_ax = generate_subplots(rows=down, columns=across, actual_count=dims, title_list=title_list, with_fig=True, with_big_ax=True)
     xlabel = 'UTM x-coordinates, zone 51S'
     ylabel = 'UTM y-coordinates, zone 51S'
     big_ax.spines['top'].set_color('none')
@@ -664,32 +754,13 @@ def plot_multi_maps(q_locations, q_preds, filename='dm_simplelabel_heatmap', acr
 
     fig.tight_layout()
     plt.savefig(filename+'.pdf')
-    clear_plt()
 
-    if q_preds.shape[1] <= 4:
+    if title_list == None and q_preds.shape[1] <= 4:
         print('Also creating colour bar...')
         imshow_colorbar(im, filename=filename)
         clear_plt()
-
-    # for i in range(q_preds.shape[1]):
-    #     vis.show_map(q_locations, q_preds[:,i], display=False, filename=filename+' '+str(i))
-
-    # fig, ax = plt.subplots()
-    # cax = fig.add_axes([0.27, 0.8, 0.5, 0.05])
-    # fig.colorbar(ims[0], cax=cax, orientation='horizontal')
-    # cax = fig.add_axes([0.27, 0.6, 0.5, 0.05])
-    # fig.colorbar(ims[1], cax=cax, orientation='horizontal')
-    # cax = fig.add_axes([0.27, 0.4, 0.5, 0.05])
-    # fig.colorbar(ims[2], cax=cax, orientation='horizontal')
-    # cax = fig.add_axes([0.27, 0.2, 0.5, 0.05])
-    # fig.colorbar(ims[0], cax=cax, orientation='horizontal')
-    # font = {'family' : 'normal',
-    #         'weight' : 'normal',
-    #         'size'   : 6}
-    # mpl.rc('font', **font)
-    # plt.savefig()
-    # mpl.rcdefaults()
-    # clear_plt()
+    else:
+        clear_plt()
 
     return im
 
@@ -699,11 +770,6 @@ def plot_dm_per_label_maps_multi(q_locations, q_preds, filename='dm_alllabels_he
     """
     label_map={1:0,2:0,3:1,4:3,5:1,6:3,7:3,8:3,9:3,10:1,11:3,12:3,13:2,14:2,15:2,16:1,17:1,18:0,19:1,20:0,21:0,22:1,23:0,24:0}
 
-    title_set1 = ['label {} ({})'.format(i, label_map[i+1]) for i in range(0,6)]
-    title_set2 = ['label {} ({})'.format(i, label_map[i+1]) for i in range(6,12)] 
-    title_set3 = ['label {} ({})'.format(i, label_map[i+1]) for i in range(12,18)] 
-    title_set4 = ['label {} ({})'.format(i, label_map[i+1]) for i in range(18,24)] 
-
     vmin = q_preds.min()
     vmax = q_preds.max()
     # vmin=0
@@ -711,10 +777,23 @@ def plot_dm_per_label_maps_multi(q_locations, q_preds, filename='dm_alllabels_he
 
     bounds = {'vmin': vmin, 'vmax': vmax}
 
-    plot_multi_maps(q_locations, q_preds[:,:6],       '{}_1-6'.format(filename), across=2, down=3, title_list=title_set1, **bounds)
-    plot_multi_maps(q_locations, q_preds[:,6:12],     '{}_7-12'.format(filename), across=2, down=3, title_list=title_set2, **bounds)
-    plot_multi_maps(q_locations, q_preds[:,12:18],    '{}_13-18'.format(filename), across=2, down=3, title_list=title_set3, **bounds)
-    im = plot_multi_maps(q_locations, q_preds[:,18:], '{}_19-24'.format(filename), across=2, down=3, title_list=title_set4, **bounds)
+    step = 4
+    if 24 % step != 0:
+        raise ValueError('step size needs to divide into 24 perfectly!')
+    across = 2
+    down = int(step/across)
+    step_locs = np.arange(0,24,step)
+    for idx, i in enumerate(step_locs):
+        title_set = ['label {} ({})'.format(i, label_map[i+1]) for i in range(i, i+step)]
+        cur_filename = '{}_{}-{}'.format(filename, i, i+step-1)
+        print(cur_filename)
+        im = plot_multi_maps(q_locations, q_preds[:,i:i+step], cur_filename, 
+                across=across, down=down, title_list=title_set, **bounds)
+
+    # plot_multi_maps(q_locations, q_preds[:,:6],       '{}_1-6'.format(filename), across=2, down=3, title_list=title_set1, **bounds)
+    # plot_multi_maps(q_locations, q_preds[:,6:12],     '{}_7-12'.format(filename), across=2, down=3, title_list=title_set2, **bounds)
+    # plot_multi_maps(q_locations, q_preds[:,12:18],    '{}_13-18'.format(filename), across=2, down=3, title_list=title_set3, **bounds)
+    # im = plot_multi_maps(q_locations, q_preds[:,18:], '{}_19-24'.format(filename), across=2, down=3, title_list=title_set4, **bounds)
     clear_plt()
 
     imshow_colorbar(im, filename)
@@ -727,7 +806,7 @@ def standalone_multioutput_colorbar(vmin=0, vmax=1, filename='dm_standalone_colo
     fig = plt.figure(figsize=(8, 1))
     # fig.subplots_adjust(left=0, right=0.2, bottom=0, top=0.2)
     ax = fig.add_axes([0.05, 0.50, 0.9, 0.15])
-    cmap = cm.jet
+    cmap = cm.viridis
     norm = mpl.colors.Normalize(vmin=vmin, vmax=vmax)
     cb1 = mpl.colorbar.ColorbarBase(ax, cmap=cmap, norm=norm, orientation='horizontal')
     ax.set_title(title)
@@ -741,7 +820,7 @@ def standalone_label_colorbar(label_count=24, filename='label_standalone_colorba
     fig = plt.figure(figsize=(8, 1))
     ax = fig.add_axes([0.05, 0.50, 0.9, 0.15])
 
-    cmap = cm.jet
+    cmap = cm.viridis
     cmaplist = [cmap(i) for i in range(cmap.N)]
     cmap = cmap.from_list('custom cmap', cmaplist, cmap.N)
     bounds = np.linspace(1, label_count, label_count)
@@ -823,3 +902,6 @@ def discrete_cmap(N, base_cmap=None):
     color_list = base(np.linspace(0, 1, N))
     cmap_name = base.name + str(N)
     return base.from_list(cmap_name, color_list, N)
+
+def bathymetry_survey_example():
+    pass
