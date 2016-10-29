@@ -11,7 +11,7 @@ try:
     import matplotlib as mpl
     from matplotlib import colors
 except:
-    print("Failed to import matplotlib stuff.")
+    print("Failed to import matplotlib stuff. Check relevant libraries are installed if working from a headless server.")
 import math
 import pdb
 
@@ -288,9 +288,9 @@ def show_map(locations, labels, x_bins=None, y_bins=None, display=False, filenam
     in_ax = False if ax == None else True
 
     print("Setting colourbar (legend)...")
-    cmap = cm.jet
-    cmaplist = [cmap(i) for i in range(cmap.N)]
-    cmap = cmap.from_list('custom cmap', cmaplist, cmap.N)
+    cmap = cm.viridis
+    # cmaplist = [cmap(i) for i in range(cmap.N)]
+    # cmap = cmap.from_list('custom cmap', cmaplist, cmap.N)
 
     print("Bulding image...")
     # plt.imshow(Z, extent=[x_min, x_max, y_min, y_max], origin='lower', cmap=cmap, vmin=vmin, vmax=vmax)
@@ -353,6 +353,8 @@ def show_map(locations, labels, x_bins=None, y_bins=None, display=False, filenam
         cur_fig.show()
     else:
         cur_fig.savefig(filename + '.pdf')
+
+    im = np.copy(im)
 
     plt.cla()
     plt.clf()
@@ -506,7 +508,7 @@ def dm_pred_vs_actual(preds, actuals, title='DM predictions vs actuals', filenam
     """
     x = np.arange(1, preds.shape[0]+1)
     colours = ['b', 'g', 'r', 'c', 'm', 'y', 'b', 'w']
-    # cmap = cm.jet
+    # cmap = cm.viridis
     # colours = [cmap(i) for i in range(cmap.N)]
 
     for i in range(preds.shape[1]):
@@ -716,7 +718,7 @@ def standalone_multioutput_colorbar(vmin=0, vmax=1, filename='dm_standalone_colo
     fig = plt.figure(figsize=(8, 1))
     # fig.subplots_adjust(left=0, right=0.2, bottom=0, top=0.2)
     ax = fig.add_axes([0.05, 0.50, 0.9, 0.15])
-    cmap = cm.jet
+    cmap = cm.viridis
     norm = mpl.colors.Normalize(vmin=vmin, vmax=vmax)
     cb1 = mpl.colorbar.ColorbarBase(ax, cmap=cmap, norm=norm, orientation='horizontal')
     ax.set_title(title)
@@ -730,7 +732,7 @@ def standalone_label_colorbar(label_count=24, filename='label_standalone_colorba
     fig = plt.figure(figsize=(8, 1))
     ax = fig.add_axes([0.05, 0.50, 0.9, 0.15])
 
-    cmap = cm.jet
+    cmap = cm.viridis
     cmaplist = [cmap(i) for i in range(cmap.N)]
     cmap = cmap.from_list('custom cmap', cmaplist, cmap.N)
     bounds = np.linspace(1, label_count, label_count)
