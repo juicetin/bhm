@@ -1,4 +1,5 @@
 from ML.gp import gp_gpy
+from ML.gp import gp
 from ML.helpers import partition_indexes
 from progressbar import Bar, Percentage, Counter, ProgressBar, ETA
 from ML.helpers import sigmoid
@@ -9,13 +10,18 @@ import pdb
 
 class GP_ensembles():
     def __init__(self, expert_size=200):
+        print(expert_size)
         self.expert_size = expert_size
     
     def fit(self, X, y, parallel=False):
-        # if type(y[0]) != np.int64:
-        #     self.gp_type = 'regression'
-        # else:
-        #     self.gp_type = 'classification'
+        if type(y[0]) != np.int64:
+            print('Performing ensemble GP regression')
+            # self.gp_type = 'regression'
+            self.model = gp_gpy.GPR
+        else:
+            print('Performing ensemble GP classification')
+            self.model = gp_gpy.GPyC
+            # self.gp_type = 'classification'
 
         self.labels_count = np.unique(y).shape[0]
 
@@ -35,7 +41,7 @@ class GP_ensembles():
         expert_count = math.ceil(X_s.shape[0]/self.expert_size)
     
         # Create and train all local GP experts
-        gp_experts = np.full(expert_count, gp_gpy.GPyC(), dtype='object')
+        gp_experts = np.full(expert_count, self.model(), dtype='object')
         idxs = partition_indexes(X_s.shape[0], expert_count)
         widgets=['Fitting: ', Bar(), ' ', Counter(), ' ', Percentage(), ' ', ETA()]
         bar = ProgressBar(widgets=widgets, maxval=gp_experts.shape[0])
