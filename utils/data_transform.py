@@ -107,3 +107,17 @@ def merge_rare_labels(labels, min_count=20):
         new_labels = np.where(new_labels == i, substitute_label, new_labels)
 
     return new_labels
+
+def scale_dm_preds(preds, lower_bound=0.2, upper_bound=0.4):
+    """
+    Scales predictions if too many of the values sit within too small a range. E.g. for dm24 predictions, 96% of the values reside between 0.0 and 0.2, while the remaining 4% are between 0.2 and 0.8 - but this means all the variance in 96% of the data isn't visible.
+    """
+    scale_idxs = np.where(preds > 0.2)[0]
+    pred_min = preds[scale_idxs].min()
+    pred_max = preds[scale_idxs].max()
+    
+    new_vals = (upper_bound-lower_bound) * (preds[scale_idxs] - pred_min) / (pred_max-pred_min) + lower_bound
+    scaled_preds = np.copy(preds)
+    scaled_preds[scale_idxs] = new_vals
+
+    return scaled_preds
