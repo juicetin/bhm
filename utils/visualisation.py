@@ -261,6 +261,20 @@ def plot_classes(X, Y, Y_pred):
 
         plt.show()
 
+def scatter_map(locations, labels, filename='scattermap.pdf'):
+    x_min = locations[:,0].min()
+    x_max = locations[:,0].max()
+    y_min = locations[:,0].min()
+    y_max = locations[:,0].max()
+
+    fig, ax = plt.subplots()
+    ax.scatter(locations[:,0], locations[:,1], c=labels, cmap=cm.viridis)
+    ax.set_xlabel('$x$ coordinate')
+    ax.set_ylabel('$y$ coordinate')
+
+    plt.savefig(filename)
+    clear_plt()
+
 def show_map(locations, labels, x_bins=None, y_bins=None, display=False, filename='map', vmin=None, vmax=None, ax=None, hide_y=False):
     """
     Given the x, y coord locations and corresponding labels, plot this on imshow (null points
