@@ -261,6 +261,71 @@ def plot_classes(X, Y, Y_pred):
 
         plt.show()
 
+def scatter_map(locations, labels, filename='scattermap'):
+    x_min = locations[:,0].min()
+    x_max = locations[:,0].max()
+    y_min = locations[:,0].min()
+    y_max = locations[:,0].max()
+
+    fig, ax = plt.subplots()
+    if np.unique(labels).shape[0] == 1:
+        im = ax.scatter(locations[:,0], locations[:,1], c='black', s=8, lw=0)
+    else:
+        im = ax.scatter(locations[:,0], locations[:,1], c=labels, cmap=cm.viridis, s=8, lw=0)
+    ax.set_xlabel('$x$ coordinates')
+    ax.set_ylabel('$y$ coordinates')
+
+    ax.set_xlim(x_min, x_max)
+    ax.set_ylim(y_min, y_max)
+
+    plt.savefig(filename+'.pdf')
+    clear_plt()
+    return im
+
+def plot_toy_data(*args, **kwargs):
+    print('Function removed. Use utils/visualisation.scatter_map_clusters')
+
+def scatter_toymap_clusters(locations, title='Illustrative example plots', filename='tmp.pdf', display=False):
+    """
+    Plot the toy DM vs GP data to show clusters
+    """
+    x = locations[:,0]
+    y = locations[:,1]
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+
+    ax.scatter(x, y, c='grey', lw=0, s=8)
+    ax.set_title(title)
+    ax.annotate('cluster A', xy=(-4.5, 2.2), xytext=(-7.4, 0),
+            arrowprops=dict(facecolor='black', shrink=0.05),
+            )
+    ax.annotate('cluster B', xy=(4.0, 2), xytext=(2, -1),
+            arrowprops=dict(facecolor='black', shrink=0.05),
+            )
+
+    ax.annotate('cluster C', xy=(-2, -5), xytext=(0, -6),
+            arrowprops=dict(facecolor='black', shrink=0.05),
+            )
+
+    ax.set_xlabel('$x$ coordinates')
+    ax.set_ylabel('$y$ coordinates')
+
+    # Show image
+    if display == False:
+        plt.savefig(filename)
+    else:
+        plt.show()
+    clear_plt()
+
+def scatter_multi_maps(locations, labels, filename='scattermap'):
+    for i in range(labels.shape[1]):
+        im = scatter_map(locations, labels[:,i], '{}_{}'.format(filename, i))
+    
+    standalone_colorbar(im, filename=filename+'_horz', orientation='horizontal', label='Label distributions')
+    # standalone_colorbar(im, filename=filename+'_vert', orientation='vertical', label='Label distributions')
+    clear_plt()
+
 def show_map(locations, labels, x_bins=None, y_bins=None, display=False, filename='map', vmin=None, vmax=None, ax=None, hide_y=False):
     """
     Given the x, y coord locations and corresponding labels, plot this on imshow (null points
@@ -372,7 +437,7 @@ def show_map(locations, labels, x_bins=None, y_bins=None, display=False, filenam
     # Create colourbar here if single (integer) labels are being predicted
     # if type(labels[0]) == np.int64:
     #     print('Creating colour bar...')
-    #     imshow_colorbar(im, '{}_colourbar.pdf'.format(filename))
+    #     standalone_colorbar(im, '{}_colourbar.pdf'.format(filename))
 
     return im
 
@@ -446,35 +511,6 @@ def plot_training_with_grid(locations, filename='training_map.pdf', display=True
 
     pdb.set_trace()
 
-def plot_toy_data(locations, colours, title='Illustrative example plots', filename='tmp.pdf', display=True):
-    """
-    Plot the toy DM vs GP data to show clusters
-    """
-    x = locations[:,0]
-    y = locations[:,1]
-
-    fig = plt.figure()
-    ax = fig.add_subplot(111)
-
-    ax.scatter(x, y, c=colours, lw=0)
-    ax.set_title(title)
-    ax.annotate('cluster A', xy=(-4, 2.2), xytext=(-3, 0),
-            arrowprops=dict(facecolor='black', shrink=0.05),
-            )
-    ax.annotate('cluster B', xy=(5.5, 2), xytext=(3, -1),
-            arrowprops=dict(facecolor='black', shrink=0.05),
-            )
-
-    ax.annotate('cluster C', xy=(-3, -7), xytext=(-1, -9),
-            arrowprops=dict(facecolor='black', shrink=0.05),
-            )
-
-    # Show image
-    if display == False:
-        plt.savefig(filename)
-    else:
-        plt.show()
-    clear_plt()
 
 def plot_multilabel_distribution(labels, title='Multi-label distribution', filename='multilabel_distr.pdf', display=True):
     """
@@ -626,12 +662,39 @@ def plot_dm_hists(chains, filename='dm_mcmc_weight_hist'):
     # Plot all graphs
     for i, ax in enumerate(axs):
         n, bins, patches = ax.hist(chains[:,i], bins=50)
+        ax.get_yaxis().set_visible(False)
 
     # Save graphs
     # plt.tight_layout()
     plt.savefig(filename+'.pdf')
     clear_plt()
     mpl.rcdefaults()
+
+def plot_dm_hists_multi(chains, filename='dm_mcmc_weight_hist'):
+
+    # 5x16 = 5x8 x 2
+    # Convert chains to numpy array if not already to allow easier axis access
+    if type(chains) != np.ndarray:
+        print('Converting chains to numpy array...')
+        chains = np.array(chains)
+
+    # Flatten each chain from a matrix of chains to access slices easily
+    if len(chains) >= 3:
+        print('Flatteing chains with more than 2 dimensions...')
+        chains = np.reshape((len(chains), chains[0].shape[0] * chains.[0].shape[1]))
+
+    # Organise MCMC chains into rows of 5 (up to 8 columns)
+    h_max = 5
+    v_max = 8
+
+    # Calculate chain axes boundaries to plot per multi-histogram image
+    bounds = np.arange(0, chains.shape[1], h_max * v_max)
+    print('Full list of chains broken up into segments to print per multi-hist image: {}'.format(bounds))
+
+    # Print each of the mcmc segments
+    for i in np.arange(1, bounds.shape[0]):
+        cur_chain_axes = [bounds[i-1]:[bounds[i]]
+        plot_dm_hists(chains[:,cur_chain_axes], filename)
 
 def plot_multi_maps(q_locations, q_preds, filename='dm_simplelabel_heatmap', across=2, down=2, offset=None, title_list=None, vmin=None, vmax=None):
     """
@@ -678,7 +741,7 @@ def plot_multi_maps(q_locations, q_preds, filename='dm_simplelabel_heatmap', acr
 
     if title_list == None and q_preds.shape[1] <= 4:
         print('Also creating colour bar...')
-        imshow_colorbar(im, filename=filename)
+        standalone_colorbar(im, filename=filename)
         clear_plt()
     else:
         clear_plt()
@@ -717,7 +780,7 @@ def plot_dm_per_label_maps_multi(q_locations, q_preds, filename='dm_alllabels_he
     # im = plot_multi_maps(q_locations, q_preds[:,18:], '{}_19-24'.format(filename), across=2, down=3, title_list=title_set4, **bounds)
     clear_plt()
 
-    imshow_colorbar(im, filename)
+    standalone_colorbar(im, filename)
     clear_plt()
 
 def standalone_multioutput_colorbar(vmin=0, vmax=1, filename='dm_standalone_colorbar.pdf', title='Dirichlet Multinomial Regression Colour Bar'):
@@ -752,15 +815,23 @@ def standalone_label_colorbar(label_count=24, filename='label_standalone_colorba
 
     clear_plt()
 
-def imshow_colorbar(im, filename):
-    fig = plt.figure(figsize=(8, 1))
-    cax = fig.add_axes([0.05, 0.50, 0.9, 0.15])
-    fig.colorbar(im, cax=cax, orientation='horizontal')
-    font = {'family' : 'normal',
-            'weight' : 'normal',
-            'size'   : 7}
-    mpl.rc('font', **font)
+def standalone_colorbar(im, filename, orientation='horizontal', label=None):
+    if orientation=='horizontal':
+        fig = plt.figure(figsize=(8, 1))
+        cax = fig.add_axes([0.05, 0.50, 0.9, 0.15])
+    else:
+        fig = plt.figure(figsize=(1, 8))
+        cax = fig.add_axes([0.03, 0.03, 0.3, 0.95])
+
+    cb = fig.colorbar(im, cax=cax, orientation=orientation)
+    if label != None:
+        cb.set_label(label)
+    # font = {'family' : 'normal',
+    #         'weight' : 'normal',
+    #         'size'   : 7}
+    # mpl.rc('font', **font)
     plt.savefig('{}_colourbar.pdf'.format(filename))
+    print('colour bar for {} created!'.format(filename))
     mpl.rcdefaults()
     clear_plt()
 
@@ -946,3 +1017,19 @@ def plot_illustrative_gp_hparams(x=None, filename='gp_sample_plot.pdf'):
     plot_confidence(x, y, xnew, y3, np.sqrt(v3), title=None, filename='gp_with_variance_plot3.pdf')
 
     return (y1, v1), (y2, v2), (y3, v3)
+
+def plot_multiple_arrays(data, filename='multi_plot.pdf', datatype='variance'):
+    fig, ax = plt.subplots()
+    colors = [cm.viridis.colors[0], cm.viridis.colors[90], cm.viridis.colors[180]]
+    clust_dict = {0: 'A', 1: 'B', 2: 'C'}
+    for i in range(data.shape[1]):
+        ax.plot(range(data.shape[0]), data[:,i], c=colors[i], label='Cluster {}'.format(clust_dict[i]))
+
+    ax.set_ylabel(datatype)
+    ax.set_xlabel('n-th data point in cluster')
+
+    #TODO legend
+    plt.legend(loc='upper right')
+
+    plt.savefig(filename)
+    clear_plt()
