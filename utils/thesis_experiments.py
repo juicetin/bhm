@@ -491,7 +491,18 @@ def final_entropy_maps(coords, entr4, entr24):
     new_entr4 = helpers.tune_entropies_better_spread(entr4, 200, rungs=5, stepsize=100)
     vis.show_map(coords, new_entr4, filename='dm4_entropy_map')
 
+def biodiversity_searching(preds):
+    """
+    Determine biodiverse clusters
+    """
+    # TODO
+    np.where(preds > 0.3)
+
 def biodiversity_for_cohab_count(preds, cohabitations=2, factor=1.2):
+    """
+    Don't use this!
+    """
+    print("don't use this!")
     labels = np.arange(0, preds.shape[1])
     label_sets = itertools.combinations(labels, cohabitations)
     cur_cohabitat_idxs = set()
