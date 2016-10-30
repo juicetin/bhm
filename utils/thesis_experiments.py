@@ -452,14 +452,14 @@ def downsample_queries(qp_locs, queries):
 #         _, _, idxs = find_even_split_areas(q_preds, q_vars, bounds=[[0.1, 0.4], [0.3, 0.9]], split_labels=label_pair, check='preds')
 #         # vis.plot_multi_maps(coords, preds[0][idxs][:,label_pair],
 
-def test_naive_GP_time(train_features, train_labels, test_features=None, parallel=False, predict=True):
+def test_naive_GP_time(train_features, train_labels, test_features=None, parallel=False, predict=True, optimize=True):
     print('Fit/predict in parallel: {}, doing predictions: {}'.format(parallel, predict))
 
     gp = GPyC()
     t1 = datetime.now()
-    gp.fit(train_features, train_labels, parallel)
+    gp.fit(train_features, train_labels, parallel=parallel, optimize=optimize)
     t2 = datetime.now()
-    print('time taken to train on all training features: {}'.format(t2-t1))
+    print('time taken to train on all training features: {}, with {} parallel and {} model optimisation'.format(t2-t1, parallel, optimize))
 
     if predict == True:
         gp4_p = gp.predict(test_features, parallel)
@@ -469,11 +469,11 @@ def test_naive_GP_time(train_features, train_labels, test_features=None, paralle
 
     return gp
 
-def test_naive_GP_time_combo(train_features, train_labels, test_features=None, predict=True, parallel=False):
-    for i in np.arange(1, 6):
+def test_naive_GP_time_combo(train_features, train_labels, test_features=None, predict=True, parallel=False, optimize=True, start=1):
+    for i in np.arange(start, 6):
         idx = i*1000
         print('Now testing GP runtime for {} points'.format(idx))
-        test_naive_GP_time(train_features[:idx], train_labels[:idx], test_features, parallel=parallel, predict=predict)
+        test_naive_GP_time(train_features[:idx], train_labels[:idx], test_features, parallel=parallel, predict=predict, optimize=optimize)
 
 def plot_entropy(coords, entropies, threshold=-1e-3):
     idxs = helpers.discard_outlier_entropies(entropies, threshold)
