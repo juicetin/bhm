@@ -120,11 +120,10 @@ def fill(labels, num_uniqs, zero_indexed=False):
     else:
         return list(counts)[1:]
 
-def generate_toy_dm_clusters():
-    size = 100
-    multisamp1 = 500
-    multisamp2 = 10
-    multisamp3 = 50
+def generate_toy_dm_clusters(size=100, samples=[500, 10, 50]):
+    multisamp1 = samples[0]
+    multisamp2 = samples[1]
+    multisamp3 = samples[2]
     X1 = np.random.multivariate_normal([-5, -5], [[1, 0], [0, 1]], size)
     X2 = np.random.multivariate_normal([5, 5], [[1, 0], [0, 1]], size)
     X3 = np.random.multivariate_normal([-5, 5], [[1, 0], [0, 1]], size)
@@ -134,24 +133,24 @@ def generate_toy_dm_clusters():
 
     return X1, X2, X3, C1, C2, C3
 
-def generate_toy_clusters():
-    size = 100
-    multisamp1 = 500
-    multisamp2 = 10
-    multisamp3 = 50
+def generate_toy_clusters(size=100, samples=[500, 10, 50]):
+    multisamp1 = samples[0]
+    multisamp2 = samples[1]
+    multisamp3 = samples[2]
     X1 = np.random.multivariate_normal([0, -5], [[1, 0], [0, 1]], size)
     X2 = np.random.multivariate_normal([5, 5], [[1, 0], [0, 1]], size)
     X3 = np.random.multivariate_normal([-5, 5], [[1, 0], [0, 1]], size)
 
     return X1, X2, X3
 
-def generate_dm_toy_ex(plot_toy_graph=False, plot_cluster_distr=False):
+def generate_dm_toy_ex(plot_toy_graph=False, plot_cluster_distr=False, size_per_cluster=1000):
     # Settings
     kfolds = 5
     activation = 'soft'
 
     # Make data
-    X1, X2, X3, C1, C2, C3 = generate_toy_dm_clusters()
+    X1, X2, X3, C1, C2, C3 = generate_toy_dm_clusters(size=size_per_cluster, samples=[50, 50, 50])
+    size = X1.shape[0]
 
     # Concatenate data
     X_train_coords = np.vstack((X1[:size/2], X2[:size/2], X3[:size/2]))
