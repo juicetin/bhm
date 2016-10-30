@@ -3,6 +3,7 @@ from datetime import datetime
 from ML.gp.poe import PoGPE
 from ML.gp.gpoe import GPoGPE
 
+from progressbar import ProgressBar
 try:
     import matplotlib as mpl
     from matplotlib import pyplot as plt
@@ -641,47 +642,80 @@ def plot_dm_chains(chains, filename='dm_mcmc_weights'):
         plt.savefig(filename+'_'+str(idx)+'.pdf')
         clear_plt()
 
-def plot_dm_hists(chains, filename='dm_mcmc_weight_hist'):
+def plot_dm_hists(chains, filename='dm_mcmc_weight_hist', cols=None, rows=None, xlims=None, ylims=None):
     """
     Plots histograms of each MCMC weight to visualise their distribution
     """
-
     # Determine layout of graphs on page
+    if cols == None or rows == None:
+        cols = np.round(math.sqrt(chains.shape[1]/2.51))
+        rows = math.ceil(chains.shape[1]/cols)
+        print(cols, rows)
+
     weight_count = chains.shape[1]
-    cols = np.round(math.sqrt(chains.shape[1]/2.51))
-    rows = math.ceil(chains.shape[1]/cols)
-    print(cols, rows)
+
+    axs, fig, big_ax = generate_subplots(rows=rows, columns=cols, actual_count=weight_count, with_fig=True, with_big_ax=True)
+    # axs = generate_subplots(rows=rows, columns=cols, actual_count=weight_count, title_list=None)
+    xlabel = 'weight values'
+    ylabel = 'weight counts per x-axis value'
+    big_ax.spines['top'].set_color('none')
+    big_ax.spines['bottom'].set_color('none')
+    big_ax.spines['left'].set_color('none')
+    big_ax.spines['right'].set_color('none')
+    big_ax.tick_params(labelcolor='w', top='off', bottom='off', left='off', right='off')
+    big_ax.set_xlabel(xlabel, fontsize=14)
+    big_ax.set_ylabel(ylabel, fontsize=14)
 
     # Generate necessary axes
-    axs = generate_subplots(rows=rows, columns=cols, actual_count=weight_count, title_list=None)
     font = {'family' : 'normal',
             'weight' : 'normal',
             'size'   : 7}
     mpl.rc('font', **font)
 
     # Plot all graphs
+    bar = ProgressBar(maxval=len(axs))
+    bar.start()
     for i, ax in enumerate(axs):
+        bar.update(i)
         n, bins, patches = ax.hist(chains[:,i], bins=50)
-        ax.get_yaxis().set_visible(False)
+
+        # Only show x-axis for last plot in each *column*
+        if i < weight_count - cols:
+            ax.get_xaxis().set_visible(False)
+
+        # Only show y-axis for left-most plots
+        if (i+1) % cols != 0:
+            ax.get_yaxis().set_visible(False)
+        else:
+            ax.yaxis.tick_right()
+
+        if xlims != None:
+            ax.set_xlim(xlims)
+        if ylims != None:
+            ax.set_ylim(ylims)
+    bar.finish()
 
     # Save graphs
     # plt.tight_layout()
     plt.savefig(filename+'.pdf')
-    clear_plt()
     mpl.rcdefaults()
 
-def plot_dm_hists_multi(chains, filename='dm_mcmc_weight_hist'):
+    clear_plt()
 
+def plot_dm_hists_multi(chains, filename='dm_mcmc_weight_hist', ylims=None):
+    """
+    Plot a large number of MCMC chains on a series of images each containing (c x r) MC chains
+    """
     # 5x16 = 5x8 x 2
     # Convert chains to numpy array if not already to allow easier axis access
-    if type(chains) != np.ndarray:
-        print('Converting chains to numpy array...')
-        chains = np.array(chains)
+    # if type(chains) != np.ndarray:
+    #     print('Converting chains to numpy array...')
+    #     chains = np.array(chains)
 
     # Flatten each chain from a matrix of chains to access slices easily
     if len(chains) >= 3:
-        print('Flatteing chains with more than 2 dimensions...')
-        chains = np.reshape((len(chains), chains[0].shape[0] * chains[0].shape[1]))
+        print('Flattening chains with more than 2 dimensions...')
+        chains = chains.reshape(len(chains), chains.shape[1] * chains.shape[2])
 
     # Organise MCMC chains into rows of 5 (up to 8 columns)
     h_max = 5
@@ -689,12 +723,16 @@ def plot_dm_hists_multi(chains, filename='dm_mcmc_weight_hist'):
 
     # Calculate chain axes boundaries to plot per multi-histogram image
     bounds = np.arange(0, chains.shape[1], h_max * v_max)
+    if bounds[-1] < chains.shape[1]:
+        bounds = np.concatenate((bounds, [chains.shape[1]]))
     print('Full list of chains broken up into segments to print per multi-hist image: {}'.format(bounds))
+
+    xlims = (chains.min(), chains.max())
 
     # Print each of the mcmc segments
     for i in np.arange(1, bounds.shape[0]):
-        cur_chain_axes = [bounds[i-1]:[bounds[i]]
-        plot_dm_hists(chains[:,cur_chain_axes], filename)
+        print('Now plotting hist plots {}/{}...'.format(i, bounds.shape[0]-1))
+        plot_dm_hists(chains[:,bounds[i-1]:bounds[i]], '{}_{}'.format(filename, i), cols=h_max, rows=v_max, xlims=xlims, ylims=ylims)
 
 def plot_multi_maps(q_locations, q_preds, filename='dm_simplelabel_heatmap', across=2, down=2, offset=None, title_list=None, vmin=None, vmax=None):
     """
