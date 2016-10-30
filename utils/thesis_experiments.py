@@ -552,7 +552,7 @@ def plot_toydata_vars(dm_preds, gp_preds):
     sz = dm_preds[0].shape[0]/3
     dm_entr = dm_preds[3]
     gp_vars = np.average(gp_preds[1], axis=1)
-    dm_entr_stacked = np.column_stack((dm_entr[:sz], dm_entr[sz:2*sz], 0.7*dm_entr[2*sz:]))
+    dm_entr_stacked = np.column_stack((dm_entr[:sz], dm_entr[sz:2*sz], dm_entr[2*sz:]))
     gp_vars_stacked = np.column_stack((gp_vars[:sz], gp_vars[sz:2*sz], gp_vars[2*sz:]))
 
     vis.plot_multiple_arrays(dm_entr_stacked, filename='toy_scattermap_dm_entropy.pdf', datatype='entropy')
