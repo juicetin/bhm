@@ -279,6 +279,7 @@ def show_map(locations, labels, x_bins=None, y_bins=None, display=False, filenam
     y_min = min(y_bins)
     y_max = max(y_bins)
 
+    print('Prepating to plot {} points...'.format(locations.shape[0]))
     print("Creating x, y index map to determine where to plot...")
     x_bin_coord_map = dict( zip( x_bins, range(len(x_bins)) ) )
     y_bin_coord_map = dict( zip( y_bins, range(len(y_bins)) ) )
