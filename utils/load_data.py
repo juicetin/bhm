@@ -157,8 +157,11 @@ def generate_dm_toy_ex(plot_toy_graph=False, plot_cluster_distr=False, size_per_
     C_train = np.vstack((C1[:size/2], C2[:size/2], C3[:size/2]))
     X_test_coords = np.vstack((X1[size/2:], X2[size/2:], X3[size/2:]))
     C_test = np.vstack((C1[size/2:], C2[size/2:], C3[size/2:]))
-    X_train = bases.RadialBasis(X_train_coords).transform(X_train_coords, lenscale=1)
-    X_test = bases.RadialBasis(X_test_coords).transform(X_test_coords, lenscale=1)
+
+    # X_train = bases.RadialBasis(X_train_coords).transform(X_train_coords, lenscale=1)
+    # X_test = bases.RadialBasis(X_test_coords).transform(X_test_coords, lenscale=1)
+    X_train = 0
+    X_test = 0
 
     # X_train_coords = np.vstack((X1, X2))
     # C_train = np.vstack((C1, C2))
