@@ -502,7 +502,7 @@ def biodiversity_for_cohab_count(preds, cohabitations=2, factor=1.2):
 
     return cur_cohabitat_idxs
 
-def dm_toyplots(size=1000):
+def dm_toyplots(size=200):
     Xtrc, Xtec, Xtr, Xte, Ctr, Cte = load_data.generate_dm_toy_ex(True, False, size)
     vis.plot_multi_maps(Xtrc, Ctr/Ctr.sum(axis=1)[:,np.newaxis], offset=0, filename='toyheatmaps', across=2, down=1)
     return Xtrc, Xtec, Xtr, Xte, Ctr, Cte
