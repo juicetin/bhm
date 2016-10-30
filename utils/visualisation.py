@@ -327,7 +327,7 @@ def scatter_multi_maps(locations, labels, filename='scattermap'):
     # standalone_colorbar(im, filename=filename+'_vert', orientation='vertical', label='Label distributions')
     clear_plt()
 
-def show_map(locations, labels, x_bins=None, y_bins=None, display=False, filename='map', vmin=None, vmax=None, ax=None, hide_y=False):
+def show_map(locations, labels, x_bins=None, y_bins=None, display=False, filename='map', vmin=None, vmax=None, ax=None, hide_y=False, title=None):
     """
     Given the x, y coord locations and corresponding labels, plot this on imshow (null points
     will be shown as blank in the background).
@@ -398,9 +398,9 @@ def show_map(locations, labels, x_bins=None, y_bins=None, display=False, filenam
     # mpl.colorbar.colorbar_factory(cur_fig, habitat_map)
     if in_ax == False:
         uniq = np.unique(labels).shape[0]
-        if uniq <= 24:
+        if uniq > 4:
             plt.colorbar(ticks=range(uniq))
-        else:
+        elif uniq == 4:
             # plt.colorbar()
             plt.colorbar(im, ticks=bounds, cmap=cmap, norm=norm)
 
@@ -418,6 +418,8 @@ def show_map(locations, labels, x_bins=None, y_bins=None, display=False, filenam
         print('Setting axis labels...')
         cur_fig.xlabel(xlabel, fontsize=axis_fontsize)
         cur_fig.ylabel(ylabel, fontsize=axis_fontsize)
+        print('Title set as: {}'.format(title))
+        cur_fig.title(title, fontsize=12)
 
     if hide_y == True:
         ax.get_yaxis().set_visible(False)
@@ -432,8 +434,7 @@ def show_map(locations, labels, x_bins=None, y_bins=None, display=False, filenam
 
     im = np.copy(im)
 
-    plt.cla()
-    plt.clf()
+    clear_plt()
 
     # Create colourbar here if single (integer) labels are being predicted
     # if type(labels[0]) == np.int64:

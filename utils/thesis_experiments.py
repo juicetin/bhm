@@ -491,16 +491,30 @@ def final_entropy_maps(coords, entr4, entr24):
     new_entr4 = helpers.tune_entropies_better_spread(entr4, 200, rungs=5, stepsize=100)
     vis.show_map(coords, new_entr4, filename='dm4_entropy_map')
 
-def biodiversity_searching(preds):
+def biodiversity_searching(preds, coords, plot=False):
     """
-    Determine biodiverse clusters
+    Determine a basic/probably ecologically invalid definition biodiverse clusters 
+    based on the very simple criteria that (n) number of points simulatneously occur
+    at a rate greater than some threshold (t) that decreases as the number of simulatneous
+    occurrences required increases (as we can't have 24 labels all occuring more than 10% of
+    the time, for example...)
     """
-    for i in range(preds.shape[1]):
-        cur_threshold = 0.15
-        cur_cohab_count = 2
-        cur_cohab_idxs = np.where(np.sum(dm24_p > cur_threshold, axis=cur_cohab_count) > 2)[0]
+    scale_factor=.8
+    prev_threshold = (1/scale_factor) * 0.15
+    for i in np.arange(2, preds.shape[1]):
+        cur_threshold = scale_factor * prev_threshold
+        prev_threshold = cur_threshold
+        cur_cohab_count = i
+        cur_cohab_idxs = np.where(np.sum(preds > cur_threshold, axis=1) > i)[0]
         print('There are [{}] points where [{}] labels occur more than [{}] of the time'.format(
             cur_cohab_idxs.shape[0], cur_cohab_count, cur_threshold))
+
+        # Plot the map displaying the cohabitated areas at the current location
+        if plot == True:
+            vis.show_map(coords[cur_cohab_idxs], np.zeros(cur_cohab_idxs.shape[0]), 
+                filename='dm24_cohab_map_{}habs_{}points'.format(cur_cohab_count, cur_cohab_idxs.shape[0]),
+                title='Cohabitation between {} habitats, with a {} occurrence threshold - {} points'.format(
+                    i, np.round(cur_threshold, 3), cur_cohab_idxs.shape[0]))
 
 def biodiversity_for_cohab_count(preds, cohabitations=2, factor=1.2):
     """
