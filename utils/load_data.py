@@ -124,11 +124,11 @@ def generate_toy_dm_clusters(size=100, samples=[500, 10, 50]):
     multisamp1 = samples[0]
     multisamp2 = samples[1]
     multisamp3 = samples[2]
-    X1 = np.random.multivariate_normal([-5, -5], [[1, 0], [0, 1]], size)
-    X2 = np.random.multivariate_normal([5, 5], [[1, 0], [0, 1]], size)
-    X3 = np.random.multivariate_normal([-5, 5], [[1, 0], [0, 1]], size)
-    C1 = np.random.multinomial(multisamp1, [0.7, 0.3], size)
-    C2 = np.random.multinomial(multisamp2, [0.3, 0.7], size)
+    X1 = np.random.multivariate_normal([-3, -3], [[1, 0], [0, 1]], size)
+    X2 = np.random.multivariate_normal([3, 3], [[1, 0], [0, 1]], size)
+    X3 = np.random.multivariate_normal([-3, 3], [[1, 0], [0, 1]], size)
+    C1 = np.random.multinomial(multisamp1, [0.8, 0.2], size)
+    C2 = np.random.multinomial(multisamp2, [0.2, 0.8], size)
     C3 = np.random.multinomial(multisamp3, [0.5, 0.5], size)
 
     return X1, X2, X3, C1, C2, C3
@@ -159,10 +159,10 @@ def generate_dm_toy_ex(plot_toy_graph=False, plot_cluster_distr=False, size_per_
     X_test_coords = np.vstack((X1[half_split:], X2[half_split:], X3[half_split:]))
     C_test = np.vstack((C1[half_split:], C2[half_split:], C3[half_split:]))
 
-    # X_train = bases.RadialBasis(X_train_coords).transform(X_train_coords, lenscale=1)
-    # X_test = bases.RadialBasis(X_test_coords).transform(X_test_coords, lenscale=1)
-    X_train = 0
-    X_test = 0
+    X_train = bases.RadialBasis(X_train_coords).transform(X_train_coords, lenscale=1)
+    X_test = bases.RadialBasis(X_test_coords).transform(X_test_coords, lenscale=1)
+    # X_train = 0
+    # X_test = 0
 
     # X_train_coords = np.vstack((X1, X2))
     # C_train = np.vstack((C1, C2))
