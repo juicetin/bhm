@@ -495,8 +495,12 @@ def biodiversity_searching(preds):
     """
     Determine biodiverse clusters
     """
-    # TODO
-    np.where(preds > 0.3)
+    for i in range(preds.shape[1]):
+        cur_threshold = 0.15
+        cur_cohab_count = 2
+        cur_cohab_idxs = np.where(np.sum(dm24_p > cur_threshold, axis=cur_cohab_count) > 2)[0]
+        print('There are [{}] points where [{}] labels occur more than [{}] of the time'.format(
+            cur_cohab_idxs.shape[0], cur_cohab_count, cur_threshold))
 
 def biodiversity_for_cohab_count(preds, cohabitations=2, factor=1.2):
     """
