@@ -491,7 +491,18 @@ def final_entropy_maps(coords, entr4, entr24):
     new_entr4 = helpers.tune_entropies_better_spread(entr4, 200, rungs=5, stepsize=100)
     vis.show_map(coords, new_entr4, filename='dm4_entropy_map')
 
+def biodiversity_searching(preds):
+    """
+    Determine biodiverse clusters
+    """
+    # TODO
+    np.where(preds > 0.3)
+
 def biodiversity_for_cohab_count(preds, cohabitations=2, factor=1.2):
+    """
+    Don't use this!
+    """
+    print("don't use this!")
     labels = np.arange(0, preds.shape[1])
     label_sets = itertools.combinations(labels, cohabitations)
     cur_cohabitat_idxs = set()
@@ -502,7 +513,47 @@ def biodiversity_for_cohab_count(preds, cohabitations=2, factor=1.2):
 
     return cur_cohabitat_idxs
 
-def dm_toyplots(size=200):
-    Xtrc, Xtec, Xtr, Xte, Ctr, Cte = load_data.generate_dm_toy_ex(True, False, size)
-    vis.plot_multi_maps(Xtrc, Ctr/Ctr.sum(axis=1)[:,np.newaxis], offset=0, filename='toyheatmaps', across=2, down=1)
-    return Xtrc, Xtec, Xtr, Xte, Ctr, Cte
+def dm_toyplots(Xtrc=None, Xtec=None, Xtr=None, Xte=None, Ctr=None, Cte=None, size=1000):
+    if Xtrc == None and Xtec == None and Xtr == None and Xte == None and Ctr == None and Cte == None:
+        Xtrc, Xtec, Xtr, Xte, Ctr, Cte = load_data.generate_dm_toy_ex(True, False, size)
+    sz = int(Xtrc.shape[0]/3)
+    # print('Each cluster test size is {}'.format(sz))
+    
+    # vis.plot_multi_maps(Xtrc, Ctr/Ctr.sum(axis=1)[:,np.newaxis], offset=0, filename='toyheatmaps', across=2, down=1)
+    Xcs = np.concatenate((Xtrc, Xtec))
+    Cs = np.concatenate((Ctr, Cte))
+    Cs_norm = Cs/Cs.sum(axis=1)[:,np.newaxis]
+
+    vis.scatter_toymap_clusters(Xcs, filename='toy_scattermap_clusters.pdf')
+    vis.scatter_multi_maps(Xcs, Cs_norm, filename='toy_scattermap')
+
+    vis.scatter_multi_maps(Xtec, Cte, filename='toy_scattermap_test_expected')
+
+    W = dirmultreg_learn(data_transform.features_squared_only(Xtr), Ctr, reg=100)
+    dm_preds = dirmultreg_predict(data_transform.features_squared_only(Xte), W)
+    dm_errs = np.abs(dm_preds[0] - Cte/Cte.sum(axis=1)[:,np.newaxis])
+
+    print('DM avg errs: {}, clusterA: {}, clusterB: {}, clusterC: {}'.format( 
+        np.average(dm_errs), np.average(dm_errs[:sz]), np.average(dm_errs[sz:2*sz]), np.average(dm_errs[2*sz:])))
+    vis.scatter_multi_maps(Xtec, dm_preds[0], filename='toy_scattermap_dmpreds')
+
+    gp = GPyC()
+    gp.fit(Xtr, Ctr.argmax(axis=1), parallel=True)
+    gp_preds = gp.predict(Xte, parallel=True)
+    gp_errs = gp_preds[0].argmax(axis=1) == Cte.argmax(axis=1)
+    print('GP avg acc: {}, clusterA: {}, clusterB: {}, clusterC: {}'.format( 
+        np.average(gp_errs), np.average(gp_errs[:sz]), np.average(gp_errs[sz:2*sz]), np.average(gp_errs[2*sz:])))
+    vis.scatter_map(Xtec, Cte.argmax(axis=1), filename='toy_scattermap_testgp_expected')
+    vis.scatter_map(Xtec, gp_preds[0].argmax(axis=1), filename='toy_scattermap_gppreds')
+
+    return dm_preds, gp_preds, Xtrc, Xtec, Xtr, Xte, Ctr, Cte
+
+def plot_toydata_vars(dm_preds, gp_preds):
+    sz = dm_preds[0].shape[0]/3
+    dm_entr = dm_preds[3]
+    gp_vars = np.average(gp_preds[1], axis=1)
+    dm_entr_stacked = np.column_stack((dm_entr[:sz], dm_entr[sz:2*sz], 0.7*dm_entr[2*sz:]))
+    gp_vars_stacked = np.column_stack((gp_vars[:sz], gp_vars[sz:2*sz], gp_vars[2*sz:]))
+
+    vis.plot_multiple_arrays(dm_entr_stacked, filename='toy_scattermap_dm_entropy.pdf', datatype='entropy')
+    vis.plot_multiple_arrays(gp_vars_stacked, filename='toy_scattermap_gp_vars.pdf', datatype='variance')
