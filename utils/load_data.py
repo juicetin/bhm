@@ -249,7 +249,7 @@ def sample_equal_multi_labels(multi_labels):
     np.bincount(multi_labels.argmax(axis=1)).min()
 
 def load_mmap_mcmc(*, l):
-    nprocs = mp.cpu_count() - 1
+    nprocs = 3
     res = []
     for i in range(nprocs):
         # db = pymc.database.pickle.load('mcmc_db/dm{}_mcmc_{}.pickle'.format(l, i))
