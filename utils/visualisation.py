@@ -681,7 +681,7 @@ def plot_dm_hists_multi(chains, filename='dm_mcmc_weight_hist'):
     # Flatten each chain from a matrix of chains to access slices easily
     if len(chains) >= 3:
         print('Flatteing chains with more than 2 dimensions...')
-        chains = np.reshape((len(chains), chains[0].shape[0] * chains.[0].shape[1]))
+        chains = np.reshape((len(chains), chains[0].shape[0] * chains[0].shape[1]))
 
     # Organise MCMC chains into rows of 5 (up to 8 columns)
     h_max = 5
