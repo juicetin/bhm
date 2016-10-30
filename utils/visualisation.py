@@ -662,12 +662,39 @@ def plot_dm_hists(chains, filename='dm_mcmc_weight_hist'):
     # Plot all graphs
     for i, ax in enumerate(axs):
         n, bins, patches = ax.hist(chains[:,i], bins=50)
+        ax.get_yaxis().set_visible(False)
 
     # Save graphs
     # plt.tight_layout()
     plt.savefig(filename+'.pdf')
     clear_plt()
     mpl.rcdefaults()
+
+def plot_dm_hists_multi(chains, filename='dm_mcmc_weight_hist'):
+
+    # 5x16 = 5x8 x 2
+    # Convert chains to numpy array if not already to allow easier axis access
+    if type(chains) != np.ndarray:
+        print('Converting chains to numpy array...')
+        chains = np.array(chains)
+
+    # Flatten each chain from a matrix of chains to access slices easily
+    if len(chains) >= 3:
+        print('Flatteing chains with more than 2 dimensions...')
+        chains = np.reshape((len(chains), chains[0].shape[0] * chains.[0].shape[1]))
+
+    # Organise MCMC chains into rows of 5 (up to 8 columns)
+    h_max = 5
+    v_max = 8
+
+    # Calculate chain axes boundaries to plot per multi-histogram image
+    bounds = np.arange(0, chains.shape[1], h_max * v_max)
+    print('Full list of chains broken up into segments to print per multi-hist image: {}'.format(bounds))
+
+    # Print each of the mcmc segments
+    for i in np.arange(1, bounds.shape[0]):
+        cur_chain_axes = [bounds[i-1]:[bounds[i]]
+        plot_dm_hists(chains[:,cur_chain_axes], filename)
 
 def plot_multi_maps(q_locations, q_preds, filename='dm_simplelabel_heatmap', across=2, down=2, offset=None, title_list=None, vmin=None, vmax=None):
     """
