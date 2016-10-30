@@ -174,7 +174,7 @@ class GPyC:
 #     # return np.concatenate(predict_results, axis=0)
 # 
 #     # return np.hstack(predict_results)
-=======
+
 # HACKY - for use when models are saved to remove need for retraining
 def predict(x, models_shape=None, parallel=False, models=None, index_range=None, npy_name=None):
     """
