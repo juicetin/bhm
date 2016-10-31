@@ -327,7 +327,7 @@ def scatter_multi_maps(locations, labels, filename='scattermap'):
     # standalone_colorbar(im, filename=filename+'_vert', orientation='vertical', label='Label distributions')
     clear_plt()
 
-def show_map(locations, labels, x_bins=None, y_bins=None, display=False, filename='map', vmin=None, vmax=None, ax=None, hide_y=False, title=None):
+def show_map(locations, labels, x_bins=None, y_bins=None, display=False, filename='map', vmin=None, vmax=None, ax=None, hide_y=False, title=None, save_im=False):
     """
     Given the x, y coord locations and corresponding labels, plot this on imshow (null points
     will be shown as blank in the background).
@@ -386,23 +386,24 @@ def show_map(locations, labels, x_bins=None, y_bins=None, display=False, filenam
     im = cur_fig.imshow(Z, extent=[x_min, x_max, y_min, y_max], origin='lower', vmin=vmin, vmax=vmax, cmap=cmap, norm=norm)
 
     # Slightly hacky - unfortunately neeeded for 0-count argmaxs of 24 labels
-    # if np.unique(labels).shape[0] < 5:
-    #     uniq_labels = np.arange(5)
-    # else:
-    #     uniq_labels = np.arange(25)
+    if np.unique(labels).shape[0] < 5:
+        uniq_labels = np.arange(5)
+    else:
+        uniq_labels = np.arange(25)
 
-    # bounds = np.linspace(uniq_labels.min()+1, uniq_labels.max(), uniq_labels.shape[0])
-    # norm = mpl.colors.BoundaryNorm(bounds, cmap.N)
 
     # plt.colorbar(cmap=cmap, norm=norm, spacing='Proportional', boundaries=bounds, format='%li')
     # mpl.colorbar.colorbar_factory(cur_fig, habitat_map)
     if in_ax == False:
         uniq = np.unique(labels).shape[0]
-        if uniq > 4:
+        if uniq > 4 and uniq <= 24:
             plt.colorbar(ticks=range(uniq))
         elif uniq == 4:
-            # plt.colorbar()
+            bounds = np.linspace(uniq_labels.min()+1, uniq_labels.max(), uniq_labels.shape[0])
+            norm = mpl.colors.BoundaryNorm(bounds, cmap.N)
             plt.colorbar(im, ticks=bounds, cmap=cmap, norm=norm)
+        else:
+            plt.colorbar()
 
     # Setting axis labels
     xlabel = 'UTM x-coordinate, zone 51S'
@@ -418,21 +419,23 @@ def show_map(locations, labels, x_bins=None, y_bins=None, display=False, filenam
         print('Setting axis labels...')
         cur_fig.xlabel(xlabel, fontsize=axis_fontsize)
         cur_fig.ylabel(ylabel, fontsize=axis_fontsize)
-        print('Title set as: {}'.format(title))
-        cur_fig.title(title, fontsize=12)
+        if title != None:
+            cur_fig.title(title, fontsize=12)
+            print('Title set as: {}'.format(title))
 
     if hide_y == True:
         ax.get_yaxis().set_visible(False)
 
     print("Image generated!")
-    if in_ax == True:
+    if in_ax == True :
         return im
     elif display == True:
         cur_fig.show()
+    elif save_im == True:
+        cur_fig.savefig(filename + '.pdf')
+        return im
     else:
         cur_fig.savefig(filename + '.pdf')
-
-    im = np.copy(im)
 
     clear_plt()
 
@@ -440,8 +443,6 @@ def show_map(locations, labels, x_bins=None, y_bins=None, display=False, filenam
     # if type(labels[0]) == np.int64:
     #     print('Creating colour bar...')
     #     standalone_colorbar(im, '{}_colourbar.pdf'.format(filename))
-
-    return im
 
 def multi_label_histogram(multi_labels):
     """
@@ -871,8 +872,8 @@ def standalone_colorbar(im, filename, orientation='horizontal', label=None):
     # mpl.rc('font', **font)
     plt.savefig('{}_colourbar.pdf'.format(filename))
     print('colour bar for {} created!'.format(filename))
-    mpl.rcdefaults()
     clear_plt()
+    mpl.rcdefaults()
 
 def plot_multiple_axes(points, labels = None, filename='multi_plots.pdf'):
     """
