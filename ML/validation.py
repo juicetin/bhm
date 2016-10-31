@@ -56,6 +56,8 @@ def cross_validate_algo(features, labels, folds, algo, verbose=False):
     kf = cross_validation.StratifiedKFold(labels, n_folds=folds) # Prevent rounds with none of any given label - breaks AUC
     count = 1
     algo_str = algo_module_to_str(algo)
+    f1_arrs = []
+    uniq_c = np.unique(labels).shape[0]
     for train_index, test_index in kf:
     # for train_index, test_index in kf.split(features, labels):
         # print("Calculating part {} of {}".format(count, folds))
@@ -79,6 +81,12 @@ def cross_validate_algo(features, labels, folds, algo, verbose=False):
         this_accuracy = accuracy_score(y_test, y_)
         accuracies.append(this_accuracy)
         this_f1 = f1_score(y_test, y_, average=None)
+
+        # missing values
+        if this_f1.shape[0] != uniq_c:
+            this_f1 = np.concatenate((this_f1, (uniq_c-this_f1.shape[0]) * [0] ))
+
+        f1_arrs.append(this_f1)
         f1s.append(np.average(this_f1))
 
         if verbose == True:
@@ -91,7 +99,8 @@ def cross_validate_algo(features, labels, folds, algo, verbose=False):
 
     # return '{} & {} & {} & {} \\\\\n'.format(algo_str=algo_str, f1s=f1s, accs=accuracies, label_cnt=uniq_labels)
     label_cnt = str(np.unique(labels).shape[0])
-    return generate_cross_algo_print(algo_str=algo_str, f1s=f1s, accs=accuracies, label_cnt=label_cnt, auroc=auroc)
+    cross_algo_results = generate_cross_algo_print(algo_str=algo_str, f1s=f1s, accs=accuracies, label_cnt=label_cnt, auroc=auroc)
+    return np.array(f1_arrs)
 
 def cross_validate_dm_argmax(features, labels, algo, folds=10):
     accuracies = []
