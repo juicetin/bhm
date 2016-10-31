@@ -29,7 +29,7 @@ import itertools
 
 from utils import visualisation as vis
 from utils import data_transform
-from ML.dir_mul.nicta.dirmultreg import dirmultreg_learn, dirmultreg_predict
+from ML.dir_mul.nicta.dirmultreg import dirmultreg_learn, dirmultreg_predict, predict_parallel
 from ML import pseudo_multioutput
 from utils import downsample
 
@@ -589,13 +589,13 @@ def plot_toydata_vars(dm_preds, gp_preds):
     vis.plot_multiple_arrays(dm_entr_stacked, filename='toy_scattermap_dm_entropy.pdf', datatype='entropy')
     vis.plot_multiple_arrays(gp_vars_stacked, filename='toy_scattermap_gp_vars.pdf', datatype='variance')
 
-def plot_dm_argmax_from_chains(coords, features, chains):
+def plot_dm_argmax_from_chains(coords, features, chains, i_offset=0):
     for i, W in enumerate(chains):
-        dm_preds = dirmultreg_predict(features, W)
+        dm_preds = predict_parallel(features, W, 2)
         if chains.shape[1] == 4:
-            vis.show_map(coords, dm_preds[0].argmax(axis=1), filename='dm4_argmax_images/dm4_argmax_{}'.format(i))
+            vis.show_map(coords, dm_preds[0].argmax(axis=1), filename='dm4_argmax_images/dm4_argmax_{}'.format(i+i_offset))
         elif chains.shape[1] == 24:
-            vis.show_map(coords, dm_preds[0].argmax(axis=1), filename='dm24_argmax_images/dm24_argmax_{}'.format(i))
+            vis.show_map(coords, dm_preds[0].argmax(axis=1), filename='dm24_argmax_images/dm24_argmax_{}'.format(i+i_offset), vmin=1, vmax=14)
 
 def plot_gp_vars(coords, gp_preds):
     gp_p, gp_v = gp_preds
