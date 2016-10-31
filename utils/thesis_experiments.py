@@ -343,7 +343,7 @@ def dm_maps_from_chains(*, chains, coords, features, argmax=True):
         plot_map_func = vis.plot_dm_per_label_maps_multi # (q_locations, q_preds, filename='dm_alllabels_heatmap')
     for i, chain in enumerate(chains):
         print('creating {}-th map'.format(i))
-        preds = dirmultreg_predict(features, chain)[0]
+        preds = predict_parallel(features, chain)[0]
         if argmax == True:
             plot_map_func(coords, preds.argmax(axis=1), filename='dm{}_argmax_images/dm_heatmap_{}'.format(preds.shape[1], i))
         else:
