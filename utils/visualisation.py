@@ -76,11 +76,33 @@ def plot_gp_stats(points, display=False, filename='gp_stats.pdf'):
 
     clear_plt()
 
-def scatter_array(points, display=False, filename='scatterplot.pdf'):
+def scatter_arrays(points, display=False, filename='scatterplot.pdf', marker='x', c='b', labels=None):
     fig, ax = plt.subplots()
-    ax.scatter(np.arange(points.shape[0]), points, s=2, lw=0)
-    ax.get_yaxis().get_major_formatter().set_useOffset(False)
-    ax.set_ylim((points.min(), points.max()))
+    if points.shape[1] == 4:
+        ax.set_ylim(-0.1, 1.19)
+        x = np.arange(1, points.shape[1]+1)
+        ax.set_xticks(x)
+    elif points.shape[1] > 4:
+        ax.set_xlim(0, 25)
+        x = np.concatenate((np.arange(1, 21), [22, 23, 24]))
+        ax.set_xticks(x)
+    ax.set_xlabel('label no.')
+    ax.set_ylabel('f-score')
+    
+    colors = ['b', 'r', 'c', 'g']
+    # for row, label, c in enumerate(points, labels, colors):
+
+    print(x.shape)
+    print(points[0].shape)
+
+    # ax.plot(x, points, label=labels)
+    # ax.scatter(np.repeat(x.T, 4, axis=0), points, s=20, lw=2, c=colors)
+    for i in range(len(points)):
+        ax.plot(x, points[i], label=labels[i], c=colors[i])
+        ax.scatter(x, points[i], s=20, lw=2, marker=marker, c=colors[i])
+
+    plt.legend(fontsize=11)
+    # ax.set_ylim((points.min(), points.max()))
     if display == False:
         plt.savefig(filename)
     else:
@@ -137,20 +159,6 @@ def show_all():
         date = datetime.now()
 
     plt.savefig('images/{}.pdf'.format(date))
-
-def add_confidence_plot(ax, x, y, sigma):
-    confidence = 1.9600
-    ax.plot(x, y, 'b-', label=u'Prediction')
-    ax.fill(np.concatenate([x, x[::-1]]),
-            np.concatenate([y - confidence * sigma,
-                (y + confidence * sigma)[::-1]]),
-            alpha=.5, fc='b', ec='None', label='95% confidence interval')
-    ax.set_xlabel('$x$')
-    ax.set_ylabel('$y$')
-
-def add_scatter_plot(ax, x, y):
-    colors = np.ones_like(x)
-    ax.scatter(x, y, c=colors, marker='o')
 
 def generate_subplots(rows=1, columns=1, actual_count=1, title_list=None, with_fig=False, with_big_ax=False):
     fig = plt.figure()
@@ -388,7 +396,7 @@ def show_map(locations, labels, x_bins=None, y_bins=None, display=False, filenam
     if norm == mpl.colors.LogNorm:
         if vmin == 0:
             vmin += 1e-10
-        norm = colors.LogNorm(vmin=vmin, vmax=vmax)
+        norm = norm(vmin=vmin, vmax=vmax)
 
     # Display image
     im = cur_fig.imshow(Z, extent=[x_min, x_max, y_min, y_max], origin='lower', vmin=vmin, vmax=vmax, cmap=cmap, norm=norm)
@@ -740,7 +748,7 @@ def plot_dm_hists_multi(chains, filename='dm_mcmc_weight_hist', ylims=None):
         print('Now plotting hist plots {}/{}...'.format(i, bounds.shape[0]-1))
         plot_dm_hists(chains[:,bounds[i-1]:bounds[i]], '{}_{}'.format(filename, i), cols=h_max, rows=v_max, xlims=xlims, ylims=ylims)
 
-def plot_multi_maps(q_locations, q_preds, filename='dm_simplelabel_heatmap', across=2, down=2, offset=None, title_list=None, vmin=None, vmax=None, norm=None):
+def plot_multi_maps(q_locations, q_preds, filename='dm_simplelabel_heatmap', across=2, down=2, offset=None, title_list=None, vmin=None, vmax=None, norm=None, xticks=None):
     """
     Plots heatmap for each label in data
     """
@@ -785,7 +793,7 @@ def plot_multi_maps(q_locations, q_preds, filename='dm_simplelabel_heatmap', acr
 
     if title_list == None and q_preds.shape[1] <= 4:
         print('Also creating colour bar...')
-        standalone_colorbar(im, filename=filename)
+        standalone_colorbar(im, filename=filename, xticks=xticks)
         clear_plt()
     else:
         clear_plt()
@@ -859,7 +867,7 @@ def standalone_label_colorbar(label_count=24, filename='label_standalone_colorba
 
     clear_plt()
 
-def standalone_colorbar(im, filename, orientation='horizontal', label=None):
+def standalone_colorbar(im, filename, orientation='horizontal', label=None, xticks=None):
     if orientation=='horizontal':
         fig = plt.figure(figsize=(8, 1))
         cax = fig.add_axes([0.05, 0.50, 0.9, 0.15])
@@ -868,6 +876,9 @@ def standalone_colorbar(im, filename, orientation='horizontal', label=None):
         cax = fig.add_axes([0.03, 0.03, 0.3, 0.95])
 
     cb = fig.colorbar(im, cax=cax, orientation=orientation)
+    if xticks != None:
+        cb.set_ticks(xticks)
+
     if label != None:
         cb.set_label(label)
     # font = {'family' : 'normal',

@@ -22,6 +22,7 @@ from sklearn.linear_model import LinearRegression
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.svm import SVR
+from sklearn.metrics import f1_score
 
 import multiprocessing as mp
 from multiprocessing import Pool
@@ -370,6 +371,32 @@ def calc_all_det_preds(features, l4, l24, query):
 
     return preds
 
+def calc_all_det_f1s(train_q, actual4, actual24):
+    algos = [LogisticRegression, SVC, KNeighborsClassifier, RandomForestClassifier]
+    f1s = []
+    for algo in algos:
+        f1s.append(validation.cross_validate_algo(train_q, actual4, 10, algo))
+        f1s.append(validation.cross_validate_algo(train_q, actual24, 10, algo))
+    return f1s
+
+def print_f1s(f1s):
+    algos = ["Logistic Regressor", "SVM", "kNN", "Random Forest"]
+    for i in np.arange(0, len(f1s), 2):
+        cur_f1 = np.round(np.average(f1s[i], axis=0), 3)
+        cur_f1 = '['+', '.join(list(map(str, cur_f1)))+']'
+        print('{} & {}\\\\'.format(algos[int(i/2)], cur_f1))
+
+def plot_f1s(f1s):
+    algos = ["Logistic Regressor", "SVM", "kNN", "Random Forest"]
+
+    # 4-label case
+    l4_f1s = np.average(f1s[::2], axis=1)
+    vis.scatter_arrays(l4_f1s, display=False, filename='det4_f1s.pdf', labels=algos)
+
+    # 24-label case
+    l24_f1s = np.average(f1s[1::2], axis=1)
+    vis.scatter_arrays(l24_f1s, display=False, filename='det24_f1s.pdf', labels=algos)
+
 def save_all_det_preds(preds):
     lr4p, lr24p, svm4p, svm24p, knn4p, knn24p, rf4p, rf24p = preds
     np.save('data/lr4p', lr4p)
@@ -497,9 +524,13 @@ def map_many_entropy_thresholds(coords, entropies, *, labels):
         idxs = helpers.discard_outlier_entropies(entropies, threshold)
         vis.show_map(coords[idxs], helpers.normalise_entropies(entropies[idxs]), filename='dm{}_entropies_t{}'.format(labels, threshold))
 
-def final_entropy_maps(coords, entr4, entr24):
-    new_entr4 = helpers.tune_entropies_better_spread(entr4, 200, rungs=5, stepsize=100)
-    vis.show_map(coords, new_entr4, filename='dm4_entropy_map')
+def final_entropy_maps(coords, entr):
+    """
+    The actual function used to adjust entropies so that they can plotted with visual variance,
+    all while still representing the original information
+    """
+    new_entr = helpers.tune_entropies_better_spread(entr, 200, rungs=5, stepsize=100)
+    vis.show_map(coords, new_entr, filename='dm4_entropy_map')
 
 @timing
 def biodiversity_searching(preds, coords, plot=False):
