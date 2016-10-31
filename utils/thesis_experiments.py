@@ -40,6 +40,16 @@ from utils.load_data import inverse_indices
 import progressbar
 import itertools
 import pymc
+import time
+
+def timing(func):
+    def wrapper(*arg, **kw):
+        '''source: http://www.daniweb.com/code/snippet368.html'''
+        t1 = time.time()
+        res = func(*arg, **kw)
+        t2 = time.time()
+        return (t2 - t1), res, func.__name__
+    return wrapper
 
 def algo_module_to_str(algo):
     return str(algo()).split('(')[0]
@@ -491,6 +501,7 @@ def final_entropy_maps(coords, entr4, entr24):
     new_entr4 = helpers.tune_entropies_better_spread(entr4, 200, rungs=5, stepsize=100)
     vis.show_map(coords, new_entr4, filename='dm4_entropy_map')
 
+@timing
 def biodiversity_searching(preds, coords, plot=False):
     """
     Determine a basic/probably ecologically invalid definition biodiverse clusters 
@@ -499,6 +510,7 @@ def biodiversity_searching(preds, coords, plot=False):
     occurrences required increases (as we can't have 24 labels all occuring more than 10% of
     the time, for example...)
     """
+    t1 = datetime.now()
     scale_factor=.8
     prev_threshold = (1/scale_factor) * 0.15
     for i in np.arange(2, preds.shape[1]):
@@ -515,6 +527,7 @@ def biodiversity_searching(preds, coords, plot=False):
                 filename='dm24_cohab_map_{}habs_{}points'.format(cur_cohab_count, cur_cohab_idxs.shape[0]),
                 title='Cohabitation between {} habitats, with a {} occurrence threshold - {} points'.format(
                     i, np.round(cur_threshold, 3), cur_cohab_idxs.shape[0]))
+    print(datetime.now()-t1)
 
 def biodiversity_for_cohab_count(preds, cohabitations=2, factor=1.2):
     """
@@ -575,3 +588,28 @@ def plot_toydata_vars(dm_preds, gp_preds):
 
     vis.plot_multiple_arrays(dm_entr_stacked, filename='toy_scattermap_dm_entropy.pdf', datatype='entropy')
     vis.plot_multiple_arrays(gp_vars_stacked, filename='toy_scattermap_gp_vars.pdf', datatype='variance')
+
+def plot_dm_argmax_from_chains(coords, features, chains):
+    for i, W in enumerate(chains):
+        dm_preds = dirmultreg_predict(features, W)
+        if chains.shape[1] == 4:
+            vis.show_map(coords, dm_preds[0].argmax(axis=1), filename='dm4_argmax_images/dm4_argmax_{}'.format(i))
+        elif chains.shape[1] == 24:
+            vis.show_map(coords, dm_preds[0].argmax(axis=1), filename='dm24_argmax_images/dm24_argmax_{}'.format(i))
+
+def plot_gp_vars(coords, gp_preds):
+    gp_p, gp_v = gp_preds
+    max_idxs = gp_p.argmax(axis=1)
+
+    gp_max_vars = (gp_v[np.arange(gp_v.shape[0])[:,np.newaxis], max_idxs[:,np.newaxis]]).flatten()
+    gp_max_probs = (gp_p[np.arange(gp_p.shape[0])[:,np.newaxis], max_idxs[:,np.newaxis]]).flatten()
+
+    print('Average across all variances was {}, but average across the variances corresponding to the argmax labels was {}'.format(
+        np.average(gp_v), np.average(gp_max_vars) ))
+
+    vis.show_map(coords, np.sqrt(gp_max_vars), filename='gp4_max_st', save_im=False)
+    vis.show_map(coords, np.average(gp_v, axis=1), filename='gp4_avg_vars', save_im=False)
+    vis.show_map(coords, gp_max_probs, filename='gp4_max_probs', save_im=False)
+    # vis.standalone_colorbar(im1, 'gp4_max_vars')
+    # vis.standalone_colorbar(im2, 'gp4_avg_vars')
+    # vis.standalone_colorbar(im3, 'gp4_max_probs')
