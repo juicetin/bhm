@@ -387,7 +387,7 @@ def show_map(locations, labels, x_bins=None, y_bins=None, display=False, filenam
     # Adjust lower bound (0 is invalid) when using LogNorm for imshow
     if norm == mpl.colors.LogNorm:
         if vmin == 0:
-            vmin += 1e-10
+            vmin += 1e-5
         norm = colors.LogNorm(vmin=vmin, vmax=vmax)
 
     # Display image
