@@ -327,7 +327,7 @@ def scatter_multi_maps(locations, labels, filename='scattermap'):
     # standalone_colorbar(im, filename=filename+'_vert', orientation='vertical', label='Label distributions')
     clear_plt()
 
-def show_map(locations, labels, x_bins=None, y_bins=None, display=False, filename='map', vmin=None, vmax=None, ax=None, hide_y=False, title=None, save_im=False):
+def show_map(locations, labels, x_bins=None, y_bins=None, display=False, filename='map', vmin=None, vmax=None, ax=None, hide_y=False, title=None, save_im=False, norm=None):
     """
     Given the x, y coord locations and corresponding labels, plot this on imshow (null points
     will be shown as blank in the background).
@@ -372,7 +372,6 @@ def show_map(locations, labels, x_bins=None, y_bins=None, display=False, filenam
     # plt.imshow(Z, extent=[x_min, x_max, y_min, y_max], origin='lower', cmap=cmap, vmin=vmin, vmax=vmax)
 
     ###############
-    norm=None
     # uniq_C = np.unique(labels)
     # # Can also take an Nx3 or Nx4 array of rgb/rgba values - will need for 24 case hmmm
     # # cmap = colors.ListedColormap(['blue', 'cyan', 'yellow', 'red'])
@@ -383,6 +382,15 @@ def show_map(locations, labels, x_bins=None, y_bins=None, display=False, filenam
     # norm = colors.BoundaryNorm(bounds, cmap.N)
     ###############
 
+    # norm = colors.LogNorm(Z.mean() + 0.5 * Z.std(), Z.max(), clip='True')
+
+    # Adjust lower bound (0 is invalid) when using LogNorm for imshow
+    if norm == mpl.colors.LogNorm:
+        if vmin == 0:
+            vmin += 1e-10
+        norm = colors.LogNorm(vmin=vmin, vmax=vmax)
+
+    # Display image
     im = cur_fig.imshow(Z, extent=[x_min, x_max, y_min, y_max], origin='lower', vmin=vmin, vmax=vmax, cmap=cmap, norm=norm)
 
     # Slightly hacky - unfortunately neeeded for 0-count argmaxs of 24 labels
@@ -455,7 +463,6 @@ def multi_label_histogram(multi_labels):
     plt.hist(non_zero_labels, bins=range(1,bins.shape[0]), bottom=1)
     for i, txt in enumerate(bins):
         plt.annotate(str(txt), (i, 0), xytext=(i,-300), va='top', ha='center')
-    pdb.set_trace()
     plt.savefig('label_occurrences_full24classes.pdf')
 
 def histogram(freqs, title=None, filename='freqs.pdf', offset=0):
@@ -511,9 +518,6 @@ def plot_training_with_grid(locations, filename='training_map.pdf', display=True
     plt.scatter(locations[:,0], locations[:,1])
     plt.grid(linestyle='dashed')
     plt.savefig(filename)
-
-    pdb.set_trace()
-
 
 def plot_multilabel_distribution(labels, title='Multi-label distribution', filename='multilabel_distr.pdf', display=True):
     """
@@ -736,7 +740,7 @@ def plot_dm_hists_multi(chains, filename='dm_mcmc_weight_hist', ylims=None):
         print('Now plotting hist plots {}/{}...'.format(i, bounds.shape[0]-1))
         plot_dm_hists(chains[:,bounds[i-1]:bounds[i]], '{}_{}'.format(filename, i), cols=h_max, rows=v_max, xlims=xlims, ylims=ylims)
 
-def plot_multi_maps(q_locations, q_preds, filename='dm_simplelabel_heatmap', across=2, down=2, offset=None, title_list=None, vmin=None, vmax=None):
+def plot_multi_maps(q_locations, q_preds, filename='dm_simplelabel_heatmap', across=2, down=2, offset=None, title_list=None, vmin=None, vmax=None, norm=None):
     """
     Plots heatmap for each label in data
     """
@@ -768,7 +772,7 @@ def plot_multi_maps(q_locations, q_preds, filename='dm_simplelabel_heatmap', acr
 
     for i, ax in enumerate(axs):
         hide_y_labels = True if i%2 == 0 else False
-        im = show_map(q_locations, q_preds[:,i], ax=ax, hide_y = hide_y_labels, **bounds)
+        im = show_map(q_locations, q_preds[:,i], ax=ax, hide_y = hide_y_labels, norm=norm, **bounds)
         if offset != None:
             ax.set_title('label {}'.format(offset+i))
         elif title_list != None:
@@ -799,7 +803,7 @@ def plot_dm_per_label_maps_multi(q_locations, q_preds, filename='dm_alllabels_he
     # vmin=0
     # vmax=1
 
-    bounds = {'vmin': vmin, 'vmax': vmax}
+    multimap_kwargs = {'vmin': vmin, 'vmax': vmax, 'norm': mpl.colors.LogNorm}
 
     step = 4
     if 24 % step != 0:
@@ -812,7 +816,7 @@ def plot_dm_per_label_maps_multi(q_locations, q_preds, filename='dm_alllabels_he
         cur_filename = '{}_{}-{}'.format(filename, i, i+step-1)
         print(cur_filename)
         im = plot_multi_maps(q_locations, q_preds[:,i:i+step], cur_filename, 
-                across=across, down=down, title_list=title_set, **bounds)
+                across=across, down=down, title_list=title_set, **multimap_kwargs)
 
     # plot_multi_maps(q_locations, q_preds[:,:6],       '{}_1-6'.format(filename), across=2, down=3, title_list=title_set1, **bounds)
     # plot_multi_maps(q_locations, q_preds[:,6:12],     '{}_7-12'.format(filename), across=2, down=3, title_list=title_set2, **bounds)
@@ -849,7 +853,7 @@ def standalone_label_colorbar(label_count=24, filename='label_standalone_colorba
     cmap = cmap.from_list('custom cmap', cmaplist, cmap.N)
     bounds = np.linspace(1, label_count, label_count)
     norm = mpl.colors.BoundaryNorm(bounds, cmap.N)
-    cb1 = mpl.colorbar.ColorbarBase(ax, cmap=cmap, norm=norm, spacing='Proportional', format='%li', orientation='horizontal')
+    cb1 = mpl.colorbar.ColorbarBase(ax, cmap=cmap, norm=norm, spacing='Uniform', format='%li', orientation='horizontal')
     ax.set_title(title)
     plt.savefig(filename)
 
@@ -1016,7 +1020,6 @@ def plot_illustrative_gp_hparams(x=None, filename='gp_sample_plot.pdf'):
     x = np.array([-7, -6, -5.5, -4.9, -2.5, -2.4, -2.0, -1.5, -0.5, 0.3, 0.4, 0.5, 2.3, 2.5, 4.0, 4.1, 5.0, 6.0, 6.5]).reshape(-1, 1)
     y = np.array([-1.8, 0, 0.3, -0.9, -1.3, -1.2, 0.4, 1.6, 1.9, 0.0, -0.9, -1.1, -2.7, -2.2, -1.2, -1.0, -1.5, -1.0, -0.8]).reshape(-1, 1)
     xnew = np.linspace(x.min(), x.max(), 300).reshape(-1, 1)
-    # pdb.set_trace()
 
     gp_model = gp.GaussianProcess
     # gp_model = gp_gpy.GPR

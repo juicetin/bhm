@@ -1,6 +1,6 @@
 SETUP="
 import numpy as np
-from ML.dir_mul.nicta.dirmultreg import dirmultreg_learn, dirmultreg_predict
+from ML.dir_mul.nicta.dirmultreg import dirmultreg_learn, dirmultreg_predict, predict_parallel
 from utils.data_transform import features_squared_only
 red_features = np.load('data/red_features.npy')
 f_sq2r = features_squared_only(red_features)
@@ -11,7 +11,7 @@ W = dirmultreg_learn(f_sq2r, l24)
 "
 
 DM4_PREDS="
-dm_preds = dirmultreg_predict(q_sq2r, W)"
+dm_preds = predict_parallel(q_sq2r, W)"
 
-echo "dirichlet multinomial regression fit and predict full query set for 24-label case"
+echo "dirichlet multinomial regression fit and parallel predict full query set for 24-label case"
 python -m timeit -v -n 10 -s "$SETUP" "$DM4_PREDS"
