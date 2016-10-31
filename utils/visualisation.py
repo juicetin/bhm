@@ -399,7 +399,7 @@ def show_map(locations, labels, x_bins=None, y_bins=None, display=False, filenam
     if in_ax == False:
         uniq = np.unique(labels).shape[0]
         if uniq > 4:
-            plt.colorbar(ticks=range(uniq))
+            plt.colorbar(ticks=range(uniq), spacing='uniform')
         elif uniq == 4:
             # plt.colorbar()
             plt.colorbar(im, ticks=bounds, cmap=cmap, norm=norm)
