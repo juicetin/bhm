@@ -335,7 +335,7 @@ def scatter_multi_maps(locations, labels, filename='scattermap'):
     # standalone_colorbar(im, filename=filename+'_vert', orientation='vertical', label='Label distributions')
     clear_plt()
 
-def show_map(locations, labels, x_bins=None, y_bins=None, display=False, filename='map', vmin=None, vmax=None, ax=None, hide_y=False, title=None, save_im=False, norm=None):
+def show_map(locations, labels, x_bins=None, y_bins=None, display=False, filename='map', vmin=None, vmax=None, ax=None, hide_y=False, title=None, save_im=False, norm=None, show_cbar=True):
     """
     Given the x, y coord locations and corresponding labels, plot this on imshow (null points
     will be shown as blank in the background).
@@ -395,8 +395,8 @@ def show_map(locations, labels, x_bins=None, y_bins=None, display=False, filenam
     # Adjust lower bound (0 is invalid) when using LogNorm for imshow
     if norm == mpl.colors.LogNorm:
         if vmin == 0:
-            vmin += 1e-10
-        norm = norm(vmin=vmin, vmax=vmax)
+            vmin += 1e-5
+        norm = colors.LogNorm(vmin=vmin, vmax=vmax)
 
     # Display image
     im = cur_fig.imshow(Z, extent=[x_min, x_max, y_min, y_max], origin='lower', vmin=vmin, vmax=vmax, cmap=cmap, norm=norm)
@@ -418,7 +418,7 @@ def show_map(locations, labels, x_bins=None, y_bins=None, display=False, filenam
             bounds = np.linspace(uniq_labels.min()+1, uniq_labels.max(), uniq_labels.shape[0])
             norm = mpl.colors.BoundaryNorm(bounds, cmap.N)
             plt.colorbar(im, ticks=bounds, cmap=cmap, norm=norm)
-        else:
+        elif show_cbar == True:
             plt.colorbar()
 
     # Setting axis labels
@@ -478,14 +478,19 @@ def histogram(freqs, title=None, filename='freqs.pdf', offset=0):
     Plots a histogram 
     """
     bins = np.arange(offset, freqs.shape[0]+offset)
-    plt.hist(bins, bins=bins - .5, weights=freqs, lw=0, color=['blue'])
-    plt.xticks(bins[:-1])
+    fig, ax = plt.subplots()
+    ax.hist(bins, bins=bins - .5, weights=freqs, lw=0, color=['blue'])
+    ax.set_xticks(bins[:-1])
+    ax.set_xlim(1, freqs.shape[0])
+    ax.set_xlabel('label number')
+    ax.set_ylabel('no. of occurrences')
 
     if title != None:
         plt.title(title)
     # for i, txt in enumerate(freqs):
     #     plt.annotate(str(txt), (i, 0), xytext=(i,-300), va='top', ha='center')
     plt.savefig(filename)
+    clear_plt()
 
 def clear_plt(fig=None):
     """
@@ -748,7 +753,7 @@ def plot_dm_hists_multi(chains, filename='dm_mcmc_weight_hist', ylims=None):
         print('Now plotting hist plots {}/{}...'.format(i, bounds.shape[0]-1))
         plot_dm_hists(chains[:,bounds[i-1]:bounds[i]], '{}_{}'.format(filename, i), cols=h_max, rows=v_max, xlims=xlims, ylims=ylims)
 
-def plot_multi_maps(q_locations, q_preds, filename='dm_simplelabel_heatmap', across=2, down=2, offset=None, title_list=None, vmin=None, vmax=None, norm=None, xticks=None):
+def plot_multi_maps(q_locations, q_preds, filename='dm_simplelabel_heatmap', across=2, down=2, offset=None, title_list=None, vmin=None, vmax=None, norm=None, xticks=None, include_map=False, orientation='vertical'):
     """
     Plots heatmap for each label in data
     """
@@ -791,10 +796,13 @@ def plot_multi_maps(q_locations, q_preds, filename='dm_simplelabel_heatmap', acr
     fig.tight_layout()
     plt.savefig(filename+'.pdf')
 
-    if title_list == None and q_preds.shape[1] <= 4:
+    if (title_list == None and q_preds.shape[1] <= 4) or include_map == True:
         print('Also creating colour bar...')
-        standalone_colorbar(im, filename=filename, xticks=xticks)
+        standalone_colorbar(im, filename=filename, xticks=xticks, orientation=orientation)
         clear_plt()
+    # elif include_map == True:
+    #     fig.colorbar(big_ax)
+    #     clear_plt()
     else:
         clear_plt()
 

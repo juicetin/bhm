@@ -273,14 +273,15 @@ def map_red_coords_to_idx(red_coords, coords):
 
 def load_det_preds():
     return (
-        np.load('data/lr4p.npy'),
-        np.load('data/lr24p.npy'),
-        np.load('data/svm4p.npy'),
-        np.load('data/svm24p.npy'),
-        np.load('data/knn4p.npy'),
-        np.load('data/knn24p.npy'),
-        np.load('data/rf4p.npy'),
-        np.load('data/rf24p.npy')
+        np.load('preds/lr4_p.npy'),
+        np.load('preds/svc4_p.npy'),
+        np.load('preds/knn4_p.npy'),
+        np.load('preds/rf4_p.npy'),
+
+        np.load('preds/lr23_p.npy'),
+        np.load('preds/svc23_p.npy'),
+        np.load('preds/knn23_p.npy'),
+        np.load('preds/rf23_p.npy')
     )
 
 def load_det_multi_preds():
