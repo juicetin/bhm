@@ -238,7 +238,26 @@ def check_dm_err_var_rankings(dm_mc_errs, dm_mc_vars):
     for i, idx in enumerate(vars_argsort):
         print('{}-smallest variance corresponds to the {}-smallest error - index {}'.format(i, np.where(errs_argsort == idx)[0][0], idx))
 
-def plot_det_maps(query_features, qp_locations, all_preds=None, features=None, labels=None):
+def det_query_preds(qp_features, features, labels):
+    uniq_C = np.unique(labels).shape[0]
+    
+    print('Logistic Regression predictions...')
+    lr_preds = LogisticRegression().fit(features, labels).predict(qp_features)
+    print('Random Forest predictions...')
+    rf_preds = RandomForestClassifier().fit(features, labels).predict(qp_features)
+    print('kNN predictions')
+    knn_preds = KNeighborsClassifier().fit(features, labels).predict(qp_features)
+    print('SVC predictions...')
+    svc_preds = SVC().fit(features, labels).predict(qp_features)
+    
+    np.save('preds/lr{}_p'.format(uniq_C), lr_preds)
+    np.save('preds/rf{}_p'.format(uniq_C), rf_preds)
+    np.save('preds/knn{}_p'.format(uniq_C), knn_preds)
+    np.save('preds/svc{}_p'.format(uniq_C), svc_preds)
+
+    return lr_preds, rf_preds, svc_preds, knn_preds
+
+def plot_det_maps(qp_locations, qp_features=None, all_preds=None, features=None, labels=None):
     if all_preds == None:
         print('Making det predictions')
         print('SVC predictions...')
@@ -254,7 +273,7 @@ def plot_det_maps(query_features, qp_locations, all_preds=None, features=None, l
     
     det4_preds = np.column_stack((svc_preds, lr_preds, knn_preds, rf_preds))
 
-    vis.plot_multi_maps(qp_locations, det4_preds, filename='det4_preds', title_list=['SVM', 'Logistic Regression', 'kNN', 'Random Forest'])
+    vis.plot_multi_maps(qp_locations, det4_preds, filename='det4_preds', title_list=['SVM', 'Logistic Regression', 'kNN', 'Random Forest'], include_map=True, xticks=np.arange(4))
 
 def plot_det_multi_maps(qp_locations, preds):
     lr4_preds, svm4_preds, knn4_preds, rf4_preds = preds
