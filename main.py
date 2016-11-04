@@ -265,7 +265,6 @@ if __name__ == "__main__":
     # vis.show_map(bath_locations, labels, x_bins_training, y_bins_training, vmin=1, vmax=24)
     #########################################################################################################
 
-
     ######### Looking at error and variance of DM using different projections #########
     # all_errs, all_vars = benchmarks.dm_test_feature_space(red_features, l_norm)
 
@@ -314,5 +313,4 @@ if __name__ == "__main__":
     # # W24 = dirmultreg_learn(f_sq2, l24_norm, reg=100)
     # W24 = dirmultreg_learn(f_sq2, red_mlabels24, reg=100)
     # dm24_p, alpha24, dm24_v, a24entropy = dirmultreg_predict(q_sq2r, W24)
-
 

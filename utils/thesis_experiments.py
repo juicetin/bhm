@@ -274,6 +274,7 @@ def plot_det_maps(qp_locations, qp_features=None, all_preds=None, features=None,
     det4_preds = np.column_stack((svc_preds, lr_preds, knn_preds, rf_preds))
 
     vis.plot_multi_maps(qp_locations, det4_preds, filename='det4_preds', title_list=['SVM', 'Logistic Regression', 'kNN', 'Random Forest'], include_map=True, xticks=np.arange(23))
+    # vis.plot_multi_maps(qp_locations, det4_preds, filename='det4_preds', title_list=['SVM', 'Logistic Regression', 'kNN', 'Random Forest'], include_map=True, xticks=np.arange(4))
 
 def plot_det_multi_maps(qp_locations, preds):
     lr4_preds, svm4_preds, knn4_preds, rf4_preds = preds
@@ -638,6 +639,7 @@ def plot_toydata_vars(dm_entr, gp_preds):
 
     vis.plot_multiple_arrays(dm_entr_stacked, filename='toy_scattermap_dm_entropy.pdf', datatype='entropy')
     vis.plot_multiple_arrays(np.sqrt(gp_vars_stacked), filename='toy_scattermap_gp_vars.pdf', datatype='1 standard deviation')
+    # vis.plot_multiple_arrays(gp_vars_stacked, filename='toy_scattermap_gp_vars.pdf', datatype='variance')
 
 def plot_dm_argmax_from_chains(coords, features, chains, i_offset=0):
     for i, W in enumerate(chains):
